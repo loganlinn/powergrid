@@ -50,8 +50,7 @@
     {:id i
      :money 50
      :cities []
-     :power-plants []
-     :resources []}))
+     :power-plants {}}))
 
 (defn init-state
   [num-players]
@@ -71,9 +70,13 @@
   [player]
   (count (:cities player)))
 
+(defn power-plants
+  [player]
+  (vals (:power-plants)))
+
 (defn max-power-plant
   [player]
-  (apply max (map :number (:power-plants player))))
+  (apply max (map :number (power-plants player))))
 
 (defn update-money
   [players player amt]
