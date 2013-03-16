@@ -20,9 +20,12 @@
                 :uranium 0})
              [{:cost 10 :uranium 0}
               {:cost 12 :uranium 0}
-              {:cost 14 :uranium 0}
-              {:cost 16 :uranium 0}])
-   :supply []})
+              {:cost 14 :uranium 1}
+              {:cost 16 :uranium 1}])
+   :supply {:coal 0
+            :oil 6
+            :garbage 16
+            :uranium 10}})
 
 (defn init-power-plants
   []
