@@ -64,11 +64,6 @@
   [player prompt & {:keys [choices passable? formatter validator]}]
   )
 
-(defn network-size
-  "Returns the number of cities in the player's network"
-  [player]
-  (count (:cities player)))
-
 (defn accepts-resource?
   "Returns true if the power-plant accepts the resource, otherwise false"
   [{power-plant-resource :resource} resource]
@@ -93,6 +88,11 @@
   "Returns state after updating player with f"
   [state player f & args]
   (apply update-in state [:players (player-pos state player)] f args))
+
+(defn network-size
+  "Returns the number of cities in the player's network"
+  [player]
+  (count (:cities player)))
 
 (defn power-plants
   "Returns the power-plants owned by player"
