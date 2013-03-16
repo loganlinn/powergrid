@@ -2,7 +2,7 @@
 
 (defrecord PowerPlant [number resource capacity yield])
 
-(def power-plants
+(def power-plant-cards
   [(PowerPlant.  3 :oil 2 1)
    (PowerPlant.  4 :coal 2 1)
    (PowerPlant.  5 [:coal :oil] 2 1)

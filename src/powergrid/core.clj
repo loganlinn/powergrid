@@ -29,9 +29,9 @@
 
 (defn init-power-plants
   []
-  (let [actual-market (take 4 power-plants)
-        future-market (take 4 (drop 4 power-plants))
-        deck (drop 8 power-plants)
+  (let [actual-market (take 4 power-plant-cards)
+        future-market (take 4 (drop 4 power-plant-cards))
+        deck (drop 8 power-plant-cards)
         ;; remove 13 card
         card-13? #(= (:number %) 13)
         card-13 (filter card-13? deck)
@@ -67,12 +67,35 @@
   )
 
 (defn network-size
+  "Returns the number of cities in the player's network"
   [player]
   (count (:cities player)))
 
+(defn accepts-resource?
+  "Returns true if the power-plant accepts the resource, otherwise false"
+  [{power-plant-resource :resource} resource]
+  (if (coll? power-plant-resource)
+    (boolean (some #(= resource %) power-plant-resource))
+    (condp = power-plant-resource
+      :ecological false
+      :fusion     false
+      resource    true
+      false)))
+
 (defn power-plants
+  "Returns the power-plants owned by player"
   [player]
   (vals (:power-plants)))
+
+(defn add-power-plant
+  "Returns updated player after adding power-plant"
+  [player power-plant]
+  (assoc-in player [:power-plants power-plant] {}))
+
+(defn add-resource
+  [player power-plant resource]
+  {:pre [(accepts-resource? power-plant resource)]}
+  (update-in player [:power-plants power-plant resource] (fnil inc 0)))
 
 (defn max-power-plant
   [player]
