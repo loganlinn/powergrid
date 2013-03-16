@@ -92,10 +92,10 @@
   [player power-plant]
   (assoc-in player [:power-plants power-plant] {}))
 
-(defn add-resource
-  [player power-plant resource]
+(defn add-resources
+  [player power-plant resource amount]
   {:pre [(accepts-resource? power-plant resource)]}
-  (update-in player [:power-plants power-plant resource] (fnil inc 0)))
+  (update-in player [:power-plants power-plant resource] (fnil #(+ % amount) 0)))
 
 (defn max-power-plant
   [player]
