@@ -32,18 +32,13 @@
    :round 1
    :resources {}
    :power-plants (init-power-plants)
-   :players (atom [])})
+   :players []})
 
 ;(pprint (:power-plants (init-state 2)))
 
 (defn prompt-player
   [player prompt & {:keys [choices passable? formatter validator]}]
   )
-
-(defn update-money
-  "Returns player after adjusting their money by amt."
-  [player amt]
-  (assoc player :money (+ (:money player 0) amt)))
 
 (defn network-size
   [player]
@@ -57,7 +52,8 @@
   [players player-id amt]
   (map
     #(if (= (:id %) player-id)
-       (assoc % :money (+ (:money % 0) amt)) %)
+       (assoc % :money (+ (:money % 0) amt))
+       %)
     players))
 
 (defn player-order
@@ -79,8 +75,7 @@
 
 (defn phase-1
   [state]
-  (swap! (:players state) player-order)
-  state)
+  (update-in state :players player-order))
 
 ;; PHASE 2
 
@@ -142,14 +137,14 @@
   [state]
   (second
     (loop [state state
-           round-players @(:players state) ;; players active in round's auctions
+           round-players (:players state) ;; players active in round's auctions
            auctions []]
       (if-let [player (first round-players)]
         (if-let [auction (do-auction state player (rest round-players))]
           (let [[power-plant purchaser price] auction]
-            ;; Deduct player funds
-            (swap! (:players state) update-money (- price))
-            (recur (update-in state :power-plants replace-power-plant power-plant)
+            (recur (-> state
+                     (update-in :power-plants replace-power-plant power-plant)
+                     (update-in :players update-money (:id purchaser) (- price)))
                    (remove #(= purchaser %) round-players)
                    (conj auctions auction)))
           (recur state (rest round-players) auctions))
@@ -166,7 +161,7 @@
                  (-> state :power-plants :actual first))
       state)))
 
-
 (defn phase-3
   [state]
-  )
+  (let [round-players (reverse (:players state))]
+    ))
