@@ -11,7 +11,7 @@
 
 (defn init-resources
   []
-  {:available []
+  {:market []
    :supply []})
 
 (defn init-power-plants
@@ -27,7 +27,7 @@
         deck (shuffle deck)
         ;; place card-13 on top & step-3 on bottom
         deck (concat card-13 deck [:step-3])]
-    {:actual actual-market
+    {:market actual-market
      :future future-market
      :deck deck}))
 
@@ -125,7 +125,7 @@
                  player
                  "Choose power plant for auction"
                  :passable? (not= 1 (:round state))
-                 :choices (:actual (:power-plants state)))]
+                 :choices (:market (:power-plants state)))]
     (when choice
       (cons choice (negotiate-auction choice
                                       (cons player other-players))))))
@@ -135,13 +135,13 @@
   reordering according to rules."
   [power-plants choice]
   (let [[next-plant & deck] (:deck power-plants)
-        actual-market (remove #(= % choice) (:actual power-plants))
+        actual-market (remove #(= % choice) (:market power-plants))
         future-market (:future power-plants)
         markets (sort-by :number
                          (concat [next-plant] actual-market future-market))
         [actual-market future-market] (split-at (/ (count markets) 2) markets)]
     (merge power-plants
-           {:actual actual-market
+           {:market actual-market
             :future future-market
             :deck deck})))
 
@@ -172,7 +172,7 @@
     ;; replace it by drawing a power plant from the draw stack
     (if (empty? auctions)
       (update-in state :power-plants replace-power-plant
-                 (-> state :power-plants :actual first))
+                 (-> state :power-plants :market first))
       state)))
 
 (defn phase-3
