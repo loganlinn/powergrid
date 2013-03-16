@@ -1,6 +1,6 @@
 (ns powergrid.power-plants)
 
-(defrecord PowerPlant [number resource-type capacity yield])
+(defrecord PowerPlant [number resource capacity yield])
 
 (def power-plants
   [(PowerPlant.  3 :oil 2 1)
