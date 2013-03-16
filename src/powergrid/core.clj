@@ -11,7 +11,17 @@
 
 (defn init-resources
   []
-  {:market []
+  {:market (concat
+             (for [cost (range 1 9)]
+               {:cost cost
+                :coal 3
+                :oil (if (>= cost 3) 3 0)
+                :garbage (if (>= cost 7) 3 0)
+                :uranium 0})
+             [{:cost 10 :uranium 0}
+              {:cost 12 :uranium 0}
+              {:cost 14 :uranium 0}
+              {:cost 16 :uranium 0}])
    :supply []})
 
 (defn init-power-plants
