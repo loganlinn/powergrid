@@ -9,6 +9,11 @@
    "Building"
    "Bureaucracy"])
 
+(defn init-resources
+  []
+  {:available []
+   :supply []})
+
 (defn init-power-plants
   []
   (let [actual-market (take 4 power-plants)
@@ -20,8 +25,8 @@
         deck (filter (complement card-13?) deck)
         ;; shuffle rest
         deck (shuffle deck)
-        ;; place card-13 on top
-        deck (concat card-13 deck)]
+        ;; place card-13 on top & step-3 on bottom
+        deck (concat card-13 deck [:step-3])]
     {:actual actual-market
      :future future-market
      :deck deck}))
@@ -30,17 +35,20 @@
   [num-players]
   (for [i (range 1 (inc num-players))]
     {:id i
-     :money 50}))
+     :money 50
+     :cities []
+     :power-plants []
+     :resources []}))
 
 (defn init-state
   [num-players]
   {:phase 1
    :round 1
-   :resources {}
+   :resources    (init-resources)
    :power-plants (init-power-plants)
-   :players (init-players num-players)})
+   :players      (init-players num-players)})
 
-(comment (pprint (init-state 4)))
+(pprint (init-state 4))
 
 (defn prompt-player
   [player prompt & {:keys [choices passable? formatter validator]}]
