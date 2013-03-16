@@ -46,11 +46,11 @@
 
 (defn init-players
   [num-players]
-  (for [i (range 1 (inc num-players))]
-    {:id i
-     :money 50
-     :cities []
-     :power-plants {}}))
+  (vec (for [i (range 1 (inc num-players))]
+         {:id i
+          :money 50
+          :cities #{}
+          :power-plants {}})))
 
 (defn init-state
   [num-players]
@@ -59,8 +59,6 @@
    :resources    (init-resources)
    :power-plants (init-power-plants)
    :players      (init-players num-players)})
-
-(pprint (init-state 4))
 
 (defn prompt-player
   [player prompt & {:keys [choices passable? formatter validator]}]
@@ -82,10 +80,24 @@
       resource    true
       false)))
 
+(defn player-pos
+  "Returns the position (0-index) of player in player order"
+  [{:keys [players]} {pid :id}]
+  (loop [[player & others] players i 0]
+    (when player
+      (if (= (player :id) pid)
+        i
+        (recur others (inc i))))))
+
+(defn update-player
+  "Returns state after updating player with f"
+  [state player f & args]
+  (apply update-in state [:players (player-pos state player)] f args))
+
 (defn power-plants
   "Returns the power-plants owned by player"
   [player]
-  (vals (:power-plants)))
+  (keys (:power-plants player)))
 
 (defn add-power-plant
   "Returns updated player after adding power-plant"
@@ -100,17 +112,36 @@
              [:power-plants power-plant resource]
              (fnil #(+ % amount) 0)))
 
+(defn add-city
+  "Returns updated player after adding city"
+  [player city]
+  (update-in player [:cities] conj city))
+
+(defn owns-city?
+  "Returns true of the player owns city, false otherwise"
+  [player city]
+  (contains? (:cities player) city))
+
 (defn max-power-plant
+  "Returns the highest power-plant number the player owns"
   [player]
-  (apply max (map :number (power-plants player))))
+  (when-let [players-plants (power-plants player)]
+   (apply max (map :number players-plants))))
 
 (defn update-money
-  [players player amt]
-  (map
-    #(if (= (:id %) (:id player))
-       (assoc % :money (+ (:money % 0) amt))
-       %)
-    players))
+  [player amt]
+  (assoc player :money (+ (:money player 0) amt)))
+
+;(let [state (init-state 2)
+      ;plant1 {:number 36, :resource :coal, :capacity 3, :yield 7}
+      ;plant2 {:number 17, :resource :uranium, :capacity 1, :yield 2}
+      ;[p1 p2] (state :players)]
+  ;(pprint (-> state
+            ;(update-player p1 add-power-plant plant1)
+            ;(update-player p1 add-resources plant1 :coal 5)
+            ;(update-player p2 add-power-plant plant2)
+            ;(update-player p2 add-city :norfolk)
+            ;(update-player p1 update-money (+ 10)))))
 
 (defn player-order
   "First player is player with most cities in network. If two or more players
@@ -131,7 +162,7 @@
 
 (defn phase-1
   [state]
-  (update-in state :players player-order))
+  (update-in state [:players] player-order))
 
 ;; PHASE 2
 
@@ -199,8 +230,8 @@
         (if-let [auction (do-auction state player (rest round-players))]
           (let [[power-plant purchaser price] auction]
             (recur (-> state
-                     (update-in :power-plants replace-power-plant power-plant)
-                     (update-in :players update-money purchaser (- price)))
+                     (update-in [:power-plants] replace-power-plant power-plant)
+                     (update-in [:players (player-pos state purchaser)] update-money (- price)))
                    (remove #(= purchaser %) round-players)
                    (conj auctions auction)))
           (recur state (rest round-players) auctions))
@@ -213,7 +244,7 @@
     ;; numbered power plant from the market, placing it back in the box, and
     ;; replace it by drawing a power plant from the draw stack
     (if (empty? auctions)
-      (update-in state :power-plants replace-power-plant
+      (update-in state [:power-plants] replace-power-plant
                  (-> state :power-plants :market first))
       state)))
 
