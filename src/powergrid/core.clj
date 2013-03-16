@@ -26,15 +26,21 @@
      :future future-market
      :deck deck}))
 
+(defn init-players
+  [num-players]
+  (for [i (range 1 (inc num-players))]
+    {:id i
+     :money 50}))
+
 (defn init-state
   [num-players]
   {:phase 1
    :round 1
    :resources {}
    :power-plants (init-power-plants)
-   :players []})
+   :players (init-players num-players)})
 
-;(pprint (:power-plants (init-state 2)))
+(comment (pprint (init-state 4)))
 
 (defn prompt-player
   [player prompt & {:keys [choices passable? formatter validator]}]
