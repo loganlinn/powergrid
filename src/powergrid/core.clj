@@ -231,7 +231,7 @@
           (let [[power-plant purchaser price] auction]
             (recur (-> state
                      (update-in [:power-plants] replace-power-plant power-plant)
-                     (update-in [:players (player-pos state purchaser)] update-money (- price)))
+                     (update-player purchaser update-money (- price)))
                    (remove #(= purchaser %) round-players)
                    (conj auctions auction)))
           (recur state (rest round-players) auctions))
