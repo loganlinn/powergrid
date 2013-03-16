@@ -11,17 +11,18 @@
 
 (defn init-resources
   []
-  {:market (concat
-             (for [cost (range 1 9)]
-               {:cost cost
-                :coal 3
-                :oil (if (>= cost 3) 3 0)
-                :garbage (if (>= cost 7) 3 0)
-                :uranium 0})
-             [{:cost 10 :uranium 0}
-              {:cost 12 :uranium 0}
-              {:cost 14 :uranium 1}
-              {:cost 16 :uranium 1}])
+  {:market {1 {:coal 3 :oil 0 :garbage 0 :uranium 0}
+            2 {:coal 3 :oil 0 :garbage 0 :uranium 0}
+            3 {:coal 3 :oil 3 :garbage 0 :uranium 0}
+            4 {:coal 3 :oil 3 :garbage 0 :uranium 0}
+            5 {:coal 3 :oil 3 :garbage 0 :uranium 0}
+            6 {:coal 3 :oil 3 :garbage 0 :uranium 0}
+            7 {:coal 3 :oil 3 :garbage 3 :uranium 0}
+            8 {:coal 3 :oil 3 :garbage 3 :uranium 0}
+            10 {:uranium 0}
+            12 {:uranium 0}
+            14 {:uranium 1}
+            16 {:uranium 1}}
    :supply {:coal 0
             :oil 6
             :garbage 16
@@ -62,6 +63,27 @@
 (defn prompt-player
   [player prompt & {:keys [choices passable? formatter validator]}]
   )
+
+(defn players
+  [state]
+  (get state :players))
+
+(defn resource-market
+  [state]
+  (get-in state [:resources :market]))
+
+(defn set-resource-market
+  [state resource-market]
+  (assoc-in state [:resources :market] resource-market))
+
+(defn resource-supply
+  [state]
+  (get-in state [:resources :supply]))
+
+(defn resource-available
+  "Returns the number of units of resources currently available (regardless of price)"
+  [resources resource]
+  (reduce #(+ %1 (get %2 resource 0)) 0 (vals resources)))
 
 (defn accepts-resource?
   "Returns true if the power-plant accepts the resource, otherwise false"
@@ -121,6 +143,12 @@
   [player city]
   (contains? (:cities player) city))
 
+(defn can-buy-resource?
+  "Returns true if player can buy resource type, otherwise false. User must own
+  power plant that accepts the resource"
+  [player resource]
+  (some #(accepts-resource? % resource) (power-plants player)))
+
 (defn max-power-plant
   "Returns the highest power-plant number the player owns"
   [player]
@@ -130,17 +158,6 @@
 (defn update-money
   [player amt]
   (assoc player :money (+ (:money player 0) amt)))
-
-;(let [state (init-state 2)
-      ;plant1 {:number 36, :resource :coal, :capacity 3, :yield 7}
-      ;plant2 {:number 17, :resource :uranium, :capacity 1, :yield 2}
-      ;[p1 p2] (state :players)]
-  ;(pprint (-> state
-            ;(update-player p1 add-power-plant plant1)
-            ;(update-player p1 add-resources plant1 :coal 5)
-            ;(update-player p2 add-power-plant plant2)
-            ;(update-player p2 add-city :norfolk)
-            ;(update-player p1 update-money (+ 10)))))
 
 (defn player-order
   "First player is player with most cities in network. If two or more players
@@ -223,7 +240,7 @@
   [state]
   (second
     (loop [state state
-           round-players (:players state) ;; players active in round's auctions
+           round-players (players state) ;; players active in round's auctions
            auctions []]
       (if-let [player (first round-players)]
         (if-let [auction (do-auction state player (rest round-players))]
@@ -247,7 +264,66 @@
                  (-> state :power-plants :market first))
       state)))
 
+;; PHASE 3
+
+(defn consume-resource
+  "Returns [updated-resources total-cost amount-purchased]. Consumes the first
+  available units of resource, computes cost"
+  [resources resource amount]
+  (loop [resources resources
+         [price & prices] (keys resources)
+         amount amount
+         total 0]
+    (if (and price (> amount 0))
+      (if-let [stock (get-in resources [price resource])]
+        (let [x (min stock amount)]
+          (recur (update-in resources [price resource] - x)
+                 prices
+                 (- amount x)
+                 (+ total (* price x)))))
+      [resources total amount])))
+
+(defn get-resource-purchase-input
+  "Returns map of users resource purchases. Maps resource to quantity.
+  Handles validation that resources can be bought by user"
+  [state player]
+  ;; TODO Prompt user for purchase requests
+  ;; TODO Validate resources exist
+  ;; TODO Validate user has resource capacity
+  )
+
+(defn purchase-resources
+  "Returns update state after processing player's purchases"
+  [state player purchases]
+  (reduce
+    (fn [state [resource amount]]
+      (let [[resources cost] (consume-resource (resource-market state) resource amount)]
+        (-> state
+          (set-resource-market resources)
+          (update-player player update-money (- cost)))))
+    state
+    purchases))
+
 (defn phase-3
   [state]
-  (let [round-players (reverse (:players state))]
-    ))
+  (reduce
+    (fn [state player]
+      (purchase-resources
+        state
+        player
+        (get-resource-purchase-input state player)))
+    state
+    (reverse (players state))))
+
+;(let [state (init-state 2)
+      ;plant1 {:number 36, :resource :coal, :capacity 3, :yield 7}
+      ;plant2 {:number 17, :resource :uranium, :capacity 1, :yield 2}
+      ;[p1 p2] (state players)
+      ;state (-> state
+              ;(update-player p1 add-power-plant plant1)
+              ;(update-player p1 add-resources plant1 :coal 5)
+              ;(update-player p2 add-power-plant plant2)
+              ;(update-player p2 add-city :norfolk)
+              ;(update-player p1 update-money (+ 10)))]
+  ;)
+
