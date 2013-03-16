@@ -44,13 +44,12 @@
      :future future-market
      :deck deck}))
 
+(defrecord Player [id money cities power-plants])
+
 (defn init-players
   [num-players]
   (vec (for [i (range 1 (inc num-players))]
-         {:id i
-          :money 50
-          :cities #{}
-          :power-plants {}})))
+         (Player. i 50 #{} {}))))
 
 (defn init-state
   [num-players]
@@ -80,7 +79,7 @@
   [{:keys [players]} {pid :id}]
   (loop [[player & others] players i 0]
     (when player
-      (if (= (player :id) pid)
+      (if (= (:id player) pid)
         i
         (recur others (inc i))))))
 
@@ -107,7 +106,7 @@
 (defn add-resources
   [player power-plant resource amount]
   {:pre [(accepts-resource? power-plant resource)
-         (contains? (player :power-plants) power-plant)]}
+         (contains? (:power-plants player) power-plant)]}
   (update-in player
              [:power-plants power-plant resource]
              (fnil #(+ % amount) 0)))
