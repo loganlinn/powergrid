@@ -49,9 +49,9 @@
   (apply max (map :number (:power-plants player))))
 
 (defn update-money
-  [players player-id amt]
+  [players player amt]
   (map
-    #(if (= (:id %) player-id)
+    #(if (= (:id %) (:id player))
        (assoc % :money (+ (:money % 0) amt))
        %)
     players))
@@ -144,7 +144,7 @@
           (let [[power-plant purchaser price] auction]
             (recur (-> state
                      (update-in :power-plants replace-power-plant power-plant)
-                     (update-in :players update-money (:id purchaser) (- price)))
+                     (update-in :players update-money purchaser (- price)))
                    (remove #(= purchaser %) round-players)
                    (conj auctions auction)))
           (recur state (rest round-players) auctions))
