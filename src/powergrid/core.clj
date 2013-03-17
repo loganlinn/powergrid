@@ -88,8 +88,8 @@
 (defn accepts-resource?
   "Returns true if the power-plant accepts the resource, otherwise false"
   [{power-plant-resource :resource} resource]
-  (if (coll? power-plant-resource)
-    (boolean (some #(= resource %) power-plant-resource))
+  (if (set? power-plant-resource)
+    (contains? power-plant-resource resource)
     (condp = power-plant-resource
       :ecological false
       :fusion     false
