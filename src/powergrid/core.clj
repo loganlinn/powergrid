@@ -149,6 +149,49 @@
   [player resource]
   (some #(accepts-resource? % resource) (power-plants player)))
 
+(defn resource-capacities
+  [player]
+  (reduce
+    (fn [m [power-plant utilization]]
+      (let [avail-cap (- (* 2 (:capacity power-plant))
+                         (apply + (vals utilization)))]
+       (update-in m [(:resource power-plant)]
+                 (fnil #(+ avail-cap %) 0))))
+    {}
+    (:power-plants player)))
+
+(defn has-capacity?
+  "Returns true if the player has the power-plant capacity to fit resource
+  amount, otherwise false."
+  ([capacities resource amount]
+   (>= 0
+       (reduce
+         (fn [amt [res cap]]
+           (if (or (= res resource)
+                   (and (set? res) (res resource)))
+             (- amt cap) amt))
+         amount
+         capacities)))
+  ([capacities resources]
+   (let [capacities (reduce (fn [c [r n]] (assoc c r (- (get c r 0) n)))
+                            capacities resources)
+         ;; Handle hybrids
+         capacities (reduce
+                      (fn [c [s cap]]
+                        (let [[c* cap*]
+                              (reduce
+                                (fn [[c cap] r]
+                                  (let [x (get c r)]
+                                    (if (and (neg? x) (> cap x))
+                                      [(assoc c r 0) (+ cap x)]
+                                      [c cap])))
+                                [c cap]
+                                s)]
+                          (assoc c* s cap*)))
+                      capacities
+                      (filter (comp set? key) capacities))]
+     (not-any? neg? (vals capacities)))))
+
 (defn max-power-plant
   "Returns the highest power-plant number the player owns"
   [player]
