@@ -250,48 +250,46 @@
     players))
 
 (defn handle-step-3
-  "Returns state after handling step-3 card"
+  "Returns state after handling step-3. Assumes step-3 was just drawn from
+  power-plant deck."
   [state]
   ;; TODO Update state, based on current phase for step-3 card
   )
 
-(defn refresh-power-plants
-  "Returns power-plants after dealing (if needed) and re-ordering"
-  [state choice]
-  (let [{:keys [market future deck]} (:power-plants state)
-        ;; TODO Handle 6 card market in step 3
-        num-missing (- 4 (count market))
-        draw (take num-missing deck)]
-    (if (some #(= :step-3 %) draw)
-      (handle-step-3 state)
-      (let [all (concat draw market future)
-            deck (drop num-missing deck)
-            [market future] (split-at 4 all)]
-        (assoc state :power-plants
-               {:market market
-                :future future
-                :deck deck})))))
-
 (defn draw-power-plant
+  "Returns state after moving card from power-plant deck to market"
   [state]
-  )
+  (let [[draw & deck] (get-in state [:power-plants :deck])]
+    (if (= draw :step-3)
+      (-> state
+        (assoc-in [:power-plants :deck] deck)
+        (handle-step-3))
+      (-> state
+        (assoc-in [:power-plants :deck] deck)
+        (update-in [:power-plants :market] conj draw)))))
 
 (defn power-plant-order
+  "Returns state after ordering the power-plants"
   [state]
-  )
+  (let [{:keys [market future]} (:power-plants state)
+        ;; TODO handle :step-3 being in the future market
+        ordered (sort-by :number (concat market future))
+        split-ind (if (= (:step state) 3) 6 4)
+        [market future] (split-at split-ind ordered)]
+    (-> state
+      (assoc-in [:power-plants :market] market)
+      (assoc-in [:power-plants :future] future))))
 
 (defn take-power-plant
-  [state power-plant])
+  "Returns state after removing power-plant from the current power-plant market"
+  [state power-plant]
+  (update-in state [:power-plants :market] (partial remove #(= % power-plant))))
 
-(defn replace-power-plant
-  "Removes choice from current power-plant market and re-orders as normal"
-  [state choice]
-  (refresh-power-plants (update-in state [:power-plants :market] remove #(= % choice))))
-
-(defn replace-lowest-power-plant
-  "Replaces lowest power-plant in market and re-orders as normal"
+(defn drop-lowest-power-plant
+  "Removes lowest power-plant from market. Assumes power-plant market is in
+  order. Note, no replacement is drawn."
   [state]
-  (refresh-power-plants (update-in state [:power-plants :market] rest)))
+  (update-in state [:power-plants :market] rest))
 
 (defn init-turns
   [num-players reverse-order?]
@@ -322,7 +320,10 @@
 
 (defmethod prep-step 2
   [state]
-  (update-in state [:power-plant] replace-lowest-power-plant))
+  (-> state
+    (drop-lowest-power-plant)
+    (draw-power-plant)
+    (power-plant-order)))
 
 (defmethod step-complete? 1
   [state]
@@ -399,7 +400,9 @@
         (if-let [auction (do-auction state player (rest round-players))]
           (let [[power-plant purchaser price] auction]
             (recur (-> state
-                     (update-in [:power-plants] replace-power-plant power-plant)
+                     (take-power-plant power-plant)
+                     (draw-power-plant)
+                     (power-plant-order)
                      (update-player purchaser update-money (- price)))
                    (remove #(= purchaser %) round-players)
                    (conj auctions auction)))
@@ -413,7 +416,10 @@
     ;; numbered power plant from the market, placing it back in the box, and
     ;; replace it by drawing a power plant from the draw stack
     (if (empty? auctions)
-      (update-in state [:power-plants] replace-lowest-power-plant)
+      (-> state
+        (drop-lowest-power-plant)
+        (draw-power-plant)
+        (power-plant-order))
       state)))
 
 ;; PHASE 3
