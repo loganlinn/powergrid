@@ -58,25 +58,57 @@
    :round 1
    :resources    (init-resources)
    :power-plants (init-power-plants)
-   :players      (init-players num-players)})
+   :players      (init-players num-players)
+   :turns []})
 
 (defn prompt-player
   [player prompt & {:keys [choices passable? formatter validator]}]
   )
 
+(defn advance-phase
+  [state]
+  (update-in state [:phase] inc))
+
+(defn advance-step
+  [state]
+  (update-in state [:phase] inc))
+
 (defn players
   [state]
   (get state :players))
 
+(defn num-players
+  [state]
+  (count (players state)))
+
+(defn current-player
+  "Returns player who's turn it is, otherwise nil"
+  [state]
+  (if-let [i (first (:turns state))]
+    (nth (players state) i)))
+
+(defn update-turns
+  "Updates state for next player in turn"
+  [state]
+  (update-in state [:turns] rest))
+
+(defn turns-remain?
+  "Returns true if turns still exist in phase, otherwise false."
+  [state]
+  (boolean (seq (:turns state))))
+
 (defn resource-market
+  "Returns current resource market"
   [state]
   (get-in state [:resources :market]))
 
 (defn set-resource-market
+  "Updates current resource market in state"
   [state resource-market]
   (assoc-in state [:resources :market] resource-market))
 
 (defn resource-supply
+  "Returns resource supply"
   [state]
   (get-in state [:resources :supply]))
 
@@ -115,6 +147,11 @@
   [player]
   (count (:cities player)))
 
+(defn max-network-size
+  "Returns the maximum number of cities a single player has built"
+  [state]
+  (apply max (map network-size (players state))))
+
 (defn power-plants
   "Returns the power-plants owned by player"
   [player]
@@ -150,6 +187,8 @@
   (some #(accepts-resource? % resource) (power-plants player)))
 
 (defn resource-capacities
+  "Returns map from resource to amount of remaining capacity for player based on
+  the power plants he owns and current resources"
   [player]
   (reduce
     (fn [m [power-plant utilization]]
@@ -190,11 +229,13 @@
    (apply max (map :number players-plants))))
 
 (defn update-money
+  "Updates player's money by amt"
   [player amt]
   (assoc player :money (+ (:money player 0) amt)))
 
 (defn player-order
-  "First player is player with most cities in network. If two or more players
+  "Returns players after sorting for according to following rules:
+  First player is player with most cities in network. If two or more players
   are tied for the most number of cities, if the first player is the player
   among them with the largest-numbered power plant. Determine remaining player
   order using same rules"
@@ -208,9 +249,101 @@
           (compare p2-cities p1-cities))))
     players))
 
+(defn handle-step-3
+  "Returns state after handling step-3 card"
+  [state]
+  ;; TODO Update state, based on current phase for step-3 card
+  )
+
+(defn refresh-power-plants
+  "Returns power-plants after dealing (if needed) and re-ordering"
+  [state choice]
+  (let [{:keys [market future deck]} (:power-plants state)
+        ;; TODO Handle 6 card market in step 3
+        num-missing (- 4 (count market))
+        draw (take num-missing deck)]
+    (if (some #(= :step-3 %) draw)
+      (handle-step-3 state)
+      (let [all (concat draw market future)
+            deck (drop num-missing deck)
+            [market future] (split-at 4 all)]
+        (assoc state :power-plants
+               {:market market
+                :future future
+                :deck deck})))))
+
+(defn draw-power-plant
+  [state]
+  )
+
+(defn power-plant-order
+  [state]
+  )
+
+(defn take-power-plant
+  [state power-plant])
+
+(defn replace-power-plant
+  "Removes choice from current power-plant market and re-orders as normal"
+  [state choice]
+  (refresh-power-plants (update-in state [:power-plants :market] remove #(= % choice))))
+
+(defn replace-lowest-power-plant
+  "Replaces lowest power-plant in market and re-orders as normal"
+  [state]
+  (refresh-power-plants (update-in state [:power-plants :market] rest)))
+
+(defn init-turns
+  [num-players reverse-order?]
+  (if reverse-order?
+    (reverse (range num-players))
+    (range num-players)))
+
+(defmulti prep-phase :phase)
+(defmulti prep-step :step)
+(defmulti step-complete? :step)
+(defmulti do-phase :phase)
+
+(defmethod prep-phase 1
+  [state]
+  (assoc state :turns []))
+
+(defmethod prep-phase 2
+  [state]
+  (assoc state :turns (init-turns (num-players state) false)))
+
+(defmethod prep-phase 3
+  [state]
+  (assoc state :turns (init-turns (num-players state) true)))
+
+(defmethod prep-phase 4
+  [state]
+  (assoc state :turns (init-turns (num-players state) true)))
+
+(defmethod prep-step 2
+  [state]
+  (update-in state [:power-plant] replace-lowest-power-plant))
+
+(defmethod step-complete? 1
+  [state]
+  (and (= (:phase state) 4)
+       (not (turns-remain? state))
+       (>= (max-network-size state) 7)))
+
+(defn run-game
+  [num-players]
+  (loop [state (init-state num-players)]
+    (let [state* (do-phase state)]
+      ;; TODO end condition
+      (if (step-complete? state*)
+        (recur (prep-step (advance-step state*)))
+        (if (turns-remain? state*)
+          (recur state*)
+          (recur (prep-phase (advance-phase state*))))))))
+
 ;; PHASE 1
 
-(defn phase-1
+(defmethod do-phase 1
   [state]
   (update-in state [:players] player-order))
 
@@ -253,20 +386,6 @@
       (cons choice (negotiate-auction choice
                                       (cons player other-players))))))
 
-(defn replace-power-plant
-  "Returns power-plants after removing choice, drawing new power plant, and
-  reordering according to rules."
-  [power-plants choice]
-  (let [[next-plant & deck] (:deck power-plants)
-        actual-market (remove #(= % choice) (:market power-plants))
-        future-market (:future power-plants)
-        markets (sort-by :number
-                         (concat [next-plant] actual-market future-market))
-        [actual-market future-market] (split-at (/ (count markets) 2) markets)]
-    (merge power-plants
-           {:market actual-market
-            :future future-market
-            :deck deck})))
 
 (defn do-auctions
   "Runs auction for each player. Returns collection auctions, which are tuples
@@ -287,15 +406,14 @@
           (recur state (rest round-players) auctions))
         [state auctions]))))
 
-(defn phase-2
+(defmethod do-phase 2
   [state]
   (let [[state auctions] (do-auctions state)]
     ;; If no power plant is sold in a round, the players remove the lowest
     ;; numbered power plant from the market, placing it back in the box, and
     ;; replace it by drawing a power plant from the draw stack
     (if (empty? auctions)
-      (update-in state [:power-plants] replace-power-plant
-                 (-> state :power-plants :market first))
+      (update-in state [:power-plants] replace-lowest-power-plant)
       state)))
 
 ;; PHASE 3
@@ -323,7 +441,9 @@
   [state player]
   ;; TODO Prompt user for purchase requests
   ;; TODO Validate resources exist
+  ;; (resource-available)
   ;; TODO Validate user has resource capacity
+  ;; (has-capacity?)
   )
 
 (defn purchase-resources
@@ -338,7 +458,7 @@
     state
     purchases))
 
-(defn phase-3
+(defmethod do-phase 3
   [state]
   (reduce
     (fn [state player]
@@ -349,15 +469,22 @@
     state
     (reverse (players state))))
 
-;(let [state (init-state 2)
-      ;plant1 {:number 36, :resource :coal, :capacity 3, :yield 7}
-      ;plant2 {:number 17, :resource :uranium, :capacity 1, :yield 2}
-      ;[p1 p2] (state players)
-      ;state (-> state
-              ;(update-player p1 add-power-plant plant1)
-              ;(update-player p1 add-resources plant1 :coal 5)
-              ;(update-player p2 add-power-plant plant2)
-              ;(update-player p2 add-city :norfolk)
-              ;(update-player p1 update-money (+ 10)))]
-  ;)
+(let [state (init-state 2)
+      plant1 {:number 36, :resource :coal, :capacity 3, :yield 7}
+      plant2 {:number 17, :resource :uranium, :capacity 1, :yield 2}
+      plant3 {:number 12, :resource #{:coal :oil}, :capacity 2, :yield 2}
+      [p1 p2] (players state)
+      state (-> state
+              (update-player p1 add-power-plant plant1)
+              (update-player p1 add-power-plant plant3)
+              (update-player p1 add-resources plant1 :coal 5)
+              (update-player p1 add-resources plant3 :coal 1)
+              ;(update-player p1 add-resources plant3 :oil 1)
+              (update-player p2 add-power-plant plant2)
+              (update-player p2 add-city :norfolk))
+      [p1 p2] (players state)]
+  ;(pprint (get-in state [:power-plants]))
+  (pprint p1)
+  (pprint (resource-capacities p1))
+  )
 
