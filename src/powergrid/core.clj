@@ -9,6 +9,47 @@
    "Building"
    "Bureaucracy"])
 
+(defn num-regions-chosen
+  "Returns the number of regions chosen on map"
+  [num-players]
+  (case (int num-players)
+    (2 3) 3
+    4 4
+    (5 6) 5))
+
+(defn num-randomly-removed-power-plants
+  "Returns the number of randomly removed power plants after preparing the
+  power plant market"
+  [num-players]
+  (case (int num-players)
+    (2 3) 8
+    4 4
+    (5 6) 0))
+
+(defn num-cities-trigger-step-2
+  "Returns the number of connected cities needed to trigger step 2"
+  [num-players]
+  (case (int num-players)
+    2 10
+    (3 4 5) 7
+    6 6))
+
+(defn max-power-plants
+  "Returns the max number of player plants a player can have"
+  [num-players]
+  (case (int num-players)
+    2 4
+    (3 4 5 6) 3))
+
+(defn num-cities-trigger-end
+  "Returns the number of connected cities to trigger game end"
+  [num-players]
+  (case (int num-players)
+    2 21
+    (3 4) 17
+    5 15
+    6 14))
+
 (defn init-resources
   []
   {:market {1 {:coal 3 :oil 0 :garbage 0 :uranium 0}
@@ -29,7 +70,7 @@
             :uranium 10}})
 
 (defn init-power-plants
-  []
+  [num-players]
   (let [actual-market (take 4 power-plant-cards)
         future-market (take 4 (drop 4 power-plant-cards))
         deck (drop 8 power-plant-cards)
@@ -37,6 +78,8 @@
         card-13? #(= (:number %) 13)
         card-13 (filter card-13? deck)
         deck (filter (complement card-13?) deck)
+        ;; drop cards based on num-players
+        deck (drop (num-randomly-removed-power-plants num-players) deck)
         ;; shuffle rest
         deck (shuffle deck)
         ;; place card-13 on top & step-3 on bottom
@@ -46,6 +89,7 @@
      :deck deck}))
 
 (defrecord Player [id money cities power-plants])
+(defrecord Game [id phase step round resources power-plants players turns])
 
 (defn init-players
   [num-players]
@@ -54,24 +98,30 @@
 
 (defn init-state
   [num-players]
-  {:phase 1
-   :round 1
-   :resources    (init-resources)
-   :power-plants (init-power-plants)
-   :players      (init-players num-players)
-   :turns []})
+  (map->Game {:id (str (java.util.UUID/randomUUID))
+              :phase 1
+              :step 1
+              :round 1
+              :resources    (init-resources)
+              :power-plants (init-power-plants num-players)
+              :players      (init-players num-players)
+              :turns []}))
 
 (defn prompt-player
   [player prompt & {:keys [choices passable? formatter validator]}]
   )
 
-(defn advance-phase
+(defn inc-phase
   [state]
   (update-in state [:phase] inc))
 
-(defn advance-step
+(defn inc-step
   [state]
-  (update-in state [:phase] inc))
+  (update-in state [:step] inc))
+
+(defn inc-round
+  [state]
+  (update-in state [:round] inc))
 
 (defn players
   [state]
@@ -249,7 +299,19 @@
           (compare p2-cities p1-cities))))
     players))
 
-(defn handle-step-3
+(defn power-plant-order
+  "Returns state after ordering the power-plants"
+  [{:keys [step power-plants] :as state}]
+  (let [{:keys [market future]} power-plants
+        ;; TODO handle :step-3 being in the future market
+        ordered (sort-by :number (concat market future))
+        split-ind (if (= step 3) 6 4)
+        [market future] (split-at split-ind ordered)]
+    (-> state
+      (assoc-in [:power-plants :market] market)
+      (assoc-in [:power-plants :future] future))))
+
+(defn handle-step-3-card
   "Returns state after handling step-3. Assumes step-3 was just drawn from
   power-plant deck."
   [state]
@@ -257,28 +319,18 @@
   )
 
 (defn draw-power-plant
-  "Returns state after moving card from power-plant deck to market"
+  "Returns state after moving card from power-plant deck to market and
+  re-ordering"
   [state]
   (let [[draw & deck] (get-in state [:power-plants :deck])]
     (if (= draw :step-3)
       (-> state
         (assoc-in [:power-plants :deck] deck)
-        (handle-step-3))
+        (handle-step-3-card))
       (-> state
         (assoc-in [:power-plants :deck] deck)
-        (update-in [:power-plants :market] conj draw)))))
-
-(defn power-plant-order
-  "Returns state after ordering the power-plants"
-  [state]
-  (let [{:keys [market future]} (:power-plants state)
-        ;; TODO handle :step-3 being in the future market
-        ordered (sort-by :number (concat market future))
-        split-ind (if (= (:step state) 3) 6 4)
-        [market future] (split-at split-ind ordered)]
-    (-> state
-      (assoc-in [:power-plants :market] market)
-      (assoc-in [:power-plants :future] future))))
+        (update-in [:power-plants :market] conj draw)
+        power-plant-order))))
 
 (defn take-power-plant
   "Returns state after removing power-plant from the current power-plant market"
@@ -297,50 +349,54 @@
     (reverse (range num-players))
     (range num-players)))
 
+
 (defmulti prep-phase :phase)
+(defmulti post-phase :phase)
 (defmulti prep-step :step)
+(defmulti post-step :step)
 (defmulti step-complete? :step)
 (defmulti do-phase :phase)
 
-(defmethod prep-phase 1
-  [state]
+(defmethod prep-phase :default [state] state)
+(defmethod post-phase :default [state] state)
+(defmethod prep-step :default [state] state)
+(defmethod post-step :default [state] state)
+
+(defmethod prep-phase 1 [state]
   (assoc state :turns []))
 
-(defmethod prep-phase 2
-  [state]
-  (assoc state :turns (init-turns (num-players state) false)))
+(defmethod prep-phase 2 [{:keys [round] :as state}]
+  (let [state (if (= round 1) (update-in state [:players] player-order) state)]
+    (assoc state :turns (init-turns (num-players state) false))))
 
-(defmethod prep-phase 3
-  [state]
+(defmethod prep-phase 3 [state]
   (assoc state :turns (init-turns (num-players state) true)))
 
-(defmethod prep-phase 4
-  [state]
+(defmethod prep-phase 4 [state]
   (assoc state :turns (init-turns (num-players state) true)))
 
-(defmethod prep-step 2
-  [state]
+(defmethod post-phase 5 [state]
+  (inc-round state))
+
+(defmethod prep-step 2 [state]
   (-> state
     (drop-lowest-power-plant)
-    (draw-power-plant)
-    (power-plant-order)))
+    (draw-power-plant)))
 
-(defmethod step-complete? 1
-  [state]
+(defmethod step-complete? 1 [state]
   (and (= (:phase state) 4)
        (not (turns-remain? state))
-       (>= (max-network-size state) 7)))
+       (>= (max-network-size state)
+           (num-cities-trigger-step-2 (num-players state)))))
 
-(defn run-game
-  [num-players]
-  (loop [state (init-state num-players)]
-    (let [state* (do-phase state)]
-      ;; TODO end condition
-      (if (step-complete? state*)
-        (recur (prep-step (advance-step state*)))
-        (if (turns-remain? state*)
-          (recur state*)
-          (recur (prep-phase (advance-phase state*))))))))
+(defn tick
+  [state]
+  ;; TODO end condition
+  (if (step-complete? state)
+    (prep-step (inc-step state))
+    (if (turns-remain? state)
+      state
+      (prep-phase (inc-phase state)))))
 
 ;; PHASE 1
 
@@ -350,77 +406,9 @@
 
 ;; PHASE 2
 
-(defn negotiate-auction
-  "Prompts each bidder for bid until a single bidder remains.
-  Returns tuple of [player price]"
-  ([plant-num bidders bids]
-   (let [[bidder & others] bidders
-         bids? (not (empty? bids))
-         min-bid (if bids? (apply max (vals bids)) plant-num)
-         max-bid (:money bidder)
-         ;; TODO handle min-bid > max-bid
-         bid (prompt-player
-               bidder
-               (str "What would you like to bid for power-plant #" plant-num "? (min-bid: " min-bid ")")
-               :formatter #(Integer/parseInt %)
-               :validator #(and (>= % min-bid) (< % max-bid))
-               :passable? bids?)
-         bids (assoc bids bidder bid)]
-     (if others
-       (negotiate-auction plant-num
-                          (if bid (conj others bidder) others)
-                          bids)
-       (apply max-key val bids))))
-  ([plant-num bidders] (negotiate-auction plant-num bidders {})))
-
-
-(defn do-auction
-  "Returns tuple of [auctioned-power-plant purchasing-user price] if a power
-  plant is purchased as result of auction. Otherwise, returns nil"
-  [state player other-players]
-  (let [choice (prompt-player
-                 player
-                 "Choose power plant for auction"
-                 :passable? (not= 1 (:round state))
-                 :choices (:market (:power-plants state)))]
-    (when choice
-      (cons choice (negotiate-auction choice
-                                      (cons player other-players))))))
-
-
-(defn do-auctions
-  "Runs auction for each player. Returns collection auctions, which are tuples
-  of [power-plant-purchased purchasing-user purchase-amount]"
-  [state]
-  (second
-    (loop [state state
-           round-players (players state) ;; players active in round's auctions
-           auctions []]
-      (if-let [player (first round-players)]
-        (if-let [auction (do-auction state player (rest round-players))]
-          (let [[power-plant purchaser price] auction]
-            (recur (-> state
-                     (take-power-plant power-plant)
-                     (draw-power-plant)
-                     (power-plant-order)
-                     (update-player purchaser update-money (- price)))
-                   (remove #(= purchaser %) round-players)
-                   (conj auctions auction)))
-          (recur state (rest round-players) auctions))
-        [state auctions]))))
-
 (defmethod do-phase 2
   [state]
-  (let [[state auctions] (do-auctions state)]
-    ;; If no power plant is sold in a round, the players remove the lowest
-    ;; numbered power plant from the market, placing it back in the box, and
-    ;; replace it by drawing a power plant from the draw stack
-    (if (empty? auctions)
-      (-> state
-        (drop-lowest-power-plant)
-        (draw-power-plant)
-        (power-plant-order))
-      state)))
+  )
 
 ;; PHASE 3
 
@@ -438,7 +426,7 @@
           (recur (update-in resources [price resource] - x)
                  prices
                  (- amount x)
-                 (+ total (* price x)))))
+                 (int (+ total (* price x))))))
       [resources total amount])))
 
 (defn get-resource-purchase-input
@@ -490,7 +478,7 @@
               (update-player p2 add-city :norfolk))
       [p1 p2] (players state)]
   ;(pprint (get-in state [:power-plants]))
-  (pprint p1)
-  (pprint (resource-capacities p1))
+  ;(pprint p1)
+  ;(pprint (resource-capacities p1))
   )
 
