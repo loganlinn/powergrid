@@ -88,13 +88,16 @@
      :future future-market
      :deck deck}))
 
-(defrecord Player [id money cities power-plants])
+(defrecord Player [id ctx money cities power-plants])
 (defrecord Game [id phase step round resources power-plants players turns])
 
 (defn init-players
   [num-players]
   (vec (for [i (range 1 (inc num-players))]
-         (Player. i 50 #{} {}))))
+         (map->Player {:id i
+                       :money 50
+                       :cities #{}
+                       :power-plants {}}))))
 
 (defn init-state
   [num-players]
