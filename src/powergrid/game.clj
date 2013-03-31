@@ -84,23 +84,25 @@
    :future (take 4 (drop 4 power-plant-cards))
    :deck (init-power-plant-deck (drop 8 power-plant-cards) num-players)})
 
-(defn init-players
-  [num-players]
-  (vec (for [i (range 1 (inc num-players))]
-         (map->Player {:id i
-                       :money 50
-                       :cities #{}
-                       :power-plants {}}))))
+(defn new-player
+  "Returns new player"
+  [id ctx]
+  (map->Player {:id id
+                :ctx ctx
+                :money 50
+                :cities #{}
+                :power-plants {}}))
 
 (defn new-game
-  [num-players]
+  "Returns new Game"
+  [players]
   (map->Game {:id (str (java.util.UUID/randomUUID))
               :phase 1
               :step 1
               :round 1
-              :resources    (init-resources)
-              :power-plants (init-power-plants num-players)
-              :players      (init-players num-players)
+              :resources (init-resources)
+              :power-plants (init-power-plants (count players))
+              :players players
               :turns []}))
 
 (defn inc-phase

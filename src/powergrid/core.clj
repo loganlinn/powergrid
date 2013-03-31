@@ -348,7 +348,7 @@
     state
     (reverse (players state))))
 
-(let [state (new-game 2)
+(let [state (new-game [(new-player 1 nil) (new-player 2 nil)])
       plant1 {:number 36, :resource :coal, :capacity 3, :yield 7}
       plant2 {:number 17, :resource :uranium, :capacity 1, :yield 2}
       plant3 {:number 12, :resource #{:coal :oil}, :capacity 2, :yield 2}
