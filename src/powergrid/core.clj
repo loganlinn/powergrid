@@ -162,10 +162,12 @@
   [{:keys [step power-plants] :as state}]
   (update-in state [:power-plants] update-power-plants state))
 
-(defn take-power-plant
+(defn remove-power-plant
   "Returns state after removing power-plant from the current power-plant market"
-  [state power-plant]
-  (update-in state [:power-plants :market] (partial remove #(= % power-plant))))
+  ([state power-plant market]
+   (update-in state [:power-plants market] (partial remove #(= % power-plant))))
+  ([state power-plant]
+   (remove-power-plant state power-plant :market)))
 
 (defn drop-lowest-power-plant
   "Removes lowest power-plant from market. Assumes power-plant market is in
@@ -234,8 +236,7 @@
 (defn cleanup-step-3-card
   [state]
   (-> state
-    (update-in [:power-plants :future]
-               (partial filter (complement step-3-card?)))
+    (remove-power-plant (step-3-card) :future)
     (drop-lowest-power-plant)))
 
 (defmethod post-phase 2 [{:keys [round step-3-card?] :as state}]
