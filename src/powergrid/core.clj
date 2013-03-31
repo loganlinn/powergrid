@@ -142,6 +142,11 @@
   [players]
   (sort player-order-comparator players))
 
+(defn update-player-order
+  "Returns state after updating player order"
+  [state]
+  (update-in state [:players] player-order))
+
 (defn power-plant-order
   "Returns power-plants after re-ordering"
   [{:keys [market future] :as power-plants} step]
@@ -236,7 +241,7 @@
 (defmethod post-phase 2 [{:keys [round step-3-card?] :as state}]
   (cond-> state
     step-3-card? (cleanup-step-3-card)
-    (= round 1) (update-in state [:players] player-order)))
+    (= round 1) (update-player-order)))
 
 (defmethod prep-phase 3 [state]
   (assoc state :turns (reset-turns (num-players state) true)))
@@ -284,7 +289,7 @@
 
 (defmethod do-phase 1
   [state]
-  (update-in state [:players] player-order))
+  (update-player-order state))
 
 ;; PHASE 2
 
