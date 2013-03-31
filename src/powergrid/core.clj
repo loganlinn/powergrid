@@ -345,22 +345,15 @@
     (update-in [:power-plants :future] conj power-plant)
     (power-plant-order)))
 
-(defmulti handle-step-3-card
-  "Returns state after handling the Step 3 card based on current phase"
-  (fn [state step-3-card] (:phase state)))
-
-(defmethod handle-step-3-card 2
-  [state step-3-card]
-  (-> state
-    (add-to-power-plant-market step-3-card)
-    (update-in [:power-plants :deck] shuffle)
-    (assoc :step-3-card? true)))
-
-(defmethod handle-step-3-card 3
-  [state step-3-card]
-  (-> state
-    (update-in [:power-plants :deck] shuffle)
-    (assoc :step-3-card? true)))
+(defn handle-step-3-card
+  "Returns state after handling the Step 3 card"
+  [{:keys [phase] :as state} step-3-card]
+  (let [state (-> state
+                (update-in [:power-plants :deck] shuffle)
+                (assoc :step-3-card? true))]
+    (if (= phase 2)
+      (add-to-power-plant-market step-3-card)
+      (power-plant-order (drop-lowest-power-plant state)))))
 
 (defn draw-power-plant
   "Returns state after moving card from power-plant deck to market and
@@ -402,7 +395,7 @@
 (defmethod prep-phase 2 [state]
   (assoc state :turns (init-turns (num-players state) false)))
 
-(defn cleanup-step-3-power-plants
+(defn cleanup-step-3-card
   [state]
   (-> state
     (update-in [:power-plants :future]
@@ -411,7 +404,7 @@
 
 (defmethod post-phase 2 [{:keys [round step-3-card?] :as state}]
   (cond-> state
-    step-3-card? (cleanup-step-3-power-plants)
+    step-3-card? (cleanup-step-3-card)
     (= round 1) (update-in state [:players] player-order)))
 
 (defmethod prep-phase 3 [state]
