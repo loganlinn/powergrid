@@ -319,6 +319,7 @@
   power-plant deck."
   [state]
   ;; TODO Update state, based on current phase for step-3 card
+  (assoc state :step-3? true)
   )
 
 (defn draw-power-plant
@@ -357,6 +358,7 @@
 (defmulti post-phase :phase)
 (defmulti prep-step :step)
 (defmulti post-step :step)
+(defmulti phase-complete? :phase)
 (defmulti step-complete? :step)
 (defmulti do-phase :phase)
 
@@ -364,13 +366,18 @@
 (defmethod post-phase :default [state] state)
 (defmethod prep-step :default [state] state)
 (defmethod post-step :default [state] state)
+(defmethod phase-complete? :default [state] (turns-remain? state))
+(defmethod step-complete? :default [state] false)
 
 (defmethod prep-phase 1 [state]
   (assoc state :turns []))
 
 (defmethod prep-phase 2 [{:keys [round] :as state}]
-  (let [state (if (= round 1) (update-in state [:players] player-order) state)]
-    (assoc state :turns (init-turns (num-players state) false))))
+  (assoc state :turns (init-turns (num-players state) false)))
+
+(defmethod post-phase 2 [{:keys [round] :as state}]
+  (when (= round 1)
+    (update-in state [:players] player-order )))
 
 (defmethod prep-phase 3 [state]
   (assoc state :turns (init-turns (num-players state) true)))
@@ -386,20 +393,31 @@
     (drop-lowest-power-plant)
     (draw-power-plant)))
 
+(defmethod prep-step 3 [state]
+  (dissoc state :step-3?))
+
 (defmethod step-complete? 1 [state]
   (and (= (:phase state) 4)
        (not (turns-remain? state))
        (>= (max-network-size state)
            (num-cities-trigger-step-2 (num-players state)))))
 
+(defmethod step-complete? 2 [state]
+  (:step-3? state false))
+
+(defn game-over?
+  "Returns true if conditions have been to end the game, otherwise false"
+  [state]
+  (>= (max-network-size state)
+      (num-cities-trigger-end (num-players state))))
+
 (defn tick
   [state]
-  ;; TODO end condition
   (if (step-complete? state)
-    (prep-step (inc-step state))
-    (if (turns-remain? state)
-      state
-      (prep-phase (inc-phase state)))))
+    (recur (-> state post-step inc-step prep-step))
+    (if (phase-complete? state)
+      (recur (-> state post-phase inc-phase prep-phase))
+      (do-phase state))))
 
 ;; PHASE 1
 
