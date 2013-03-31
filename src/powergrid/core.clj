@@ -1,6 +1,21 @@
 (ns powergrid.core
   (:require [powergrid.power-plants :refer :all]))
+
+;; TODO Remove
 (use 'clojure.pprint)
+
+;; TODO move to utils
+(defn separate
+  [f s]
+  "Returns a vector: [ (filter f s) (filter (complement f) s) ]"
+  [(filter f s) (filter (complement f) s)])
+
+;; DATA STRUCTURES
+
+(defrecord Player [id ctx money cities power-plants])
+(defrecord Game [id phase step round resources power-plants players turns])
+
+;; GENERAL GAME RULES
 
 (def phases
   ["Determine Player Order"
@@ -50,6 +65,11 @@
     5 15
     6 14))
 
+(defn step-3-card [] :step-3)
+(defn step-3-card? [card] (= :step-3 card))
+
+;; GAME INITIALIZATION
+
 (defn init-resources
   []
   {:market {1 {:coal 3 :oil 0 :garbage 0 :uranium 0}
@@ -69,27 +89,20 @@
             :garbage 16
             :uranium 10}})
 
+(defn init-power-plant-deck
+  [power-plants num-players]
+  (let [[card-13 deck] (separate #(= (power-plant-number %) 13) power-plants)
+        recombine #(concat card-13 % [(step-3-card)])]
+    (-> deck
+      (shuffle)
+      (drop (num-randomly-removed-power-plants num-players))
+      (recombine))))
+
 (defn init-power-plants
   [num-players]
-  (let [actual-market (take 4 power-plant-cards)
-        future-market (take 4 (drop 4 power-plant-cards))
-        deck (drop 8 power-plant-cards)
-        ;; remove 13 card
-        card-13? #(= (:number %) 13)
-        card-13 (filter card-13? deck)
-        deck (filter (complement card-13?) deck)
-        ;; drop cards based on num-players
-        deck (drop (num-randomly-removed-power-plants num-players) deck)
-        ;; shuffle rest
-        deck (shuffle deck)
-        ;; place card-13 on top & step-3 on bottom
-        deck (concat card-13 deck [:step-3])]
-    {:market actual-market
-     :future future-market
-     :deck deck}))
-
-(defrecord Player [id ctx money cities power-plants])
-(defrecord Game [id phase step round resources power-plants players turns])
+  {:market (take 4 power-plant-cards)
+   :future (take 4 (drop 4 power-plant-cards))
+   :deck (init-power-plant-deck (drop 8 power-plant-cards) num-players)})
 
 (defn init-players
   [num-players]
@@ -109,10 +122,6 @@
               :power-plants (init-power-plants num-players)
               :players      (init-players num-players)
               :turns []}))
-
-(defn prompt-player
-  [player prompt & {:keys [choices passable? formatter validator]}]
-  )
 
 (defn inc-phase
   [state]
@@ -165,6 +174,13 @@
   [state]
   (get-in state [:resources :supply]))
 
+(declare network-size)
+
+(defn max-network-size
+  "Returns the maximum number of cities a single player has built"
+  [state]
+  (apply max (map network-size (players state))))
+
 (defn resource-available
   "Returns the number of units of resources currently available (regardless of price)"
   [resources resource]
@@ -200,15 +216,15 @@
   [player]
   (count (:cities player)))
 
-(defn max-network-size
-  "Returns the maximum number of cities a single player has built"
-  [state]
-  (apply max (map network-size (players state))))
-
 (defn power-plants
   "Returns the power-plants owned by player"
   [player]
   (keys (:power-plants player)))
+
+(defn update-money
+  "Updates player's money by amt"
+  [player amt]
+  (assoc player :money (+ (:money player 0) amt)))
 
 (defn add-power-plant
   "Returns updated player after adding power-plant"
@@ -281,11 +297,6 @@
   (when-let [players-plants (power-plants player)]
    (apply max (map :number players-plants))))
 
-(defn update-money
-  "Updates player's money by amt"
-  [player amt]
-  (assoc player :money (+ (:money player 0) amt)))
-
 (defn player-order
   "Returns players after sorting for according to following rules:
   First player is player with most cities in network. If two or more players
@@ -306,35 +317,14 @@
   "Returns state after ordering the power-plants"
   [{:keys [step power-plants] :as state}]
   (let [{:keys [market future]} power-plants
-        ;; TODO handle :step-3 being in the future market
-        ordered (sort-by :number (concat market future))
+        step-3-card (filter step-3-card? future)
+        combined (filter (complement step-3-card?) (concat market future))
+        ordered (sort-by :number combined)
         split-ind (if (= step 3) 6 4)
         [market future] (split-at split-ind ordered)]
     (-> state
       (assoc-in [:power-plants :market] market)
       (assoc-in [:power-plants :future] future))))
-
-(defn handle-step-3-card
-  "Returns state after handling step-3. Assumes step-3 was just drawn from
-  power-plant deck."
-  [state]
-  ;; TODO Update state, based on current phase for step-3 card
-  (assoc state :step-3? true)
-  )
-
-(defn draw-power-plant
-  "Returns state after moving card from power-plant deck to market and
-  re-ordering"
-  [state]
-  (let [[draw & deck] (get-in state [:power-plants :deck])]
-    (if (= draw :step-3)
-      (-> state
-        (assoc-in [:power-plants :deck] deck)
-        (handle-step-3-card))
-      (-> state
-        (assoc-in [:power-plants :deck] deck)
-        (update-in [:power-plants :market] conj draw)
-        power-plant-order))))
 
 (defn take-power-plant
   "Returns state after removing power-plant from the current power-plant market"
@@ -347,12 +337,49 @@
   [state]
   (update-in state [:power-plants :market] rest))
 
+(defn add-to-power-plant-market
+  "Returns state after adding power-plant to the power plant market and
+  re-ordering"
+  [state power-plant]
+  (-> state
+    (update-in [:power-plants :future] conj power-plant)
+    (power-plant-order)))
+
+(defmulti handle-step-3-card
+  "Returns state after handling the Step 3 card based on current phase"
+  (fn [state step-3-card] (:phase state)))
+
+(defmethod handle-step-3-card 2
+  [state step-3-card]
+  (-> state
+    (add-to-power-plant-market step-3-card)
+    (update-in [:power-plants :deck] shuffle)
+    (assoc :step-3-card? true)))
+
+(defmethod handle-step-3-card 3
+  [state step-3-card]
+  (-> state
+    (update-in [:power-plants :deck] shuffle)
+    (assoc :step-3-card? true)))
+
+(defn draw-power-plant
+  "Returns state after moving card from power-plant deck to market and
+  re-ordering"
+  [state]
+  (let [[draw & deck] (get-in state [:power-plants :deck])]
+    (if (step-3-card? draw)
+      (-> state
+        (assoc-in [:power-plants :deck] deck)
+        (handle-step-3-card draw))
+      (-> state
+        (assoc-in [:power-plants :deck] deck)
+        (add-to-power-plant-market draw)))))
+
 (defn init-turns
   [num-players reverse-order?]
   (if reverse-order?
     (reverse (range num-players))
     (range num-players)))
-
 
 (defmulti prep-phase :phase)
 (defmulti post-phase :phase)
@@ -375,9 +402,17 @@
 (defmethod prep-phase 2 [state]
   (assoc state :turns (init-turns (num-players state) false)))
 
-(defmethod post-phase 2 [{:keys [round] :as state}]
-  (when (= round 1)
-    (update-in state [:players] player-order )))
+(defn cleanup-step-3-power-plants
+  [state]
+  (-> state
+    (update-in [:power-plants :future]
+               (partial filter (complement step-3-card?)))
+    (drop-lowest-power-plant)))
+
+(defmethod post-phase 2 [{:keys [round step-3-card?] :as state}]
+  (cond-> state
+    step-3-card? (cleanup-step-3-power-plants)
+    (= round 1) (update-in state [:players] player-order)))
 
 (defmethod prep-phase 3 [state]
   (assoc state :turns (init-turns (num-players state) true)))
@@ -394,7 +429,7 @@
     (draw-power-plant)))
 
 (defmethod prep-step 3 [state]
-  (dissoc state :step-3?))
+  (dissoc state :step-3-card?))
 
 (defmethod step-complete? 1 [state]
   (and (= (:phase state) 4)
@@ -403,7 +438,7 @@
            (num-cities-trigger-step-2 (num-players state)))))
 
 (defmethod step-complete? 2 [state]
-  (:step-3? state false))
+  (:step-3-card? state false))
 
 (defn game-over?
   "Returns true if conditions have been to end the game, otherwise false"

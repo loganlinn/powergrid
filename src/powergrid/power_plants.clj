@@ -45,3 +45,5 @@
    (PowerPlant. 44 :ecological 0 5)
    (PowerPlant. 46 #{:coal :oil} 3 7)
    (PowerPlant. 50 :fusion 0 6)])
+
+(defn power-plant-number [power-plant] (:number power-plant))
