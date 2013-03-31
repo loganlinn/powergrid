@@ -124,21 +124,23 @@
                      (filter (comp set? key) capacities))]
     (not-any? neg? (vals capacities))))
 
-(defn player-order
-  "Returns players after sorting for according to following rules:
+(defn player-order-comparator
+  "Comparator for the following rules:
   First player is player with most cities in network. If two or more players
   are tied for the most number of cities, if the first player is the player
   among them with the largest-numbered power plant. Determine remaining player
   order using same rules"
+  [p1 p2]
+  (let [p1-cities (network-size p1)
+        p2-cities (network-size p2)]
+    (if (= p1-cities p2-cities)
+      (compare (max-power-plant p2) (max-power-plant p1))
+      (compare p2-cities p1-cities))))
+
+(defn player-order
+  "Returns sorted players using player-order-comparator"
   [players]
-  (sort
-    (fn [p1 p2]
-      (let [p1-cities (network-size p1)
-            p2-cities (network-size p2)]
-        (if (= p1-cities p2-cities)
-          (compare (max-power-plant p2) (max-power-plant p1))
-          (compare p2-cities p1-cities))))
-    players))
+  (sort player-order-comparator players))
 
 (defn update-power-plants
   "Returns power-plants after re-ordering"
