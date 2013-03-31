@@ -259,7 +259,9 @@
     (draw-power-plant)))
 
 (defmethod prep-step 3 [state]
-  (dissoc state :step-3-card?))
+  (-> state
+    (dissoc :step-3-card?)
+    (update-power-plant-order)))
 
 (defmethod step-complete? 1 [state]
   (and (= (:phase state) 4)
