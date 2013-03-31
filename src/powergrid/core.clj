@@ -413,11 +413,13 @@
 
 (defn tick
   [state]
-  (if (step-complete? state)
-    (recur (-> state post-step inc-step prep-step))
-    (if (phase-complete? state)
-      (recur (-> state post-phase inc-phase prep-phase))
-      (do-phase state))))
+  (if (game-over? state)
+    state
+    (if (step-complete? state)
+      (recur (-> state post-step inc-step prep-step))
+      (if (phase-complete? state)
+        (recur (-> state post-phase inc-phase prep-phase))
+        (do-phase state)))))
 
 ;; PHASE 1
 
