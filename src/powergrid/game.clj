@@ -73,7 +73,7 @@
   [power-plants num-players]
   (let [[card-13 deck] (separate #(= (power-plant-number %) 13) power-plants)
         recombine #(concat card-13 % [(step-3-card)])]
-    (-> deck
+    (->> deck
       (shuffle)
       (drop (num-randomly-removed-power-plants num-players))
       (recombine))))
