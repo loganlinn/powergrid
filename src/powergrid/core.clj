@@ -372,7 +372,7 @@
 (defmethod prep-phase 1 [state]
   (assoc state :turns []))
 
-(defmethod prep-phase 2 [{:keys [round] :as state}]
+(defmethod prep-phase 2 [state]
   (assoc state :turns (init-turns (num-players state) false)))
 
 (defmethod post-phase 2 [{:keys [round] :as state}]
