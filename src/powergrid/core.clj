@@ -142,7 +142,7 @@
   [players]
   (sort player-order-comparator players))
 
-(defn update-power-plants
+(defn power-plant-order
   "Returns power-plants after re-ordering"
   [{:keys [market future] :as power-plants} step]
   (let [[step-3-card combined] (separate (complement step-3-card?) (concat market future))
@@ -152,7 +152,7 @@
            :market market
            :future (concat future step-3-card))))
 
-(defn power-plant-order
+(defn update-power-plant-order
   "Returns state after ordering the power-plants"
   [{:keys [step power-plants] :as state}]
   (update-in state [:power-plants] update-power-plants state))
@@ -174,7 +174,7 @@
   [state power-plant]
   (-> state
     (update-in [:power-plants :future] conj power-plant)
-    (power-plant-order)))
+    (update-power-plant-order)))
 
 (defn handle-step-3-card
   "Returns state after handling the Step 3 card"
@@ -184,7 +184,7 @@
                 (assoc :step-3-card? true))]
     (if (= phase 2)
       (add-to-power-plant-market step-3-card)
-      (power-plant-order (drop-lowest-power-plant state)))))
+      (update-power-plant-order (drop-lowest-power-plant state)))))
 
 (defn draw-power-plant
   "Returns state after moving card from power-plant deck to market and
