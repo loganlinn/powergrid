@@ -23,20 +23,10 @@
       resource    true
       false)))
 
-(defn player-pos
-  "Returns the position (0-index) of player in player order"
-  [state {pid :id}]
-  (loop [[player & others] (players state)
-         i 0]
-    (when player
-      (if (= (:id player) pid)
-        i
-        (recur others (inc i))))))
-
 (defn update-player
   "Returns state after updating player with f"
-  [state player f & args]
-  (apply update-in state [:players (player-pos state player)] f args))
+  [state player-key f & args]
+  (apply update-in state [:players player-key] f args))
 
 (defn network-size
   "Returns the number of cities in the player's network"
@@ -124,23 +114,17 @@
                      (filter (comp set? key) capacities))]
     (not-any? neg? (vals capacities))))
 
-(defn player-order-comparator
-  "Comparator for the following rules:
+(defn player-order
+  "Returns sorted players map using the following rules:
   First player is player with most cities in network. If two or more players
   are tied for the most number of cities, if the first player is the player
   among them with the largest-numbered power plant. Determine remaining player
   order using same rules"
-  [p1 p2]
-  (let [p1-cities (network-size p1)
-        p2-cities (network-size p2)]
-    (if (= p1-cities p2-cities)
-      (compare (max-power-plant p2) (max-power-plant p1))
-      (compare p2-cities p1-cities))))
-
-(defn player-order
-  "Returns sorted players using player-order-comparator"
   [players]
-  (sort player-order-comparator players))
+  (let [order-cols (juxt network-size max-power-plant)]
+    (into {} (sort #(compare (order-cols (val %2))
+                             (order-cols (val %1)))
+                   players))))
 
 (defn update-player-order
   "Returns state after updating player order"
@@ -160,7 +144,7 @@
 (defn update-power-plant-order
   "Returns state after ordering the power-plants"
   [{:keys [step power-plants] :as state}]
-  (update-in state [:power-plants] update-power-plants state))
+  (update-in state [:power-plants] power-plant-order state))
 
 (defn remove-power-plant
   "Returns state after removing power-plant from the current power-plant market"
@@ -233,7 +217,7 @@
 (defmethod prep-phase 2 [state]
   (assoc state :turns (reset-turns (num-players state) false)))
 
-(defn cleanup-step-3-card
+(defn post-phase-2-step-3-card
   [state]
   (-> state
     (remove-power-plant (step-3-card) :future)
@@ -241,7 +225,7 @@
 
 (defmethod post-phase 2 [{:keys [round step-3-card?] :as state}]
   (cond-> state
-    step-3-card? (cleanup-step-3-card)
+    step-3-card? (post-phase-2-step-3-card)
     (= round 1) (update-player-order)))
 
 (defmethod prep-phase 3 [state]

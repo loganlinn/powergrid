@@ -1,39 +1,28 @@
 (ns powergrid.core-test
-  (:use midje.sweet
-        powergrid.core))
+  (:require [midje.sweet :refer :all]
+            [powergrid.core :refer :all]
+            [powergrid.game :refer [player-key players-map]]))
 
 (fact player-order
-  (player-order [...Anna... ...Angelika... ...Dale... ...Valerie...])
+  (vals (player-order (players-map [...Dale... ...Anna... ...Angelika... ...Valerie...])))
   => [...Anna... ...Dale... ...Angelika... ...Valerie...]
   (provided
-    (network-size ...Anna...)     => 6
+    (player-key ...Dale...)     => 3
+    (player-key ...Anna...)     => 1
+    (player-key ...Angelika...) => 2
+    (player-key ...Valerie...)  => 4
     (network-size ...Dale...)     => 5
+    (network-size ...Anna...)     => 6
     (network-size ...Angelika...) => 5
     (network-size ...Valerie....) => 4
     (max-power-plant ...Dale...)     => 17
-    (max-power-plant ...Angelika...) => 15))
-
-(fact replace-power-plant
-  (let [a {:number 1}
-        b {:number 2}
-        c {:number 3}
-        d {:number 4}
-        e {:number 5}
-        f {:number 6}
-        x {:number 7}
-        y {:number 8}
-        z {:number 9}]
-    (replace-power-plant {:actual [a b c]
-                          :future [d e f]
-                          :deck   [x y z]}
-                         a)
-    => {:actual [b c d]
-        :future [e f x]
-        :deck   [y z]}))
+    (max-power-plant ...Anna...)     => ...dont-care...
+    (max-power-plant ...Angelika...) => 15
+    (max-power-plant ...Valerie...)  => ...dont-care...))
 
 (fact accepts-resource?
  (accepts-resource? {:number 20, :resource :coal, :capacity 3, :yield 5} :coal) => true
  (accepts-resource? {:number 20, :resource :coal, :capacity 3, :yield 5} :oil) => false
- (accepts-resource? {:number 29, :resource [:coal :oil], :capacity 1, :yield 4} :coal) => true
- (accepts-resource? {:number 29, :resource [:coal :oil], :capacity 1, :yield 4} :oil) => true
- (accepts-resource? {:number 29, :resource [:coal :oil], :capacity 1, :yield 4} :garbage) => false)
+ (accepts-resource? {:number 29, :resource #{:coal :oil}, :capacity 1, :yield 4} :coal) => true
+ (accepts-resource? {:number 29, :resource #{:coal :oil}, :capacity 1, :yield 4} :oil) => true
+ (accepts-resource? {:number 29, :resource #{:coal :oil}, :capacity 1, :yield 4} :garbage) => false)

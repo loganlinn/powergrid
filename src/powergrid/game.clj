@@ -93,8 +93,14 @@
                 :cities #{}
                 :power-plants {}}))
 
+(defn player-key [player] (:id player))
+
+(defn players-map
+  [players]
+  (apply hash-map (mapcat (juxt player-key identity) players)))
+
 (defn new-game
-  "Returns new Game"
+  "Returns new Game for vector of players"
   [players]
   (map->Game {:id (str (java.util.UUID/randomUUID))
               :phase 1
@@ -102,7 +108,7 @@
               :round 1
               :resources (init-resources)
               :power-plants (init-power-plants (count players))
-              :players players
+              :players (players-map players)
               :turns []}))
 
 (defn inc-phase
@@ -119,22 +125,11 @@
 
 (defn players
   [state]
-  (get state :players))
+  (vals (:players state {})))
 
 (defn num-players
   [state]
-  (count (players state)))
-
-(defn current-player
-  "Returns player who's turn it is, otherwise nil"
-  [state]
-  (if-let [i (first (:turns state))]
-    (nth (players state) i)))
-
-(defn update-turns
-  "Updates state for next player in turn"
-  [state]
-  (update-in state [:turns] rest))
+  (count (:players state)))
 
 (defn turns-remain?
   "Returns true if turns still exist in phase, otherwise false."
