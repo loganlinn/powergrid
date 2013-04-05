@@ -313,27 +313,71 @@
   )
 
 (defn purchase-resources
-  "Returns update state after processing player's purchases"
-  [state player purchases]
+  "Returns state after processing player's purchases"
+  [state player-key purchases]
   (reduce
     (fn [state [resource amount]]
       (let [[resources cost] (consume-resource (resource-market state) resource amount)]
         (-> state
           (set-resource-market resources)
-          (update-player player update-money (- cost)))))
+          (update-player player-key update-money (- cost)))))
     state
     purchases))
 
 (defmethod do-phase 3
   [state]
-  (reduce
-    (fn [state player]
-      (purchase-resources
-        state
-        player
-        (get-resource-purchase-input state player)))
-    state
-    (reverse (players state))))
+  ;; use purchase-resources
+  )
+
+;; PHASE 4
+
+;; PHASE 5
+
+(def resource-table
+  {2 {:coal    {1 3, 2 4, 3 3}
+      :oil     {1 2, 2 2, 3 4}
+      :garbage {1 1, 2 2, 3 3}
+      :uranium {1 1, 2 1, 3 1}}
+   3 {:coal    {1 4, 2 5, 3 3}
+      :oil     {1 2, 2 3, 3 4}
+      :garbage {1 1, 2 2, 3 3}
+      :uranium {1 1, 2 1, 3 1}}
+   4 {:coal    {1 5, 2 6, 3 4}
+      :oil     {1 3, 2 4, 3 5}
+      :garbage {1 2, 2 3, 3 4}
+      :uranium {1 1, 2 2, 3 2}}
+   5 {:coal    {1 5, 2 7, 3 5}
+      :oil     {1 4, 2 5, 3 6}
+      :garbage {1 3, 2 3, 3 5}
+      :uranium {1 2, 2 3, 3 2}}
+   6 {:coal    {1 7, 2 9, 3 6}
+      :oil     {1 5, 2 6, 3 7}
+      :garbage {1 3, 2 5, 3 6}
+      :uranium {1 2, 2 3, 3 3}}})
+
+(defn resupply-resource
+  )
+
+(defn resupply-rate
+  "Returns a map of resource to amount to re-supply the resource market with,
+  optionally taking into account the current resource supply"
+  ([num-players step]
+   (reduce (fn [m [resource rates]]
+             (assoc m resource (get rates step)))
+           {} (get resource-table num-players)))
+  ([num-players step supply]
+   (reduce (fn [m [resource rates]]
+             (assoc m resource (min (get rates step) (get supply resource))))
+           {} (get resource-table num-players))))
+
+(defn resupply-resources
+  "Returns state after resupplying the resource market according to rules."
+  [{:keys [step] :as state}]
+  (let [rate (resupply-rate (num-players state) step (resource-supply state))]
+    ;; Subtract from supply, add to market
+    ))
+
+;; =====================
 
 (let [state (new-game [(new-player 1 nil) (new-player 2 nil)])
       plant1 {:number 36, :resource :coal, :capacity 3, :yield 7}
@@ -349,6 +393,7 @@
               (update-player p2 add-power-plant plant2)
               (update-player p2 add-city :norfolk))
       [p1 p2] (players state)]
+  ;(pprint state)
   ;(pprint (get-in state [:power-plants]))
   ;(pprint p1)
   ;(pprint (resource-capacities p1))
