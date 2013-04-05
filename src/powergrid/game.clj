@@ -3,7 +3,7 @@
                                             power-plant-number]]
             [powergrid.util :refer [separate]]))
 
-(defrecord Player [id ctx money cities power-plants])
+(defrecord Player [id ctx color money cities power-plants])
 (defrecord Game [id phase step round resources power-plants players turns])
 
 (defn num-regions-chosen
@@ -86,9 +86,10 @@
 
 (defn new-player
   "Returns new player"
-  [id ctx]
+  [id ctx color]
   (map->Player {:id id
                 :ctx ctx
+                :color color
                 :money 50
                 :cities #{}
                 :power-plants {}}))
