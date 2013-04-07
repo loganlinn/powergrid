@@ -33,7 +33,7 @@
   "Returns the highest power-plant number the player owns"
   [player]
   (when-let [players-plants (power-plants player)]
-   (apply max (map :number players-plants))))
+    (apply max (map :number players-plants))))
 
 (defn update-money
   "Updates player's money by amt"
@@ -79,8 +79,8 @@
     (fn [m [power-plant utilization]]
       (let [avail-cap (- (* 2 (:capacity power-plant))
                          (apply + (vals utilization)))]
-       (update-in m [(:resource power-plant)]
-                 (fnil #(+ avail-cap %) 0))))
+        (update-in m [(:resource power-plant)]
+                   (fnil #(+ avail-cap %) 0))))
     {}
     (:power-plants player)))
 
@@ -157,15 +157,15 @@
   re-ordering"
   [state power-plant]
   (-> state
-    (update-in [:power-plants :future] conj power-plant)
-    (update-power-plant-order)))
+      (update-in [:power-plants :future] conj power-plant)
+      (update-power-plant-order)))
 
 (defn handle-step-3-card
   "Returns state after handling the Step 3 card"
   [{:keys [phase] :as state} step-3-card]
   (let [state (-> state
-                (update-in [:power-plants :deck] shuffle)
-                (assoc :step-3-card? true))]
+                  (update-in [:power-plants :deck] shuffle)
+                  (assoc :step-3-card? true))]
     (if (= phase 2)
       (add-to-power-plant-market step-3-card)
       (update-power-plant-order (drop-lowest-power-plant state)))))
@@ -177,11 +177,11 @@
   (let [[draw & deck] (get-in state [:power-plants :deck])]
     (if (step-3-card? draw)
       (-> state
-        (assoc-in [:power-plants :deck] deck)
-        (handle-step-3-card draw))
+          (assoc-in [:power-plants :deck] deck)
+          (handle-step-3-card draw))
       (-> state
-        (assoc-in [:power-plants :deck] deck)
-        (add-to-power-plant-market draw)))))
+          (assoc-in [:power-plants :deck] deck)
+          (add-to-power-plant-market draw)))))
 
 (defn reset-turns
   [num-players reverse-order?]
@@ -213,8 +213,8 @@
 (defn post-phase-2-step-3-card
   [state]
   (-> state
-    (remove-power-plant (step-3-card) :future)
-    (drop-lowest-power-plant)))
+      (remove-power-plant (step-3-card) :future)
+      (drop-lowest-power-plant)))
 
 (defmethod post-phase 2 [{:keys [round step-3-card?] :as state}]
   (cond-> state
@@ -232,13 +232,13 @@
 
 (defmethod prep-step 2 [state]
   (-> state
-    (drop-lowest-power-plant)
-    (draw-power-plant)))
+      (drop-lowest-power-plant)
+      (draw-power-plant)))
 
 (defmethod prep-step 3 [state]
   (-> state
-    (dissoc :step-3-card?)
-    (update-power-plant-order)))
+      (dissoc :step-3-card?)
+      (update-power-plant-order)))
 
 (defmethod step-complete? 1 [state]
   (and (= (:phase state) 4)
@@ -320,11 +320,11 @@
     (fn [state [resource amt]]
       (let [r (get-resource state resource)]
         (-> state
-          (update-resource-amt resource :market (- amt))
-          (update-player player-key
-                         #(-> %
-                            (update-money (- (resource-cost r amt)))
-                            (accept-resource resource amt))))))
+            (update-resource-amt resource :market (- amt))
+            (update-player player-key
+                           #(-> %
+                                (update-money (- (resource-cost r amt)))
+                                (accept-resource resource amt))))))
     state
     purchases))
 
@@ -387,13 +387,13 @@
       plant3 {:number 12, :resource #{:coal :oil}, :capacity 2, :yield 2}
       [p1 p2] (players state)
       state (-> state
-              (update-player p1 add-power-plant plant1)
-              (update-player p1 add-power-plant plant3)
-              (update-player p1 assign-resource plant1 :coal 5)
-              (update-player p1 assign-resource plant3 :coal 1)
-              ;(update-player p1 assign-resource plant3 :oil 1)
-              (update-player p2 add-power-plant plant2)
-              (update-player p2 add-city :norfolk))
+                (update-player p1 add-power-plant plant1)
+                (update-player p1 add-power-plant plant3)
+                (update-player p1 assign-resource plant1 :coal 5)
+                (update-player p1 assign-resource plant3 :coal 1)
+                ;(update-player p1 assign-resource plant3 :oil 1)
+                (update-player p2 add-power-plant plant2)
+                (update-player p2 add-city :norfolk))
       [p1 p2] (players state)]
   (pprint state)
   ;(pprint (get-in state [:power-plants]))
