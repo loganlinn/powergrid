@@ -50,24 +50,25 @@
 (def step-3-card (constantly :step-3))
 (defn step-3-card? [card] (= :step-3 card))
 
+
+(defrecord Resource [market supply pricing])
+
+(defn resource-cost
+  "Returns the cost of purchasing amt of resource in current market.
+  Asserts that amt is not larger than current market."
+  [{:keys [market pricing] :as resource} amt]
+  {:pre [(>= market amt)]}
+  (let [unavail (- (count pricing) market)]
+    (apply + (take amt (drop unavail pricing)))))
+
 (defn init-resources
   []
-  {:market {1 {:coal 3 :oil 0 :garbage 0 :uranium 0}
-            2 {:coal 3 :oil 0 :garbage 0 :uranium 0}
-            3 {:coal 3 :oil 3 :garbage 0 :uranium 0}
-            4 {:coal 3 :oil 3 :garbage 0 :uranium 0}
-            5 {:coal 3 :oil 3 :garbage 0 :uranium 0}
-            6 {:coal 3 :oil 3 :garbage 0 :uranium 0}
-            7 {:coal 3 :oil 3 :garbage 3 :uranium 0}
-            8 {:coal 3 :oil 3 :garbage 3 :uranium 0}
-            10 {:uranium 0}
-            12 {:uranium 0}
-            14 {:uranium 1}
-            16 {:uranium 1}}
-   :supply {:coal 0
-            :oil 6
-            :garbage 16
-            :uranium 10}})
+  (let [std-pricing (for [p (range 1 9) _ (range 3)] p)
+        uranium-pricing (for [p (range 1 17) :when (not (#{9 10 11 13} p))] p)]
+    {:coal (->Resource 24 0 std-pricing)
+     :oil  (->Resource 18 6 std-pricing)
+     :garbage (->Resource 6 18 std-pricing)
+     :uranium (->Resource 2 10 uranium-pricing)}))
 
 (defn init-power-plant-deck
   [power-plants num-players]

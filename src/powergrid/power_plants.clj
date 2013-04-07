@@ -47,3 +47,19 @@
    (PowerPlant. 50 :fusion 0 6)])
 
 (defn power-plant-number [power-plant] (:number power-plant))
+
+(defn is-hybrid?
+  "Returns true if power-plant is hybrid, otherwise false"
+  [power-plant]
+  (set? (:resource power-plant)))
+
+(defn accepts-resource?
+  "Returns true if the power-plant accepts the resource, otherwise false"
+  [{power-plant-resource :resource :as power-plant} resource]
+  (if (is-hybrid? power-plant)
+    (contains? power-plant-resource resource)
+    (condp = power-plant-resource
+      :ecological false
+      :fusion     false
+      resource    true
+      false)))

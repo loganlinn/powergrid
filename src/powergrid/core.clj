@@ -1,6 +1,8 @@
 (ns powergrid.core
   (:require [powergrid.game :refer :all]
-            [powergrid.util :refer [separate]]))
+            [powergrid.util :refer [separate]]
+            [powergrid.power-plants :refer [is-hybrid? accepts-resource?]])
+  (:import [powergrid.game Player Resource]))
 
 ;; TODO Remove
 (use 'clojure.pprint)
@@ -11,17 +13,6 @@
   "Returns the maximum number of cities a single player has built"
   [state]
   (apply max (map network-size (players state))))
-
-(defn accepts-resource?
-  "Returns true if the power-plant accepts the resource, otherwise false"
-  [{power-plant-resource :resource} resource]
-  (if (set? power-plant-resource)
-    (contains? power-plant-resource resource)
-    (condp = power-plant-resource
-      :ecological false
-      :fusion     false
-      resource    true
-      false)))
 
 (defn update-player
   "Returns state after updating player with f"
@@ -54,7 +45,9 @@
   [player power-plant]
   (assoc-in player [:power-plants power-plant] {}))
 
-(defn add-resources
+(defn assign-resource
+  "Returns updated player after storing resource in power plant.
+  Asserts that power-plant accepts resource and player owns it."
   [player power-plant resource amount]
   {:pre [(accepts-resource? power-plant resource)
          (contains? (:power-plants player) power-plant)]}
@@ -286,41 +279,52 @@
 
 ;; PHASE 3
 
-(defn consume-resource
-  "Returns [updated-resources total-cost amount-purchased]. Consumes the first
-  available units of resource, computes cost"
-  [resources resource amount]
-  (loop [resources resources
-         [price & prices] (keys resources)
-         amount amount
-         total 0]
-    (if (and price (> amount 0))
-      (if-let [stock (get-in resources [price resource])]
-        (let [x (min stock amount)]
-          (recur (update-in resources [price resource] - x)
-                 prices
-                 (- amount x)
-                 (int (+ total (* price x))))))
-      [resources total amount])))
 
-(defn get-resource-purchase-input
-  "Returns map of users resource purchases. Maps resource to quantity.
-  Handles validation that resources can be bought by user"
-  [state player]
-  ;; TODO Validate resources exist
-  ;; TODO Validate user has resource capacity
-  ;; (has-capacity?)
-  )
+(defn update-resource-amt
+  "Updates amount of resource in :market or :supply, k, by n"
+  [state resource k n]
+  {:pre [(or (= k :market) (= k :supply))]}
+  (update-in state [:resources resource k] (fnil + 0) n))
+
+(defn get-resource
+  "Returns the current state of resource"
+  [state resource]
+  (get-in state [:resources resource]))
+
+(defmulti accept-resource
+  (fn [trader dest amt] (class trader)))
+
+(defmulti send-resource
+  (fn [trader src amt] (class trader)))
+
+(defmethod accept-resource Player
+  [player resource amt]
+  (update-in player [:resources resource] (fnil + 0) amt))
+
+(defmethod send-resource Player
+  [player resource amt]
+  (update-in player [:resources resource] (fnil - 0) amt))
+
+(defmethod accept-resource Resource
+  [resource dest amt]
+  (update-in resource [dest] (fnil + 0) amt))
+
+(defmethod send-resource Resource
+  [resource dest amt]
+  (update-in resource [dest] (fnil - 0) amt))
 
 (defn purchase-resources
   "Returns state after processing player's purchases"
   [state player-key purchases]
   (reduce
-    (fn [state [resource amount]]
-      (let [[resources cost] (consume-resource (resource-market state) resource amount)]
+    (fn [state [resource amt]]
+      (let [r (get-resource state resource)]
         (-> state
-          (set-resource-market resources)
-          (update-player player-key update-money (- cost)))))
+          (update-resource-amt resource :market (- amt))
+          (update-player player-key
+                         #(-> %
+                            (update-money (- (resource-cost r amt)))
+                            (accept-resource resource amt))))))
     state
     purchases))
 
@@ -355,8 +359,6 @@
       :garbage {1 3, 2 5, 3 6}
       :uranium {1 2, 2 3, 3 3}}})
 
-(defn resupply-resource
-  )
 
 (defn resupply-rate
   "Returns a map of resource to amount to re-supply the resource market with,
@@ -379,7 +381,7 @@
 
 ;; =====================
 
-(let [state (new-game [(new-player 1 nil) (new-player 2 nil)])
+(let [state (new-game [(new-player 1 nil :blue) (new-player 2 nil :black)])
       plant1 {:number 36, :resource :coal, :capacity 3, :yield 7}
       plant2 {:number 17, :resource :uranium, :capacity 1, :yield 2}
       plant3 {:number 12, :resource #{:coal :oil}, :capacity 2, :yield 2}
@@ -387,13 +389,13 @@
       state (-> state
               (update-player p1 add-power-plant plant1)
               (update-player p1 add-power-plant plant3)
-              (update-player p1 add-resources plant1 :coal 5)
-              (update-player p1 add-resources plant3 :coal 1)
-              ;(update-player p1 add-resources plant3 :oil 1)
+              (update-player p1 assign-resource plant1 :coal 5)
+              (update-player p1 assign-resource plant3 :coal 1)
+              ;(update-player p1 assign-resource plant3 :oil 1)
               (update-player p2 add-power-plant plant2)
               (update-player p2 add-city :norfolk))
       [p1 p2] (players state)]
-  ;(pprint state)
+  (pprint state)
   ;(pprint (get-in state [:power-plants]))
   ;(pprint p1)
   ;(pprint (resource-capacities p1))
