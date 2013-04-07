@@ -381,23 +381,23 @@
 
 ;; =====================
 
-(let [state (new-game [(new-player 1 nil :blue) (new-player 2 nil :black)])
-      plant1 {:number 36, :resource :coal, :capacity 3, :yield 7}
-      plant2 {:number 17, :resource :uranium, :capacity 1, :yield 2}
-      plant3 {:number 12, :resource #{:coal :oil}, :capacity 2, :yield 2}
-      [p1 p2] (players state)
-      state (-> state
-                (update-player p1 add-power-plant plant1)
-                (update-player p1 add-power-plant plant3)
-                (update-player p1 assign-resource plant1 :coal 5)
-                (update-player p1 assign-resource plant3 :coal 1)
-                ;(update-player p1 assign-resource plant3 :oil 1)
-                (update-player p2 add-power-plant plant2)
-                (update-player p2 add-city :norfolk))
-      [p1 p2] (players state)]
-  (pprint state)
+;(let [state (new-game [(new-player 1 nil :blue) (new-player 2 nil :black)])
+      ;plant1 {:number 36, :resource :coal, :capacity 3, :yield 7}
+      ;plant2 {:number 17, :resource :uranium, :capacity 1, :yield 2}
+      ;plant3 {:number 12, :resource #{:coal :oil}, :capacity 2, :yield 2}
+      ;[p1 p2] (players state)
+      ;state (-> state
+                ;(update-player p1 add-power-plant plant1)
+                ;(update-player p1 add-power-plant plant3)
+                ;(update-player p1 assign-resource plant1 :coal 5)
+                ;(update-player p1 assign-resource plant3 :coal 1)
+                ;;(update-player p1 assign-resource plant3 :oil 1)
+                ;(update-player p2 add-power-plant plant2)
+                ;(update-player p2 add-city :norfolk))
+      ;[p1 p2] (players state)]
+  ;(pprint state)
   ;(pprint (get-in state [:power-plants]))
   ;(pprint p1)
   ;(pprint (resource-capacities p1))
-  )
+  ;)
 
