@@ -40,17 +40,34 @@
   [player amt]
   (assoc player :money (+ (:money player 0) amt)))
 
+(defn purchase
+  "Returns state after transferring amt Elektro from player to bank"
+  [state player-key price]
+  (-> state
+      (update-player player-key update-money (- price))
+      (update-in [:bank] (fnil + 0) price)))
+
 (defn add-power-plant
   "Returns updated player after adding power-plant"
   [player power-plant]
   (assoc-in player [:power-plants power-plant] {}))
+
+(defn owns-city?
+  "Returns true if the player owns city, otherwise false"
+  [player city]
+  (contains? (:cities player) city))
+
+(defn owns-power-plant?
+  "Returns true if the player owns power-plant, otherwise false"
+  [player power-plant]
+  (contains? (:power-plants) power-plant))
 
 (defn assign-resource
   "Returns updated player after storing resource in power plant.
   Asserts that power-plant accepts resource and player owns it."
   [player power-plant resource amount]
   {:pre [(accepts-resource? power-plant resource)
-         (contains? (:power-plants player) power-plant)]}
+         (owns-power-plant? player power-plant)]}
   (update-in player
              [:power-plants power-plant resource]
              (fnil #(+ % amount) 0)))
@@ -59,11 +76,6 @@
   "Returns updated player after adding city"
   [player city]
   (update-in player [:cities] conj city))
-
-(defn owns-city?
-  "Returns true of the player owns city, false otherwise"
-  [player city]
-  (contains? (:cities player) city))
 
 (defn can-buy-resource?
   "Returns true if player can buy resource type, otherwise false. User must own
@@ -280,11 +292,10 @@
 ;; PHASE 3
 
 
-(defn update-resource-amt
-  "Updates amount of resource in :market or :supply, k, by n"
-  [state resource k n]
-  {:pre [(or (= k :market) (= k :supply))]}
-  (update-in state [:resources resource k] (fnil + 0) n))
+(defn update-resource
+  "Returns state after updating resource by applying f, args"
+  [state resource f & args]
+  (apply update-in [:resources resource] f args))
 
 (defn get-resource
   "Returns the current state of resource"
@@ -297,13 +308,32 @@
 (defmulti send-resource
   (fn [trader src amt] (class trader)))
 
+(defn player-accept-resource*
+  [power-plants resource amt]
+  ;; TODO generalize this type of iteration?
+  (loop [power-plants power-plants
+         [[plant inventory] & r] power-plants
+         amt amt]
+    (if (and plant (pos? amt))
+      (let [space-left (if (accepts-resource? plant resource)
+                         (- (* 2 (:capacity plant))
+                            (get inventory resource 0))
+                         0)
+            amt-stored (min space-left amt)]
+        (recur (assoc power-plants plant (update-in inventory resource + amt-stored))
+               r
+               (- amt amt-stored)))
+      power-plants)))
+
 (defmethod accept-resource Player
   [player resource amt]
-  (update-in player [:resources resource] (fnil + 0) amt))
+  ;; TODO ADD resource to pp (hybrids last)
+  (update-in player [:power-plants] player-accept-resource* resource amt))
 
 (defmethod send-resource Player
-  [player resource amt]
-  (update-in player [:resources resource] (fnil - 0) amt))
+  [player [power-plant resource] amt]
+  {:pre [(owns-power-plant? player power-plant)]}
+  (update-in player [:power-plants power-plant resource] - amt))
 
 (defmethod accept-resource Resource
   [resource dest amt]
@@ -318,15 +348,14 @@
   [state player-key purchases]
   (reduce
     (fn [state [resource amt]]
-      (let [r (get-resource state resource)]
+      (let [price (resource-price (get-resource state resource) amt)]
         (-> state
-            (update-resource-amt resource :market (- amt))
-            (update-player player-key
-                           #(-> %
-                                (update-money (- (resource-cost r amt)))
-                                (accept-resource resource amt))))))
+            (update-resource resource send-resource :market (- amt))
+            (update-player player-key accept-resource resource amt)
+            (purchase player-key price))))
     state
     purchases))
+
 
 (defmethod do-phase 3
   [state]

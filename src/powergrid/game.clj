@@ -4,7 +4,7 @@
             [powergrid.util :refer [separate]]))
 
 (defrecord Player [id ctx color money cities power-plants])
-(defrecord Game [id phase step round resources power-plants players turns])
+(defrecord Game [id phase step round resources power-plants players turns bank])
 
 (defn num-regions-chosen
   "Returns the number of regions chosen on map"
@@ -53,8 +53,8 @@
 
 (defrecord Resource [market supply pricing])
 
-(defn resource-cost
-  "Returns the cost of purchasing amt of resource in current market.
+(defn resource-price
+  "Returns the price of purchasing amt of resource in current market.
   Asserts that amt is not larger than current market."
   [{:keys [market pricing] :as resource} amt]
   {:pre [(>= market amt)]}
@@ -111,7 +111,8 @@
               :resources (init-resources)
               :power-plants (init-power-plants (count players))
               :players (players-map players)
-              :turns []}))
+              :turns []
+              :bank 0}))
 
 (defn inc-phase
   [state]
