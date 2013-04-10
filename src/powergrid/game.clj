@@ -5,6 +5,7 @@
 
 (defrecord Player [id ctx color money cities power-plants])
 (defrecord Game [id phase step round resources power-plants players turns bank])
+(defrecord Resource [market supply pricing])
 
 (defn num-regions-chosen
   "Returns the number of regions chosen on map"
@@ -49,9 +50,6 @@
 
 (def step-3-card (constantly :step-3))
 (defn step-3-card? [card] (= :step-3 card))
-
-
-(defrecord Resource [market supply pricing])
 
 (defn resource-price
   "Returns the price of purchasing amt of resource in current market.
