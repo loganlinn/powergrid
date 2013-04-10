@@ -62,7 +62,7 @@
 (defn init-resources
   []
   (let [std-pricing (for [p (range 1 9) _ (range 3)] p)
-        uranium-pricing (for [p (range 1 17) :when (not (#{9 10 11 13} p))] p)]
+        uranium-pricing '(1 2 3 4 5 6 7 8 12 14 15 16)]
     {:coal (->Resource 24 0 std-pricing)
      :oil  (->Resource 18 6 std-pricing)
      :garbage (->Resource 6 18 std-pricing)
