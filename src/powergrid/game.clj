@@ -10,25 +10,25 @@
   "Returns the number of regions chosen on map"
   [num-players]
   (case (int num-players)
-    (2 3) 3
+    (2, 3) 3
     4 4
-    (5 6) 5))
+    (5, 6) 5))
 
-(defn num-randomly-removed-power-plants
+(defn num-rand-removed-power-plants
   "Returns the number of randomly removed power plants after preparing the
   power plant market"
   [num-players]
   (case (int num-players)
-    (2 3) 8
+    (2, 3) 8
     4 4
-    (5 6) 0))
+    (5, 6) 0))
 
 (defn num-cities-trigger-step-2
   "Returns the number of connected cities needed to trigger step 2"
   [num-players]
   (case (int num-players)
     2 10
-    (3 4 5) 7
+    (3, 4, 5) 7
     6 6))
 
 (defn max-power-plants
@@ -36,14 +36,14 @@
   [num-players]
   (case (int num-players)
     2 4
-    (3 4 5 6) 3))
+    (3, 4, 5, 6) 3))
 
 (defn num-cities-trigger-end
   "Returns the number of connected cities to trigger game end"
   [num-players]
   (case (int num-players)
     2 21
-    (3 4) 17
+    (3, 4) 17
     5 15
     6 14))
 
@@ -55,7 +55,7 @@
 
 (defn resource-price
   "Returns the price of purchasing amt of resource in current market.
-  Asserts that amt is not larger than current market."
+  Asserts that amt is not larger than currently available in market."
   [{:keys [market pricing] :as resource} amt]
   {:pre [(>= market amt)]}
   (let [unavail (- (count pricing) market)]
@@ -76,7 +76,7 @@
         recombine #(concat card-13 % [(step-3-card)])]
     (->> deck
       (shuffle)
-      (drop (num-randomly-removed-power-plants num-players))
+      (drop (num-rand-removed-power-plants num-players))
       (recombine))))
 
 (defn init-power-plants
