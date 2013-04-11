@@ -303,9 +303,13 @@
   (get-in state [:resources resource]))
 
 (defmulti accept-resource
+  "Returns trader after storing the resource in dest.
+  Methods assert that amt is valid."
   (fn [trader dest amt] (class trader)))
 
 (defmulti send-resource
+  "Returns trader after removing resources from src.
+  Methods assert that amt is valid"
   (fn [trader src amt] (class trader)))
 
 (defn player-accept-resource*
