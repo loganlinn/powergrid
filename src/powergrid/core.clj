@@ -311,7 +311,7 @@
 (defn player-accept-resource*
   [power-plants resource amt]
   ;; TODO generalize this type of iteration?
-  (loop [power-plants power-plants
+  (loop [power-plants (sort-by is-hybrid? power-plants)
          [[plant inventory] & r] power-plants
          amt amt]
     (if (and plant (pos? amt))
@@ -332,7 +332,8 @@
 
 (defmethod send-resource Player
   [player [power-plant resource] amt]
-  {:pre [(owns-power-plant? player power-plant)]}
+  {:pre [(owns-power-plant? player power-plant)
+         (>= (get-in player [:power-plants power-plant resource]) amt)]}
   (update-in player [:power-plants power-plant resource] - amt))
 
 (defmethod accept-resource Resource
