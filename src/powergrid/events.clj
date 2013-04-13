@@ -67,5 +67,4 @@
 ;; PHASE 5
 ;;
 (defmethod handle-message [:phase5 :sell]
-  [game msg]
-
+  [game msg])
