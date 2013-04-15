@@ -1,5 +1,8 @@
 (ns powergrid.message)
 
+(def topic :topic)
+(def title :title)
+
 (defrecord ValidateError [msg silent?])
 
 (defprotocol Validated
@@ -11,3 +14,13 @@
 (defmulti passable? (fn [game msg-type] msg-type))
 
 (defmethod passable? :default [_ _] false)
+
+(comment
+  ;; TODO
+  (defevent EventName fields
+    {:passable? passable
+     :pre (fn [this game] true)}
+    [game player]
+
+    )
+  )

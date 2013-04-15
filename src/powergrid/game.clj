@@ -4,7 +4,7 @@
             [powergrid.resource :refer [map->Resource]]
             [powergrid.util :refer [separate]]))
 
-(defrecord Game [id phase step round resources power-plants players turns bank])
+(defrecord Game [id phase step round resources power-plants players turns messages bank])
 
 (defn num-regions-chosen
   "Returns the number of regions chosen on map"
@@ -46,6 +46,11 @@
     (3, 4) 17
     5 15
     6 14))
+
+(defn turns-reverse-order?
+  "Returns true if the current phase uses reverse player order, otherwise false"
+  [{:keys [phase]}]
+  (or (= 4 phase) (= 5 phase)))
 
 (def step-3-card :step-3)
 (defn step-3-card? [card] (= step-3-card card))
@@ -92,7 +97,8 @@
               :resources (init-resources)
               :power-plants (init-power-plants (count players))
               :players (players-map players)
-              :turns []
+              :turns  '()
+              :messages clojure.lang.PersistentQueue/EMPTY
               :bank 0}))
 
 (defn current-step  [game] (:step game))
@@ -132,6 +138,24 @@
   "Returns true if turns still exist in phase, otherwise false."
   [game]
   (boolean (seq (:turns game))))
+
+(defn clear-turns
+  "Clears turns in game"
+  [game]
+  (assoc game :turns nil))
+
+(defn set-turns
+  "Returns game after setting turns"
+  [game turn-type]
+  (let [player-ids (if (turns-reverse-order? game)
+                     (reverse (keys (game :players)))
+                     (keys (game :players)))]
+    (assoc game :turns (for [id player-ids] {:player-id id :type turn-type}))))
+
+(defn remove-turn
+  "Removes turn from turns in game state"
+  [game turn]
+  (update-in game [:turns] (partial remove #(= turn %))))
 
 (defn resource-market
   "Returns current resource market"
@@ -173,3 +197,7 @@
   "Returns game after updating resource via (apply f resource args)"
   [game resource f & args]
   (apply update-in game [:resources resource] f args))
+
+(defn receive-message
+  [game msg]
+  (update-in game [:messages] conj msg))

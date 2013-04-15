@@ -92,12 +92,6 @@
           (assoc-in [:power-plants :deck] deck)
           (add-to-power-plant-market draw)))))
 
-(defn reset-turns
-  [num-players reverse-order?]
-  (if reverse-order?
-    (reverse (range num-players))
-    (range num-players)))
-
 (defmulti prep-phase current-phase)
 (defmulti post-phase current-phase)
 (defmulti prep-step current-step)
@@ -113,10 +107,10 @@
 (defmethod step-complete? :default [game] false)
 
 (defmethod prep-phase 1 [game]
-  (assoc game :turns []))
+  (clear-turns game))
 
 (defmethod prep-phase 2 [game]
-  (assoc game :turns (reset-turns (num-players game) false)))
+  (-> game (set-turns :buy)))
 
 (defn post-phase-2-step-3-card
   [game]
@@ -130,13 +124,13 @@
     (= round 1) (update-player-order)))
 
 (defmethod prep-phase 3 [game]
-  (assoc game :turns (reset-turns (num-players game) true)))
+  (-> game (set-turns :buy)))
 
 (defmethod prep-phase 4 [game]
-  (assoc game :turns (reset-turns (num-players game) true)))
+  (-> game (set-turns :buy)))
 
 (defmethod post-phase 5 [game]
-  (inc-round game))
+  (-> game (inc-round)))
 
 (defmethod prep-step 2 [game]
   (-> game
@@ -220,3 +214,4 @@
           (if-not (:silent? e)
             (throw+ e))
           game)))))
+

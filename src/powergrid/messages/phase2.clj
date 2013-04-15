@@ -14,7 +14,7 @@
   [game _]
   (not= (g/current-round 1)))
 
-(defrecord BidPowerPlantMessage [player-id plant-id amt]
+(defrecord BidPowerPlantMessage [player-id plant-id bid]
   Validated
   (validate [this game] true)
   GameUpdate
