@@ -1,5 +1,5 @@
 (ns powergrid.messages.phase3
-  (:require [powergrid.message :refer [Validated GameUpdate passible?]]
+  (:require [powergrid.message :refer [Validated GameUpdate passable?]]
             [powergrid.game :as g]
             [powergrid.player :as p]
             [powergrid.resource :as r]
@@ -12,7 +12,7 @@
   GameUpdate
   (update-game [this game] game))
 
-(defmethod passible? BuyResourcesMessage [_ _] true)
+(defmethod passable? BuyResourcesMessage [_ _] true)
 
 (def messages
   {:buy map->BuyResourcesMessage})
