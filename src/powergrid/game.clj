@@ -92,6 +92,10 @@
               :turns []
               :bank 0}))
 
+(defn current-step  [game] (:step game))
+(defn current-phase [game] (:phase game))
+(defn current-round [game] (:round game))
+
 (defn inc-phase
   [game]
   (update-in game [:phase] inc))

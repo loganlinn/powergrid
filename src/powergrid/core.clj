@@ -76,8 +76,8 @@
 
 (defn update-power-plant-order
   "Returns game after ordering the power-plants"
-  [{:keys [step power-plants] :as game}]
-  (update-in game [:power-plants] power-plant-order game))
+  [game]
+  (update-in game [:power-plants] power-plant-order (current-step game)))
 
 (defn remove-power-plant
   "Returns game after removing power-plant from the current power-plant market"
