@@ -75,9 +75,14 @@
    :future (take 4 (drop 4 power-plant-cards))
    :deck (init-power-plant-deck (drop 8 power-plant-cards) num-players)})
 
-(defn players-map
-  [players]
-  (apply hash-map (mapcat (juxt p/player-key identity) players)))
+(defprotocol PlayersMap
+  (players-map [this]))
+
+(extend-protocol PlayersMap
+  clojure.lang.IPersistentMap
+  (players-map [this] this)
+  clojure.lang.Seqable
+  (players-map [this] (apply hash-map (mapcat (juxt p/player-key identity) this))))
 
 (defn new-game
   "Returns new Game for vector of players"
@@ -109,8 +114,17 @@
   (update-in game [:round] inc))
 
 (defn players
-  [game]
-  (vals (:players game {})))
+  "Returns players"
+  [game & {:keys [except]}]
+  (let [ps (:players game {})]
+    (if except
+      (keep #(when-not (= except (key %)) (val %)) ps)
+      (vals ps))))
+
+(defn player
+  "Returns player by id if exists, otherwise nil"
+  [game id]
+  (get-in [:players id]))
 
 (defn num-players
   [game]
@@ -140,3 +154,24 @@
   "Returns the maximum number of cities a single player has built"
   [game]
   (apply max (map p/network-size (players game))))
+
+(defn color-taken?
+  "Returns true if a player in game is using color"
+  [game ^clojure.lang.Keyword color]
+  (let [taken-colors (set (map p/color (players game)))]
+    (contains? color taken-colors)))
+
+(defn update-player
+  "Returns game after updating player via (apply f player args)"
+  [game player-key f & args]
+  (apply update-in game [:players player-key] f args))
+
+(defn update-players
+  "Returns game after updating players via (apply f players args)"
+  [game player-key f & args]
+  (assoc game :players (players-map (apply f (players game) args))))
+
+(defn update-resource
+  "Returns game after updating resource via (apply f resource args)"
+  [game resource f & args]
+  (apply update-in game [:resources resource] f args))

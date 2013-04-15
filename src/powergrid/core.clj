@@ -4,11 +4,6 @@
             [powergrid.player :as p]
             [powergrid.resource :as r]))
 
-(defn update-player
-  "Returns game after updating player with f"
-  [game player-key f & args]
-  (apply update-in game [:players player-key] f args))
-
 (defn purchase
   "Returns game after transferring amt Elektro from player to bank"
   [game player-key price]
@@ -162,11 +157,6 @@
   [game]
   (>= (max-network-size game)
       (num-cities-trigger-end (num-players game))))
-
-(defn update-resource
-  "Returns game after updating resource by applying f, args"
-  [game resource f & args]
-  (apply update-in game [:resources resource] f args))
 
 (defn get-resource
   "Returns the current game of resource"

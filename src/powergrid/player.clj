@@ -18,6 +18,15 @@
 
 (defn player-key [player] (:id player))
 
+(def color :color)
+
+(defn valid-color? [c] (contains? colors c))
+
+(defn set-color
+  [player color]
+  {:pre [(valid-color? color)]}
+  (assoc :color color))
+
 (defn network-size
   "Returns the number of cities in the player's network"
   [player]
