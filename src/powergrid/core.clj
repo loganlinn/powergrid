@@ -209,6 +209,9 @@
     (when (satisfies? msg/Validated msg)
       (try+
         (msg/validate msg game)
+
+        ;; TODO ensure msg is authorized (check users match)
+
         (if (satisfies? msg/GameUpdate msg)
           (msg/update-game msg game)
           game)

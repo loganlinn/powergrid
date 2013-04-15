@@ -37,6 +37,19 @@
   [player]
   (keys (:power-plants player)))
 
+(defn power-plant-resources
+  "Returns a map of resource-type to amt for resources on player's power-plant."
+  [player power-plant]
+  (get-in player [:power-plants power-plant] {}))
+
+(defn has-plant-resources?
+  "Returns true if user has the resources specified on the plant.
+  resources maps resource-type to amt"
+  [player plant resources]
+  (let [r (power-plant-resources player plant)]
+    (every? (fn [[resource amt]]
+              (>= (r resource 0) amt)))))
+
 (defn max-power-plant
   "Returns the highest power-plant number the player owns"
   [player]

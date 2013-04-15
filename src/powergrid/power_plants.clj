@@ -60,6 +60,12 @@
   [power-plant]
   (set? (:resource power-plant)))
 
+(defn consumes-resources?
+  "Returns true if plant requires resources to operate, otherwise false."
+  [{resource :resource}]
+  (not (or (= :ecological resource)
+           (= :fusion resource))))
+
 (defn accepts-resource?
   "Returns true if the power-plant accepts the resource, otherwise false"
   [{power-plant-resource :resource :as power-plant} resource]

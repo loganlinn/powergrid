@@ -7,3 +7,7 @@
 
 (defprotocol GameUpdate
   (update-game [update game]))
+
+(defmulti passable? (fn [game msg-type] msg-type))
+
+(defmethod passable? :default [_ _] false)

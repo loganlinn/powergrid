@@ -6,10 +6,11 @@
             [powergrid.util :refer [kw]]))
 
 
-(defrecord BuyMessage [player-id resources]
+(defrecord BuyResourcesMessage [player-id resources]
+  Validated
+  (validate [this game])
   GameUpdate
   (update-game [this game] game))
 
 (def messages
-  {:buy map->BuyMessage
-   :pass nil})
+  {:buy map->BuyResourcesMessage})
