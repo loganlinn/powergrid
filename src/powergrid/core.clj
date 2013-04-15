@@ -166,7 +166,7 @@
 (defn update-resource
   "Returns game after updating resource by applying f, args"
   [game resource f & args]
-  (apply update-in [:resources resource] f args))
+  (apply update-in game [:resources resource] f args))
 
 (defn get-resource
   "Returns the current game of resource"
