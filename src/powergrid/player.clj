@@ -68,7 +68,7 @@
 (defn owns-power-plant?
   "Returns true if the player owns power-plant, otherwise false"
   [player power-plant]
-  (contains? (:power-plants) power-plant))
+  (contains? (:power-plants player) power-plant))
 
 (defn assign-resource
   "Returns updated player after storing resource in power plant.
