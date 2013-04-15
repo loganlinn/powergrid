@@ -117,6 +117,8 @@
   [game]
   (update-in game [:round] inc))
 
+;; PLAYERS
+
 (defn players
   "Returns players"
   [game & {:keys [except]}]
@@ -134,6 +136,26 @@
   [game]
   (count (:players game)))
 
+(defn color-taken?
+  "Returns true if a player in game is using color"
+  [game ^clojure.lang.Keyword color]
+  (let [taken-colors (set (map p/color (players game)))]
+    (contains? color taken-colors)))
+
+(defn update-player
+  "Returns game after updating player via (apply f player args)"
+  [game player-key f & args]
+  (apply update-in game [:players player-key] f args))
+
+(defn update-players
+  "Returns game after updating players via (apply f players args)"
+  [game f & args]
+  (assoc game :players (players-map (apply f (players game) args))))
+
+;; TURNS
+
+(defn turns [game] (game :turns))
+
 (defn turns-remain?
   "Returns true if turns still exist in phase, otherwise false."
   [game]
@@ -147,15 +169,47 @@
 (defn set-turns
   "Returns game after setting turns"
   [game turn-type]
-  (let [player-ids (if (turns-reverse-order? game)
-                     (reverse (keys (game :players)))
-                     (keys (game :players)))]
-    (assoc game :turns (for [id player-ids] {:player-id id :type turn-type}))))
+  (if (turns-reverse-order? game)
+    (reverse (keys (game :players)))
+    (keys (game :players))))
+
+(defn reserve-turn
+  "Returns [updated-game turn] where turn was removed from turn queue
+  of updated-game"
+  [game]
+  [(update-in game [:turns] rest) (first (game :turns))])
 
 (defn remove-turn
   "Removes turn from turns in game state"
   [game turn]
   (update-in game [:turns] (partial remove #(= turn %))))
+
+;; AUCTIONING
+
+(defn has-auction?  [game] (contains? game :auction))
+(defn cleanup-auction [game] (dissoc game :auction))
+
+(defn set-power-plant-auction
+  "Returns game after setting bidding in state" ;; TODO is player-id in turns?
+  [game power-plant player-id starting-bid]
+  (assoc game :auction {:plant power-plant
+                        :player-id player-id ;; highest bidder
+                        :price starting-bid
+                        :turns (remove #(= player-id %) (game :turns))}))
+
+
+(defn auction-complete?
+  "Returns true if current auction has completed"
+  [game]
+  (empty? (get-in game [:auction :turns])))
+
+(defn reserve-bidder
+  "Returns [updated-game bidder] where bidder was removed from turn queue
+  of updated-game"
+  [game]
+  [(update-in [])])
+
+;; RESOURCES
 
 (defn resource-market
   "Returns current resource market"
@@ -177,22 +231,6 @@
   [game]
   (apply max (map p/network-size (players game))))
 
-(defn color-taken?
-  "Returns true if a player in game is using color"
-  [game ^clojure.lang.Keyword color]
-  (let [taken-colors (set (map p/color (players game)))]
-    (contains? color taken-colors)))
-
-(defn update-player
-  "Returns game after updating player via (apply f player args)"
-  [game player-key f & args]
-  (apply update-in game [:players player-key] f args))
-
-(defn update-players
-  "Returns game after updating players via (apply f players args)"
-  [game player-key f & args]
-  (assoc game :players (players-map (apply f (players game) args))))
-
 (defn update-resource
   "Returns game after updating resource via (apply f resource args)"
   [game resource f & args]
@@ -207,3 +245,34 @@
   game has had the message removed from msg queue."
   [game]
   [(update-in game [:messages] pop) (peek (game :messages))])
+
+;; POWER PLANTS
+
+(defn valid-power-plant-market?
+  [market]
+  (or (= :market market) (= :future market)))
+
+(defn update-power-plants
+  "Returns game after updating power-plant markets via (apply f power-plants args)"
+  [game f & args]
+  (apply update-in game [:power-plants] f args))
+
+(defn update-power-plant-market
+  "Returns game after updating power-plant market via (apply f power-plant-market args)"
+  ([game market f & args]
+   {:pre [(valid-power-plant-market? market)]}
+   (apply update-in game [:power-plants market] f args)))
+
+(defn remove-power-plant
+  "Returns game after removing power-plant from the current power-plant market"
+  ([game power-plant market]
+   {:pre [(valid-power-plant-market? market)]}
+   (update-in game [:power-plants market] (partial remove #(= % power-plant))))
+  ([game power-plant]
+   (remove-power-plant game power-plant :market)))
+
+(defn drop-lowest-power-plant
+  "Removes lowest power-plant from market. Assumes power-plant market is in
+  order. Note, no replacement is drawn."
+  [game]
+  (update-in game [:power-plants :market] rest))

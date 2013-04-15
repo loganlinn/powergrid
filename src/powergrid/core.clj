@@ -31,7 +31,7 @@
 (defn update-player-order
   "Returns game after updating player order"
   [game]
-  (update-in game [:players] player-order))
+  (update-players game player-order))
 
 (defn power-plant-order
   "Returns power-plants after re-ordering"
@@ -46,27 +46,14 @@
 (defn update-power-plant-order
   "Returns game after ordering the power-plants"
   [game]
-  (update-in game [:power-plants] power-plant-order (current-step game)))
-
-(defn remove-power-plant
-  "Returns game after removing power-plant from the current power-plant market"
-  ([game power-plant market]
-   (update-in game [:power-plants market] (partial remove #(= % power-plant))))
-  ([game power-plant]
-   (remove-power-plant game power-plant :market)))
-
-(defn drop-lowest-power-plant
-  "Removes lowest power-plant from market. Assumes power-plant market is in
-  order. Note, no replacement is drawn."
-  [game]
-  (update-in game [:power-plants :market] rest))
+  (update-power-plants game power-plant-order (current-step game)))
 
 (defn add-to-power-plant-market
   "Returns game after adding power-plant to the power plant market and
   re-ordering"
   [game power-plant]
   (-> game
-      (update-in [:power-plants :future] conj power-plant)
+      (update-power-plant-market game :future conj power-plant)
       (update-power-plant-order)))
 
 (defn handle-step-3-card
@@ -77,7 +64,9 @@
                  (assoc :step-3-card? true))]
     (if (= phase 2)
       (add-to-power-plant-market step-3-card)
-      (update-power-plant-order (drop-lowest-power-plant game)))))
+      (-> game
+          (drop-lowest-power-plant)
+          (update-power-plant-order)))))
 
 (defn draw-power-plant
   "Returns game after moving card from power-plant deck to market and
