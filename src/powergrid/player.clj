@@ -2,10 +2,9 @@
   (:require [powergrid.power-plants :refer [is-hybrid? accepts-resource?]]
             [powergrid.resource :refer [ResourceTrader]]))
 
-
 (defrecord Player [id ctx color money cities power-plants])
 
-(def colors [:red :green :blue :yellow :purple :black])
+(def colors #{:red :green :blue :yellow :purple :black})
 
 (defn new-player
   "Returns new player"

@@ -1,5 +1,7 @@
 (ns powergrid.resource)
 
+(def types #{:coal :oil :garbage :uranium})
+
 (def resupply-table
   {2 {:coal    {1 3, 2 4, 3 3}
       :oil     {1 2, 2 2, 3 4}
