@@ -5,6 +5,6 @@
             [powergrid.resource :as r]))
 
 (def messages
-  {[:phase2 :buy] nil
-   [:phase2 :bid] nil
-   [:phase2 :pass] nil})
+  {:buy nil
+   :bid nil
+   :pass nil})
