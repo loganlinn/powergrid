@@ -6,7 +6,7 @@
             [powergrid.message :as msg]
             [powergrid.messages.factory :as msgs]
             [io.pedestal.service.log :as log]
-            [slingshot.slingshot :refer [try+]])
+            [slingshot.slingshot :refer [try+ throw+]])
   (:import [powergrid.message ValidateError]))
 
 (defn purchase
@@ -214,4 +214,6 @@
           game)
         (catch ValidateError e
           (log/error e)
+          (if-not (:silent? e)
+            (throw+ e))
           game)))))
