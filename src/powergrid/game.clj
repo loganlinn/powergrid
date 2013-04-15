@@ -1,6 +1,5 @@
 (ns powergrid.game
-  (:require [powergrid.power-plants :refer [power-plant-cards
-                                            power-plant-number]]
+  (:require [powergrid.power-plants :as pp]
             [powergrid.player :as p]
             [powergrid.resource :refer [map->Resource]]
             [powergrid.util :refer [separate]]))
@@ -60,9 +59,9 @@
      :garbage (map->Resource {:market 6 :supply 18 :pricing std-pricing})
      :uranium (map->Resource {:market 2 :supply 10 :pricing uranium-pricing})}))
 
-(defn init-power-plant-deck
+(defn- init-power-plant-deck
   [power-plants num-players]
-  (let [[card-13 deck] (separate #(= (power-plant-number %) 13) power-plants)
+  (let [[card-13 deck] (separate #(= (pp/plant-number %) 13) power-plants)
         recombine #(concat card-13 % [(step-3-card)])]
     (->> deck
       (shuffle)
@@ -71,9 +70,9 @@
 
 (defn init-power-plants
   [num-players]
-  {:market (take 4 power-plant-cards)
-   :future (take 4 (drop 4 power-plant-cards))
-   :deck (init-power-plant-deck (drop 8 power-plant-cards) num-players)})
+  {:market (pp/initial-market)
+   :future (pp/initial-future)
+   :deck (init-power-plant-deck (pp/initial-deck) num-players)})
 
 (defprotocol PlayersMap
   (players-map [this]))
