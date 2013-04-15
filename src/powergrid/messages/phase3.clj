@@ -11,5 +11,5 @@
   (update-game [this game] game))
 
 (def messages
-  {:buy BuyMessage
+  {:buy map->BuyMessage
    :pass nil})

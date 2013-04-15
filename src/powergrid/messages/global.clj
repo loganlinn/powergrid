@@ -21,6 +21,6 @@
   {:register nil
    :resign nil
    :ready nil
-   :set-color SetColorMessage
+   :set-color map->SetColorMessage
    :set-region nil
    :move-resource nil})
