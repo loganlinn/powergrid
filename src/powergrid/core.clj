@@ -180,7 +180,7 @@
     (fn [game [resource amt]]
       (let [price (r/resource-price (get-resource game resource) amt)]
         (-> game
-            (update-resource resource r/send-resource :market (- amt))
+            (update-resource resource r/send-resource :market amt)
             (update-player player-key r/accept-resource resource amt)
             (purchase player-key price))))
     game
