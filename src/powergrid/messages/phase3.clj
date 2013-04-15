@@ -8,7 +8,7 @@
 
 (defrecord BuyResourcesMessage [player-id resources]
   Validated
-  (validate [this game])
+  (validate [this game] true)
   GameUpdate
   (update-game [this game] game))
 
