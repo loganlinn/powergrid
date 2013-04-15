@@ -93,41 +93,41 @@
               :bank 0}))
 
 (defn inc-phase
-  [state]
-  (update-in state [:phase] inc))
+  [game]
+  (update-in game [:phase] inc))
 
 (defn inc-step
-  [state]
-  (update-in state [:step] inc))
+  [game]
+  (update-in game [:step] inc))
 
 (defn inc-round
-  [state]
-  (update-in state [:round] inc))
+  [game]
+  (update-in game [:round] inc))
 
 (defn players
-  [state]
-  (vals (:players state {})))
+  [game]
+  (vals (:players game {})))
 
 (defn num-players
-  [state]
-  (count (:players state)))
+  [game]
+  (count (:players game)))
 
 (defn turns-remain?
   "Returns true if turns still exist in phase, otherwise false."
-  [state]
-  (boolean (seq (:turns state))))
+  [game]
+  (boolean (seq (:turns game))))
 
 (defn resource-market
   "Returns current resource market"
-  [state]
-  (get-in state [:resources :market]))
+  [game]
+  (get-in game [:resources :market]))
 
 (defn set-resource-market
-  "Updates current resource market in state"
-  [state resource-market]
-  (assoc-in state [:resources :market] resource-market))
+  "Updates current resource market in game"
+  [game resource-market]
+  (assoc-in game [:resources :market] resource-market))
 
 (defn resource-supply
   "Returns resource supply"
-  [state]
-  (get-in state [:resources :supply]))
+  [game]
+  (get-in game [:resources :supply]))
