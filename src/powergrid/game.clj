@@ -47,11 +47,10 @@
     5 15
     6 14))
 
-(def step-3-card (constantly :step-3))
-(defn step-3-card? [card] (= :step-3 card))
+(def step-3-card :step-3)
+(defn step-3-card? [card] (= step-3-card card))
 
-(defn init-resources
-  []
+(defn init-resources []
   (let [std-pricing (for [p (range 1 9) _ (range 3)] p)
         uranium-pricing '(1 2 3 4 5 6 7 8 12 14 15 16)]
     {:coal (map->Resource {:market 24 :supply 0 :pricing std-pricing})
@@ -62,7 +61,7 @@
 (defn- init-power-plant-deck
   [power-plants num-players]
   (let [[card-13 deck] (separate #(= (pp/plant-number %) 13) power-plants)
-        recombine #(concat card-13 % [(step-3-card)])]
+        recombine #(concat card-13 % [step-3-card])]
     (->> deck
       (shuffle)
       (drop (num-rand-removed-power-plants num-players))
