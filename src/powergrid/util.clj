@@ -12,5 +12,7 @@
   String
   (kw [this] (-> this clojure.string/lower-case keyword))
   clojure.lang.Keyword
-  (kw [this] this))
+  (kw [this] this)
+  nil
+  (kw [_] nil))
 
