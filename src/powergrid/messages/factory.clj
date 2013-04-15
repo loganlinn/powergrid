@@ -13,6 +13,7 @@
 
 (defn create-message
   "Returns a message instance for a given message if one is registered for the
-  message's topic and title. Otherwise returns original message"
+  message's topic and title. Otherwise returns nil"
   [{:keys [topic title] :as msg}]
-  ((get-in messages [(kw topic) (kw title)] identity) msg))
+  (when-let [ctor (get-in messages [(kw topic) (kw title)])]
+    (ctor msg)))

@@ -1,5 +1,5 @@
 (ns powergrid.messages.phase4
-  (:require [powergrid.message :refer [Message GameUpdate]]
+  (:require [powergrid.message :refer [Validated GameUpdate]]
             [powergrid.game :as g]
             [powergrid.player :as p]
             [powergrid.resource :as r]))

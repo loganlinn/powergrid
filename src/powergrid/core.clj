@@ -2,7 +2,12 @@
   (:require [powergrid.game :refer :all]
             [powergrid.util :refer [separate]]
             [powergrid.player :as p]
-            [powergrid.resource :as r]))
+            [powergrid.resource :as r]
+            [powergrid.message :as msg]
+            [powergrid.messages.factory :as msgs]
+            [io.pedestal.service.log :as log]
+            [slingshot.slingshot :refer [try+]])
+  (:import [powergrid.message ValidateError]))
 
 (defn purchase
   "Returns game after transferring amt Elektro from player to bank"
@@ -176,10 +181,17 @@
     game
     purchases))
 
+(defn resupply-rate
+  "Returns a map of resources to amounts to resupply for game"
+  [game]
+  (r/resupply-rate (num-players game)
+                   (current-step game)
+                   (resource-supply game)))
+
 (defn resupply-resources
   "Returns game after resupplying the resource market according to rules."
   ([game]
-   (resupply-resources (r/resupply-rate (num-players game) (current-step game) (resource-supply game))))
+   (resupply-resources (resupply-rate game)))
   ([game rate]
    (reduce
      (fn [game [resource amt]]
@@ -188,3 +200,18 @@
            (update-resource resource r/accept-resource :market amt)))
      game
      rate)))
+
+;; =============================================================================
+
+(defn apply-message
+  [game m]
+  (when-let [msg (msgs/create-message m)]
+    (when (satisfies? msg/Validated msg)
+      (try+
+        (msg/validate msg game)
+        (if (satisfies? msg/GameUpdate msg)
+          (msg/update-game msg game)
+          game)
+        (catch ValidateError e
+          (log/error e)
+          game)))))

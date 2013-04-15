@@ -1,7 +1,9 @@
 (ns powergrid.message)
 
-(defprotocol Message
+(defprotocol Validated
   (validate [msg game]))
+
+(defrecord ValidateError [msg silent])
 
 (defprotocol GameUpdate
   (update-game [update game]))
