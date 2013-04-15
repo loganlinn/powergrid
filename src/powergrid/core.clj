@@ -1,100 +1,29 @@
 (ns powergrid.core
   (:require [powergrid.game :refer :all]
             [powergrid.util :refer [separate]]
+            [powergrid.player :as p]
             [powergrid.power-plants :refer [is-hybrid? accepts-resource?]])
   (:import [powergrid.game Player Resource]))
 
 ;; TODO Remove
 (use 'clojure.pprint)
 
-(declare network-size)
-
 (defn max-network-size
   "Returns the maximum number of cities a single player has built"
   [game]
-  (apply max (map network-size (players game))))
+  (apply max (map p/network-size (players game))))
 
 (defn update-player
   "Returns game after updating player with f"
   [game player-key f & args]
   (apply update-in game [:players player-key] f args))
 
-(defn network-size
-  "Returns the number of cities in the player's network"
-  [player]
-  (count (:cities player)))
-
-(defn power-plants
-  "Returns the power-plants owned by player"
-  [player]
-  (keys (:power-plants player)))
-
-(defn max-power-plant
-  "Returns the highest power-plant number the player owns"
-  [player]
-  (when-let [players-plants (power-plants player)]
-    (apply max (map :number players-plants))))
-
-(defn update-money
-  "Updates player's money by amt"
-  [player amt]
-  (assoc player :money (+ (:money player 0) amt)))
-
 (defn purchase
   "Returns game after transferring amt Elektro from player to bank"
   [game player-key price]
   (-> game
-      (update-player player-key update-money (- price))
+      (update-player player-key p/update-money (- price))
       (update-in [:bank] (fnil + 0) price)))
-
-(defn add-power-plant
-  "Returns updated player after adding power-plant"
-  [player power-plant]
-  (assoc-in player [:power-plants power-plant] {}))
-
-(defn owns-city?
-  "Returns true if the player owns city, otherwise false"
-  [player city]
-  (contains? (:cities player) city))
-
-(defn owns-power-plant?
-  "Returns true if the player owns power-plant, otherwise false"
-  [player power-plant]
-  (contains? (:power-plants) power-plant))
-
-(defn assign-resource
-  "Returns updated player after storing resource in power plant.
-  Asserts that power-plant accepts resource and player owns it."
-  [player power-plant resource amount]
-  {:pre [(accepts-resource? power-plant resource)
-         (owns-power-plant? player power-plant)]}
-  (update-in player
-             [:power-plants power-plant resource]
-             (fnil #(+ % amount) 0)))
-
-(defn add-city
-  "Returns updated player after adding city"
-  [player city]
-  (update-in player [:cities] conj city))
-
-(defn can-buy-resource?
-  "Returns true if player can buy resource type, otherwise false. User must own
-  power plant that accepts the resource"
-  [player resource]
-  (some #(accepts-resource? % resource) (power-plants player)))
-
-(defn resource-capacities
-  "Returns map from resource to amount of remaining capacity for player based on
-  the power plants he owns and current resources"
-  [player]
-  (reduce
-    (fn [m [power-plant utilization]]
-      (let [avail-cap (- (* 2 (:capacity power-plant))
-                         (apply + (vals utilization)))]
-        (update-in m [(:resource power-plant)]
-                   (fnil #(+ avail-cap %) 0))))
-    {}
-    (:power-plants player)))
 
 (defn has-capacity?
   "Returns true if resources fits into capacities, otherwise false.
@@ -126,7 +55,7 @@
   among them with the largest-numbered power plant. Determine remaining player
   order using same rules"
   [players]
-  (let [order-cols (juxt network-size max-power-plant)]
+  (let [order-cols (juxt p/network-size p/max-power-plant)]
     (into {} (sort #(compare (order-cols (val %2))
                              (order-cols (val %1)))
                    players))))
@@ -302,15 +231,13 @@
   [game resource]
   (get-in game [:resources resource]))
 
-(defmulti accept-resource
-  "Returns trader after storing the resource in dest.
-  Methods assert that amt is valid."
-  (fn [trader dest amt] (class trader)))
-
-(defmulti send-resource
-  "Returns trader after removing resources from src.
-  Methods assert that amt is valid"
-  (fn [trader src amt] (class trader)))
+(defprotocol ResourceTrader
+  (accept-resource [trader dest amt]
+                   "Returns trader after storing the resource in dest.
+                   Methods assert that amt is valid")
+  (send-resource [trader src amt]
+                 "Returns trader after removing resources from src.
+                 Methods assert that amt is valid" ))
 
 (defn player-accept-resource*
   [power-plants resource amt]
@@ -329,24 +256,21 @@
                (- amt amt-stored)))
       power-plants)))
 
-(defmethod accept-resource Player
-  [player resource amt]
-  ;; TODO ADD resource to pp (hybrids last)
-  (update-in player [:power-plants] player-accept-resource* resource amt))
+(extend-protocol ResourceTrader
+  Player
+  (accept-resource [player resource amt]
+    (update-in player [:power-plants] player-accept-resource* resource amt))
+  (send-resource [player [power-plant resource] amt]
+    {:pre [(p/owns-power-plant? player power-plant)
+           (>= (get-in player [:power-plants power-plant resource]) amt)]}
+    (update-in player [:power-plants power-plant resource] - amt)))
 
-(defmethod send-resource Player
-  [player [power-plant resource] amt]
-  {:pre [(owns-power-plant? player power-plant)
-         (>= (get-in player [:power-plants power-plant resource]) amt)]}
-  (update-in player [:power-plants power-plant resource] - amt))
-
-(defmethod accept-resource Resource
-  [resource dest amt]
-  (update-in resource [dest] (fnil + 0) amt))
-
-(defmethod send-resource Resource
-  [resource dest amt]
-  (update-in resource [dest] (fnil - 0) amt))
+(extend-protocol ResourceTrader
+  Resource
+  (accept-resource [resource dest amt]
+    (update-in resource [dest] (fnil + 0) amt))
+  (send-resource [resource dest amt]
+    (update-in resource [dest] (fnil - 0) amt)))
 
 (defn purchase-resources
   "Returns game after processing player's purchases"
@@ -421,16 +345,15 @@
         plant3 {:number 12, :resource #{:coal :oil}, :capacity 2, :yield 2}
         [p1 p2] (players game)
         game (-> game
-                 (update-player p1 add-power-plant plant1)
-                 (update-player p1 add-power-plant plant3)
-                 (update-player p1 assign-resource plant1 :coal 5)
-                 (update-player p1 assign-resource plant3 :coal 1)
-                 ;(update-player p1 assign-resource plant3 :oil 1)
-                 (update-player p2 add-power-plant plant2)
-                 (update-player p2 add-city :norfolk))
+                 (update-player p1 p/add-power-plant plant1)
+                 (update-player p1 p/add-power-plant plant3)
+                 (update-player p1 p/assign-resource plant1 :coal 5)
+                 (update-player p1 p/assign-resource plant3 :coal 1)
+                 (update-player p2 p/add-power-plant plant2)
+                 (update-player p2 p/add-city :norfolk))
         [p1 p2] (players game)]
     (pprint game)
     (pprint (get-in game [:power-plants]))
     (pprint p1)
-    (pprint (resource-capacities p1)))
+    (pprint (p/resource-capacities p1)))
 
