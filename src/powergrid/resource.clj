@@ -58,4 +58,3 @@
    (reduce (fn [m [resource rates]]
              (assoc m resource (min (get rates step) (get supply resource))))
            {} (get resupply-table num-players))))
-

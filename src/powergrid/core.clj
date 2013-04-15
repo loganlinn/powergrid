@@ -4,9 +4,6 @@
             [powergrid.player :as p]
             [powergrid.resource :as r]))
 
-;; TODO Remove
-(use 'clojure.pprint)
-
 (defn update-player
   "Returns game after updating player with f"
   [game player-key f & args]
@@ -191,28 +188,13 @@
 
 (defn resupply-resources
   "Returns game after resupplying the resource market according to rules."
-  [{:keys [step] :as game}]
-  (let [rate (r/resupply-rate (num-players game) step (resource-supply game))]
-    ;; Subtract from supply, add to market
-    ))
-
-;; =====================
-
-#_(let [game (new-game [(p/new-player 1 nil :blue) (p/new-player 2 nil :black)])
-        plant1 {:number 36, :resource :coal, :capacity 3, :yield 7}
-        plant2 {:number 17, :resource :uranium, :capacity 1, :yield 2}
-        plant3 {:number 12, :resource #{:coal :oil}, :capacity 2, :yield 2}
-        [p1 p2] (players game)
-        game (-> game
-                 (update-player p1 p/add-power-plant plant1)
-                 (update-player p1 p/add-power-plant plant3)
-                 (update-player p1 p/assign-resource plant1 :coal 5)
-                 (update-player p1 p/assign-resource plant3 :coal 1)
-                 (update-player p2 p/add-power-plant plant2)
-                 (update-player p2 p/add-city :norfolk))
-        [p1 p2] (players game)]
-    (pprint game)
-    (pprint (get-in game [:power-plants]))
-    (pprint p1)
-    (pprint (p/resource-capacities p1)))
-
+  ([game]
+   (resupply-resources (r/resupply-rate (num-players game) (current-step game) (resource-supply game))))
+  ([game rate]
+   (reduce
+     (fn [game [resource amt]]
+       (-> game
+           (update-resource resource r/send-resource :supply amt)
+           (update-resource resource r/accept-resource :market amt)))
+     game
+     rate)))
