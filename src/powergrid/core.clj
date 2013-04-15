@@ -135,7 +135,6 @@
 (defmulti post-step current-step)
 (defmulti phase-complete? current-phase)
 (defmulti step-complete? current-step)
-(defmulti do-phase current-phase)
 
 (defmethod prep-phase :default [game] game)
 (defmethod post-phase :default [game] game)
@@ -195,31 +194,6 @@
   (>= (max-network-size game)
       (num-cities-trigger-end (num-players game))))
 
-(defn tick
-  [game]
-  (if (game-over? game)
-    game
-    (if (step-complete? game)
-      (recur (-> game post-step inc-step prep-step))
-      (if (phase-complete? game)
-        (recur (-> game post-phase inc-phase prep-phase))
-        (do-phase game)))))
-
-;; PHASE 1
-
-(defmethod do-phase 1
-  [game]
-  (update-player-order game))
-
-;; PHASE 2
-
-(defmethod do-phase 2
-  [game]
-  )
-
-;; PHASE 3
-
-
 (defn update-resource
   "Returns game after updating resource by applying f, args"
   [game resource f & args]
@@ -242,16 +216,6 @@
             (purchase player-key price))))
     game
     purchases))
-
-
-(defmethod do-phase 3
-  [game]
-  ;; use purchase-resources
-  )
-
-;; PHASE 4
-
-;; PHASE 5
 
 (defn resupply-resources
   "Returns game after resupplying the resource market according to rules."
