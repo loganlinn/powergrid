@@ -32,8 +32,9 @@
 (defrecord PowerCitiesMessage [player-id sale]
   Validated
   (validate [this game]
-    (and (every? valid-sale? sale)
-         (every? (partial can-sell? player-id) sale)))
+    (cond
+     (not (every? valid-sale? sale)) "Invalid sale"
+      (every? (partial can-sell? player-id) sale) "Invalid sale"))
 
   GameUpdate
   (update-game [this game] game))

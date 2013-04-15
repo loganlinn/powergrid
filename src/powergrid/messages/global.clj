@@ -1,10 +1,9 @@
 (ns powergrid.messages.global
-  (:require [powergrid.message :refer [Validated ->ValidateError GameUpdate]]
+  (:require [powergrid.message :refer [Validated GameUpdate]]
             [powergrid.game :as g]
             [powergrid.player :as p]
             [powergrid.resource :as r]
-            [powergrid.util :refer [kw]]
-            [slingshot.slingshot :refer [throw+]]))
+            [powergrid.util :refer [kw]]))
 
 (def ^:private player-color (comp p/color g/player))
 
@@ -13,9 +12,9 @@
   (validate [this game]
     (let [color (kw color)]
       (cond
-        (not (p/valid-color? color)) (throw+ (->ValidateError "Invalid color"))
-        (= color (player-color player-id)) (throw+ (->ValidateError "Already using that color" true))
-        (g/color-taken? game color) (throw+ (->ValidateError "Color taken")))))
+        (not (p/valid-color? color)) "Invalid color"
+        (= color (player-color player-id)) "Already using that color"
+        (g/color-taken? game color) "Color taken")))
   GameUpdate
   (update-game [this game]
     (g/update-player game player-id p/set-color color)))

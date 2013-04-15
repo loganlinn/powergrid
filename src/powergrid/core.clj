@@ -9,13 +9,6 @@
             [slingshot.slingshot :refer [try+ throw+]])
   (:import [powergrid.message ValidateError]))
 
-(defn purchase
-  "Returns game after transferring amt Elektro from player to bank"
-  [game player-key price]
-  (-> game
-      (update-player player-key p/update-money (- price))
-      (update-in [:bank] (fnil + 0) price)))
-
 (defn player-order
   "Returns sorted players map using the following rules:
   First player is player with most cities in network. If two or more players
@@ -32,54 +25,6 @@
   "Returns game after updating player order"
   [game]
   (update-players game player-order))
-
-(defn power-plant-order
-  "Returns power-plants after re-ordering"
-  [{:keys [market future] :as power-plants} step]
-  (let [[step-3-card combined] (separate (complement step-3-card?) (concat market future))
-        ordered (sort-by :number combined)
-        [market future] (split-at (if (= step 3) 6 4) ordered)]
-    (assoc power-plants
-           :market market
-           :future (concat future step-3-card))))
-
-(defn update-power-plant-order
-  "Returns game after ordering the power-plants"
-  [game]
-  (update-power-plants game power-plant-order (current-step game)))
-
-(defn add-to-power-plant-market
-  "Returns game after adding power-plant to the power plant market and
-  re-ordering"
-  [game power-plant]
-  (-> game
-      (update-power-plant-market game :future conj power-plant)
-      (update-power-plant-order)))
-
-(defn handle-step-3-card
-  "Returns game after handling the Step 3 card"
-  [{:keys [phase] :as game} step-3-card]
-  (let [game (-> game
-                 (update-in [:power-plants :deck] shuffle)
-                 (assoc :step-3-card? true))]
-    (if (= phase 2)
-      (add-to-power-plant-market step-3-card)
-      (-> game
-          (drop-lowest-power-plant)
-          (update-power-plant-order)))))
-
-(defn draw-power-plant
-  "Returns game after moving card from power-plant deck to market and
-  re-ordering"
-  [game]
-  (let [[draw & deck] (get-in game [:power-plants :deck])]
-    (if (step-3-card? draw)
-      (-> game
-          (assoc-in [:power-plants :deck] deck)
-          (handle-step-3-card draw))
-      (-> game
-          (assoc-in [:power-plants :deck] deck)
-          (add-to-power-plant-market draw)))))
 
 (defmulti prep-phase current-phase)
 (defmulti post-phase current-phase)

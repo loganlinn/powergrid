@@ -65,7 +65,7 @@
 
 (defn- init-power-plant-deck
   [power-plants num-players]
-  (let [[card-13 deck] (separate #(= (pp/plant-number %) 13) power-plants)
+  (let [[card-13 deck] (separate #{(pp/plant 13)} power-plants)
         recombine #(concat card-13 % [step-3-card])]
     (->> deck
       (shuffle)
@@ -152,6 +152,13 @@
   [game f & args]
   (assoc game :players (players-map (apply f (players game) args))))
 
+(defn purchase
+  "Returns game after transferring amt Elektro from player to bank"
+  [game player-id price]
+  (-> game
+      (update-player player-id p/update-money (- price))
+      (update-in [:bank] (fnil + 0) price)))
+
 ;; TURNS
 
 (defn turns [game] (game :turns))
@@ -182,22 +189,28 @@
 (defn remove-turn
   "Removes turn from turns in game state"
   [game turn]
-  (update-in game [:turns] (partial remove #(= turn %))))
+  (update-in game [:turns] (partial remove #{turn})))
 
 ;; AUCTIONING
 
 (defn has-auction?  [game] (contains? game :auction))
+
 (defn cleanup-auction [game] (dissoc game :auction))
 
-(defn set-power-plant-auction
+(defn init-power-plant-auction
   "Returns game after setting bidding in state" ;; TODO is player-id in turns?
   [game power-plant player-id starting-bid]
   (assoc game :auction {:plant power-plant
                         :player-id player-id ;; highest bidder
                         :price starting-bid
-                        :turns (remove #(= player-id %) (game :turns))}))
+                        :turns (remove #{player-id} (game :turns))}))
 
-(defn auction-complete?
+(defn auction-needed?
+  "Returns true if a auction is necessary to buy power-plant"
+  [game]
+  (turns-remain? game))
+
+(defn bidders-remain?
   "Returns true if current auction has completed"
   [game]
   (empty? (get-in game [:auction :turns])))
@@ -241,7 +254,7 @@
   (update-in game [:messages] conj msg))
 
 (defn reserve-message
-  "Returns [game msg] where msg is next message in queue (or nil if empty) and 
+  "Returns [game msg] where msg is next message in queue (or nil if empty) and
   game has had the message removed from msg queue."
   [game]
   [(update-in game [:messages] pop) (peek (game :messages))])
@@ -251,6 +264,14 @@
 (defn valid-power-plant-market?
   [market]
   (or (= :market market) (= :future market)))
+
+(defn power-plants
+  "Returns the current or future power plant market"
+  ([game]
+   (power-plants game :market))
+  ([game market]
+   {:pre [(valid-power-plant-market? market)]}
+   (get-in game [:power-plants market])))
 
 (defn update-power-plants
   "Returns game after updating power-plant markets via (apply f power-plants args)"
@@ -267,7 +288,7 @@
   "Returns game after removing power-plant from the current power-plant market"
   ([game power-plant market]
    {:pre [(valid-power-plant-market? market)]}
-   (update-in game [:power-plants market] (partial remove #(= % power-plant))))
+   (update-in game [:power-plants market] (partial remove #{power-plant})))
   ([game power-plant]
    (remove-power-plant game power-plant :market)))
 
@@ -276,3 +297,56 @@
   order. Note, no replacement is drawn."
   [game]
   (update-in game [:power-plants :market] rest))
+
+(defn power-plant-buyable?
+  [game power-plant]
+  (some #{power-plant} (power-plants game :market)))
+
+(defn power-plant-order
+  "Returns power-plants after re-ordering"
+  [{:keys [market future] :as power-plants} step]
+  (let [[step-3-card combined] (separate (complement step-3-card?) (concat market future))
+        ordered (sort-by :number combined)
+        [market future] (split-at (if (= step 3) 6 4) ordered)]
+    (assoc power-plants
+           :market market
+           :future (concat future step-3-card))))
+
+(defn update-power-plant-order
+  "Returns game after ordering the power-plants"
+  [game]
+  (update-power-plants game power-plant-order (current-step game)))
+
+(defn add-to-power-plant-market
+  "Returns game after adding power-plant to the power plant market and
+  re-ordering"
+  [game power-plant]
+  (-> game
+      (update-power-plant-market game :future conj power-plant)
+      (update-power-plant-order)))
+
+(defn- handle-step-3-card
+  "Returns game after handling the Step 3 card"
+  [{:keys [phase] :as game} step-3-card]
+  (let [game (-> game
+                 (update-in [:power-plants :deck] shuffle)
+                 (assoc :step-3-card? true))]
+    (if (= phase 2)
+      (add-to-power-plant-market step-3-card)
+      (-> game
+          (drop-lowest-power-plant)
+          (update-power-plant-order)))))
+
+(defn draw-power-plant
+  "Returns game after moving card from power-plant deck to market and
+  re-ordering"
+  [game]
+  (let [[draw & deck] (get-in game [:power-plants :deck])]
+    (if (step-3-card? draw)
+      (-> game
+          (assoc-in [:power-plants :deck] deck)
+          (handle-step-3-card draw))
+      (-> game
+          (assoc-in [:power-plants :deck] deck)
+          (add-to-power-plant-market draw)))))
+
