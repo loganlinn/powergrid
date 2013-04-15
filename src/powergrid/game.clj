@@ -2,10 +2,10 @@
   (:require [powergrid.power-plants :refer [power-plant-cards
                                             power-plant-number]]
             [powergrid.player :as p]
+            [powergrid.resource :refer [map->Resource]]
             [powergrid.util :refer [separate]]))
 
 (defrecord Game [id phase step round resources power-plants players turns bank])
-(defrecord Resource [market supply pricing])
 
 (defn num-regions-chosen
   "Returns the number of regions chosen on map"
@@ -51,22 +51,14 @@
 (def step-3-card (constantly :step-3))
 (defn step-3-card? [card] (= :step-3 card))
 
-(defn resource-price
-  "Returns the price of purchasing amt of resource in current market.
-  Asserts that amt is not larger than currently available in market."
-  [{:keys [market pricing] :as resource} amt]
-  {:pre [(>= market amt)]}
-  (let [unavail (- (count pricing) market)]
-    (apply + (take amt (drop unavail pricing)))))
-
 (defn init-resources
   []
   (let [std-pricing (for [p (range 1 9) _ (range 3)] p)
         uranium-pricing '(1 2 3 4 5 6 7 8 12 14 15 16)]
-    {:coal (->Resource 24 0 std-pricing)
-     :oil  (->Resource 18 6 std-pricing)
-     :garbage (->Resource 6 18 std-pricing)
-     :uranium (->Resource 2 10 uranium-pricing)}))
+    {:coal (map->Resource {:market 24 :supply 0 :pricing std-pricing})
+     :oil  (map->Resource {:market 18 :supply 6 :pricing std-pricing})
+     :garbage (map->Resource {:market 6 :supply 18 :pricing std-pricing})
+     :uranium (map->Resource {:market 2 :supply 10 :pricing uranium-pricing})}))
 
 (defn init-power-plant-deck
   [power-plants num-players]
@@ -139,4 +131,3 @@
   "Returns resource supply"
   [state]
   (get-in state [:resources :supply]))
-

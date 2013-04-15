@@ -2,9 +2,7 @@
   (:require [powergrid.game :refer :all]
             [powergrid.util :refer [separate]]
             [powergrid.player :as p]
-            [powergrid.resource :refer [ResourceTrader] :as r])
-  (:import [powergrid.game Resource]
-           [powergrid.player Player]))
+            [powergrid.resource :as r]))
 
 ;; TODO Remove
 (use 'clojure.pprint)
@@ -232,19 +230,12 @@
   [game resource]
   (get-in game [:resources resource]))
 
-(extend-type Resource
-  ResourceTrader
-  (accept-resource [resource dest amt]
-    (update-in resource [dest] (fnil + 0) amt))
-  (send-resource [resource dest amt]
-    (update-in resource [dest] (fnil - 0) amt)))
-
 (defn purchase-resources
   "Returns game after processing player's purchases"
   [game player-key purchases]
   (reduce
     (fn [game [resource amt]]
-      (let [price (resource-price (get-resource game resource) amt)]
+      (let [price (r/resource-price (get-resource game resource) amt)]
         (-> game
             (update-resource resource r/send-resource :market (- amt))
             (update-player player-key r/accept-resource resource amt)
@@ -262,44 +253,10 @@
 
 ;; PHASE 5
 
-(def resource-table
-  {2 {:coal    {1 3, 2 4, 3 3}
-      :oil     {1 2, 2 2, 3 4}
-      :garbage {1 1, 2 2, 3 3}
-      :uranium {1 1, 2 1, 3 1}}
-   3 {:coal    {1 4, 2 5, 3 3}
-      :oil     {1 2, 2 3, 3 4}
-      :garbage {1 1, 2 2, 3 3}
-      :uranium {1 1, 2 1, 3 1}}
-   4 {:coal    {1 5, 2 6, 3 4}
-      :oil     {1 3, 2 4, 3 5}
-      :garbage {1 2, 2 3, 3 4}
-      :uranium {1 1, 2 2, 3 2}}
-   5 {:coal    {1 5, 2 7, 3 5}
-      :oil     {1 4, 2 5, 3 6}
-      :garbage {1 3, 2 3, 3 5}
-      :uranium {1 2, 2 3, 3 2}}
-   6 {:coal    {1 7, 2 9, 3 6}
-      :oil     {1 5, 2 6, 3 7}
-      :garbage {1 3, 2 5, 3 6}
-      :uranium {1 2, 2 3, 3 3}}})
-
-(defn resupply-rate
-  "Returns a map of resource to amount to re-supply the resource market with,
-  optionally taking into account the current resource supply"
-  ([num-players step]
-   (reduce (fn [m [resource rates]]
-             (assoc m resource (get rates step)))
-           {} (get resource-table num-players)))
-  ([num-players step supply]
-   (reduce (fn [m [resource rates]]
-             (assoc m resource (min (get rates step) (get supply resource))))
-           {} (get resource-table num-players))))
-
 (defn resupply-resources
   "Returns game after resupplying the resource market according to rules."
   [{:keys [step] :as game}]
-  (let [rate (resupply-rate (num-players game) step (resource-supply game))]
+  (let [rate (r/resupply-rate (num-players game) step (resource-supply game))]
     ;; Subtract from supply, add to market
     ))
 
