@@ -99,6 +99,33 @@
     {}
     (:power-plants player)))
 
+(defn has-capacity?
+  "Returns true if resources fits into player's capacities, otherwise false.
+  resources is a map of resource to quantity."
+  ([player resource amt]
+   (has-capacity? player {resource amt}))
+  ([player resources]
+   (let [capacities (resource-capacities player)
+         capacities (reduce (fn [c [r n]] (assoc c r (- (get c r 0) n)))
+                            capacities resources)
+         ;; Handle hybrids
+         capacities (reduce
+                      (fn [c [s cap]]
+                        (let [[c* cap*]
+                              (reduce
+                                (fn [[c cap] r]
+                                  (let [x (get c r)]
+                                    (if (and (neg? x) (> cap x))
+                                      [(assoc c r 0) (+ cap x)]
+                                      [c cap])))
+                                [c cap]
+                                s)]
+                          (assoc c* s cap*)))
+                      capacities
+                      (filter (comp set? key) capacities))]
+     (not-any? neg? (vals capacities)))))
+
+
 (declare distribute-resource)
 (extend-type Player
   ResourceTrader

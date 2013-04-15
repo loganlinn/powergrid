@@ -135,3 +135,8 @@
   "Returns resource supply"
   [game]
   (get-in game [:resources :supply]))
+
+(defn max-network-size
+  "Returns the maximum number of cities a single player has built"
+  [game]
+  (apply max (map p/network-size (players game))))

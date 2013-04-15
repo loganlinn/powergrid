@@ -7,11 +7,6 @@
 ;; TODO Remove
 (use 'clojure.pprint)
 
-(defn max-network-size
-  "Returns the maximum number of cities a single player has built"
-  [game]
-  (apply max (map p/network-size (players game))))
-
 (defn update-player
   "Returns game after updating player with f"
   [game player-key f & args]
@@ -23,29 +18,6 @@
   (-> game
       (update-player player-key p/update-money (- price))
       (update-in [:bank] (fnil + 0) price)))
-
-(defn has-capacity?
-  "Returns true if resources fits into capacities, otherwise false.
-  resources is a map of resource to quantity."
-  [capacities resources]
-  (let [capacities (reduce (fn [c [r n]] (assoc c r (- (get c r 0) n)))
-                           capacities resources)
-        ;; Handle hybrids
-        capacities (reduce
-                     (fn [c [s cap]]
-                       (let [[c* cap*]
-                             (reduce
-                               (fn [[c cap] r]
-                                 (let [x (get c r)]
-                                   (if (and (neg? x) (> cap x))
-                                     [(assoc c r 0) (+ cap x)]
-                                     [c cap])))
-                               [c cap]
-                               s)]
-                         (assoc c* s cap*)))
-                     capacities
-                     (filter (comp set? key) capacities))]
-    (not-any? neg? (vals capacities))))
 
 (defn player-order
   "Returns sorted players map using the following rules:
