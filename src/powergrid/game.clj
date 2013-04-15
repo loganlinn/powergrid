@@ -197,7 +197,6 @@
                         :price starting-bid
                         :turns (remove #(= player-id %) (game :turns))}))
 
-
 (defn auction-complete?
   "Returns true if current auction has completed"
   [game]
@@ -207,7 +206,8 @@
   "Returns [updated-game bidder] where bidder was removed from turn queue
   of updated-game"
   [game]
-  [(update-in [])])
+  [(update-in game [:auction :turns] rest)
+   (first (get-in game [:auction :turns]))])
 
 ;; RESOURCES
 
