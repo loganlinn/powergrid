@@ -201,3 +201,9 @@
 (defn receive-message
   [game msg]
   (update-in game [:messages] conj msg))
+
+(defn reserve-message
+  "Returns [game msg] where msg is next message in queue (or nil if empty) and 
+  game has had the message removed from msg queue."
+  [game]
+  [(update-in game [:messages] pop) (peek (game :messages))])

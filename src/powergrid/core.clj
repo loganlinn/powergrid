@@ -215,3 +215,11 @@
             (throw+ e))
           game)))))
 
+(defn apply-messages
+  "Returns game after processing messages recursively"
+  [game]
+  (loop [game game]
+    (let [[game msg] (reserve-message game)]
+      (if msg
+        (recur (apply-message game msg))
+        game))))
