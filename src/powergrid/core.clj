@@ -2,8 +2,9 @@
   (:require [powergrid.game :refer :all]
             [powergrid.util :refer [separate]]
             [powergrid.player :as p]
-            [powergrid.power-plants :refer [is-hybrid? accepts-resource?]])
-  (:import [powergrid.game Player Resource]))
+            [powergrid.resource :refer [ResourceTrader] :as r])
+  (:import [powergrid.game Resource]
+           [powergrid.player Player]))
 
 ;; TODO Remove
 (use 'clojure.pprint)
@@ -231,42 +232,8 @@
   [game resource]
   (get-in game [:resources resource]))
 
-(defprotocol ResourceTrader
-  (accept-resource [trader dest amt]
-                   "Returns trader after storing the resource in dest.
-                   Methods assert that amt is valid")
-  (send-resource [trader src amt]
-                 "Returns trader after removing resources from src.
-                 Methods assert that amt is valid" ))
-
-(defn player-accept-resource*
-  [power-plants resource amt]
-  ;; TODO generalize this type of iteration?
-  (loop [power-plants (sort-by is-hybrid? power-plants)
-         [[plant inventory] & r] power-plants
-         amt amt]
-    (if (and plant (pos? amt))
-      (let [space-left (if (accepts-resource? plant resource)
-                         (- (* 2 (:capacity plant))
-                            (get inventory resource 0))
-                         0)
-            amt-stored (min space-left amt)]
-        (recur (assoc power-plants plant (update-in inventory resource + amt-stored))
-               r
-               (- amt amt-stored)))
-      power-plants)))
-
-(extend-protocol ResourceTrader
-  Player
-  (accept-resource [player resource amt]
-    (update-in player [:power-plants] player-accept-resource* resource amt))
-  (send-resource [player [power-plant resource] amt]
-    {:pre [(p/owns-power-plant? player power-plant)
-           (>= (get-in player [:power-plants power-plant resource]) amt)]}
-    (update-in player [:power-plants power-plant resource] - amt)))
-
-(extend-protocol ResourceTrader
-  Resource
+(extend-type Resource
+  ResourceTrader
   (accept-resource [resource dest amt]
     (update-in resource [dest] (fnil + 0) amt))
   (send-resource [resource dest amt]
@@ -279,8 +246,8 @@
     (fn [game [resource amt]]
       (let [price (resource-price (get-resource game resource) amt)]
         (-> game
-            (update-resource resource send-resource :market (- amt))
-            (update-player player-key accept-resource resource amt)
+            (update-resource resource r/send-resource :market (- amt))
+            (update-player player-key r/accept-resource resource amt)
             (purchase player-key price))))
     game
     purchases))
@@ -317,7 +284,6 @@
       :garbage {1 3, 2 5, 3 6}
       :uranium {1 2, 2 3, 3 3}}})
 
-
 (defn resupply-rate
   "Returns a map of resource to amount to re-supply the resource market with,
   optionally taking into account the current resource supply"
@@ -339,7 +305,7 @@
 
 ;; =====================
 
-#_(let [game (new-game [(new-player 1 nil :blue) (new-player 2 nil :black)])
+#_(let [game (new-game [(p/new-player 1 nil :blue) (p/new-player 2 nil :black)])
         plant1 {:number 36, :resource :coal, :capacity 3, :yield 7}
         plant2 {:number 17, :resource :uranium, :capacity 1, :yield 2}
         plant3 {:number 12, :resource #{:coal :oil}, :capacity 2, :yield 2}

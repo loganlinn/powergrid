@@ -1,5 +1,23 @@
 (ns powergrid.player
-  (:require [powergrid.power-plants :refer [accepts-resource?]]))
+  (:require [powergrid.power-plants :refer [is-hybrid? accepts-resource?]]
+            [powergrid.resource :refer [ResourceTrader]]))
+
+
+(defrecord Player [id ctx color money cities power-plants])
+
+(def colors [:red :green :blue :yellow :purple :black])
+
+(defn new-player
+  "Returns new player"
+  [id ctx color]
+  (map->Player {:id id
+                :ctx ctx
+                :color color
+                :money 50
+                :cities #{}
+                :power-plants {}}))
+
+(defn player-key [player] (:id player))
 
 (defn network-size
   "Returns the number of cities in the player's network"
@@ -81,3 +99,29 @@
     {}
     (:power-plants player)))
 
+(declare distribute-resource)
+(extend-type Player
+  ResourceTrader
+  (accept-resource [player resource amt]
+    (update-in player [:power-plants] distribute-resource resource amt))
+  (send-resource [player [power-plant resource] amt]
+    {:pre [(owns-power-plant? player power-plant)
+           (>= (get-in player [:power-plants power-plant resource]) amt)]}
+    (update-in player [:power-plants power-plant resource] - amt)))
+
+(defn- distribute-resource
+  [power-plants resource amt]
+  ;; TODO generalize this type of iteration?
+  (loop [power-plants (sort-by is-hybrid? power-plants)
+         [[plant inventory] & r] power-plants
+         amt amt]
+    (if (and plant (pos? amt))
+      (let [space-left (if (accepts-resource? plant resource)
+                         (- (* 2 (:capacity plant))
+                            (get inventory resource 0))
+                         0)
+            amt-stored (min space-left amt)]
+        (recur (assoc power-plants plant (update-in inventory resource + amt-stored))
+               r
+               (- amt amt-stored)))
+      power-plants)))

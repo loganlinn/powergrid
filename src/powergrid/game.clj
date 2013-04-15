@@ -1,9 +1,9 @@
 (ns powergrid.game
   (:require [powergrid.power-plants :refer [power-plant-cards
                                             power-plant-number]]
+            [powergrid.player :as p]
             [powergrid.util :refer [separate]]))
 
-(defrecord Player [id ctx color money cities power-plants])
 (defrecord Game [id phase step round resources power-plants players turns bank])
 (defrecord Resource [market supply pricing])
 
@@ -83,21 +83,9 @@
    :future (take 4 (drop 4 power-plant-cards))
    :deck (init-power-plant-deck (drop 8 power-plant-cards) num-players)})
 
-(defn new-player
-  "Returns new player"
-  [id ctx color]
-  (map->Player {:id id
-                :ctx ctx
-                :color color
-                :money 50
-                :cities #{}
-                :power-plants {}}))
-
-(defn player-key [player] (:id player))
-
 (defn players-map
   [players]
-  (apply hash-map (mapcat (juxt player-key identity) players)))
+  (apply hash-map (mapcat (juxt p/player-key identity) players)))
 
 (defn new-game
   "Returns new Game for vector of players"
