@@ -136,10 +136,7 @@
   (when-let [msg (msgs/create-message m)]
     (when (satisfies? msg/Validated msg)
       (try+
-        (msg/validate msg game)
-
-        ;; TODO ensure msg is authorized (check users match)
-
+        (msg/throw-validation-errors msg game)
         (if (satisfies? msg/GameUpdate msg)
           (msg/update-game msg game)
           game)

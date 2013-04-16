@@ -1,5 +1,6 @@
 (ns powergrid.message
-  (:require [powergrid.game :as g]))
+  (:require [powergrid.game :as g]
+            [slingshot.slingshot :refer [throw+]]))
 
 (def topic :topic)
 (def title :title)
@@ -11,14 +12,17 @@
 
 (defn base-validate
   [{:keys [player-id] :as msg} game]
+
+  ;; TODO ensure msg is authorized (check users match)
+
   (cond
     (not (g/player player-id)) "Invalid player"))
 
-(defn do-validation
-  [game msg]
-  (let [bv (base-validate msg game)
-        v (validate msg game)]
-    ()))
+(defn throw-validation-errors
+  [msg game]
+  (when-let [error (or (base-validate msg game)
+                       (validate msg game))]
+    (throw+ (->ValidateError error))))
 
 (defprotocol GameUpdate
   (update-game [update game]))

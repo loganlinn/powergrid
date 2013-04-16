@@ -25,18 +25,18 @@
 
   GameUpdate
   (update-game [this game]
-    (let [player (g/player player-id)
-          plant (pp/plant plant-id)]
+    (let [plant (pp/plant plant-id)]
       (if (g/auction-needed? game)
         (-> game
-            (g/init-power-plant-auction))
+            (g/init-power-plant-auction plant player-id amt))
         (-> game
-            (purchase-power-plant plant player amt)
-            )))))
+            (purchase-power-plant plant player-id amt))))))
 
 (defmethod passable? BuyPowerPlantMessage
   [game _]
   (not= (g/current-round 1)))
+
+;; auctions always end on a pass
 
 (defrecord BidPowerPlantMessage [player-id plant-id bid]
   Validated
