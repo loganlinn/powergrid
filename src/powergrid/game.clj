@@ -86,7 +86,7 @@
   clojure.lang.IPersistentMap
   (players-map [this] this)
   clojure.lang.Seqable
-  (players-map [this] (apply hash-map (mapcat (juxt p/player-key identity) this))))
+  (players-map [this] (apply hash-map (mapcat (juxt p/id identity) this))))
 
 (defn new-game
   "Returns new Game for vector of players"
@@ -145,8 +145,8 @@
 
 (defn update-player
   "Returns game after updating player via (apply f player args)"
-  [game player-key f & args]
-  (apply update-in game [:players player-key] f args))
+  [game player-id f & args]
+  (apply update-in game [:players player-id] f args))
 
 (defn update-players
   "Returns game after updating players via (apply f players args)"

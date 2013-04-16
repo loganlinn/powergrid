@@ -98,14 +98,14 @@
 
 (defn purchase-resources
   "Returns game after processing player's purchases"
-  [game player-key purchases]
+  [game player-id purchases]
   (reduce
     (fn [game [resource amt]]
       (let [price (r/resource-price (get-resource game resource) amt)]
         (-> game
             (update-resource resource r/send-resource :market amt)
-            (update-player player-key r/accept-resource resource amt)
-            (purchase player-key price))))
+            (update-player player-id r/accept-resource resource amt)
+            (purchase player-id price))))
     game
     purchases))
 

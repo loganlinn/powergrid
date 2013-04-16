@@ -9,15 +9,15 @@
 
 (defn- queue
   [m]
-  (if (isa? PersistentQueue)
-    m
-    (reduce conj PersistentQueue/EMPTY m)))
+  (if-not (instance? PersistentQueue)
+    (reduce conj PersistentQueue/EMPTY (or m '()))
+    m))
 
 (defn new-auction
   "Returns a new auction"
   [m]
   (let [auction (map->Auction (merge defaults m))
-        bidders (auction :bidders)]
+        bidders (:bidders auction )]
     (assoc auction :bidders (queue bidders))))
 
 (defn bidders-remain?
@@ -40,9 +40,9 @@
 (defn accept-bid
   "Returns updated auction after accepting bid from current bidder (f"
   [{:keys [bidders] :as auction} player-id bid]
-  {:pre [(>= bid (min-bid auction))
-         (= player-id (peek bidders))]}
-  (-> auction
-      (assoc :price bid)
-      (assoc :player-id player-id)
-      (assoc :bidders (conj (pop bidders) (peek bidders)))))
+  {:pre [(>= bid (min-bid auction))]}
+  (assoc auction
+         :price bid
+         :player-id player-id
+         :bidders (conj (pop bidders) (peek bidders))))
+

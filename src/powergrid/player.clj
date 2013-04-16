@@ -16,7 +16,7 @@
                 :cities #{}
                 :power-plants {}}))
 
-(defn player-key [player] (:id player))
+(defn id [player] (:id player))
 
 (def color :color)
 
