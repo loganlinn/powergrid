@@ -20,6 +20,11 @@
         bidders (:bidders auction )]
     (assoc auction :bidders (queue bidders))))
 
+(defn current-bidder
+  "Returns the current bidder"
+  [auction]
+  (peek (:bidders auction)))
+
 (defn min-bid
   "Returns the minimum bid for item currently at auction"
   [{:keys [price min-increment]}]

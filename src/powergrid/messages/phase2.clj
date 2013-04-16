@@ -45,9 +45,10 @@
     (let [plant (pp/plant plant-id)
           auction (g/current-auction game)]
       (cond
-        (not plant) "Invalid plant"
+        (not plant) "Unknown plant"
         (not auction) "Invalid auction"
         (not= (auction :item) plant) "Invalid plant"
+        (not= player-id (a/current-bidder auction)) "Not your bid"
         (< bid (a/min-bid auction)) (str "Minimum bid is " (a/min-bid auction)))))
 
   GameUpdate
@@ -61,7 +62,9 @@
       (if (a/completed? auction)
         (-> game
             (g/remove-turn (:player auction))
-            (purchase-power-plant (:player auction))
+            (purchase-power-plant (pp/plant plant-id)
+                                  (:player auction)
+                                  (:price auction))
             (g/cleanup-auction))
         (g/set-auction game auction))
       game)))
