@@ -1,7 +1,8 @@
 (ns powergrid.messages.phase2
-  (:require [powergrid.message :refer [Validated GameUpdate passable?]]
+  (:require [powergrid.message :refer [Validated GameUpdate Passable]]
             [powergrid.game :as g]
             [powergrid.player :as p]
+            [powergrid.auction :as a]
             [powergrid.power-plants :as pp]
             [powergrid.resource :as r]))
 
@@ -30,22 +31,33 @@
         (-> game
             (g/init-power-plant-auction plant player-id amt))
         (-> game
-            (purchase-power-plant plant player-id amt))))))
-
-(defmethod passable? BuyPowerPlantMessage
-  [game _]
-  (not= (g/current-round 1)))
+            (purchase-power-plant plant player-id amt)))))
+  Passable
+  (passable? [this game] (not= (g/current-round 1)))
+  (pass [this game]
+    game))
 
 ;; auctions always end on a pass
 
 (defrecord BidPowerPlantMessage [player-id plant-id bid]
   Validated
-  (validate [this game] true)
-  GameUpdate
-  (update-game [this game] game
-    ))
+  (validate [this game]
+    (let [plant (pp/plant plant-id)
+          auction (g/current-auction game)]
+      (cond
+        (not plant) "Invalid plant"
+        (not auction) "Invalid auction"
+        (not= (auction :item) plant) "Invalid plant"
+        (< bid (a/min-bid auction)) (str "Minimum bid is " (a/min-bid auction)))))
 
-(defmethod passable? BidPowerPlantMessage [_ _] true)
+  GameUpdate
+  (update-game [this game]
+    game)
+
+  Passable
+  (passable? [_ _] true)
+  (pass [this game] game))
+
 
 (def messages
   {:buy map->BuyPowerPlantMessage

@@ -10,33 +10,25 @@
 (defprotocol Validated
   (validate [msg game] "Retruns string of validation message if msg is invalid, otherwise nil"))
 
+(defprotocol GameUpdate
+  (update-game [update game]))
+
+(defprotocol Passable
+  (passable? [this game] "Returns true if passing is allowed")
+  (pass [this game] "Returns (modified) game from passing msg"))
+
+(extend-protocol Passable
+  clojure.lang.IPersistentMap
+  (passable? [_ _] false)
+  (pass [_ game] game))
+
 (defn base-validate
   [{:keys [player-id] :as msg} game]
-
   ;; TODO ensure msg is authorized (check users match)
-
   (cond
     (not (g/player player-id)) "Invalid player"))
 
 (defn throw-validation-errors
   [msg game]
-  (when-let [error (or (base-validate msg game)
-                       (validate msg game))]
+  (when-let [error (or (base-validate msg game) (validate msg game))]
     (throw+ (->ValidateError error))))
-
-(defprotocol GameUpdate
-  (update-game [update game]))
-
-(defmulti passable? (fn [game msg-type] msg-type))
-
-(defmethod passable? :default [_ _] false)
-
-(comment
-  ;; TODO
-  (defevent EventName fields
-    {:passable? passable
-     :pre (fn [this game] true)}
-    [game player]
-
-    )
-  )

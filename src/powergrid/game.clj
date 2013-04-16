@@ -1,10 +1,11 @@
 (ns powergrid.game
   (:require [powergrid.power-plants :as pp]
             [powergrid.player :as p]
+            [powergrid.auction :as a]
             [powergrid.resource :refer [map->Resource]]
             [powergrid.util :refer [separate]]))
 
-(defrecord Game [id phase step round resources power-plants players turns messages bank])
+(defrecord Game [id phase step round resources power-plants players turns auction messages bank])
 
 (defn num-regions-chosen
   "Returns the number of regions chosen on map"
@@ -197,30 +198,20 @@
 
 (defn cleanup-auction [game] (dissoc game :auction))
 
-(defn init-power-plant-auction
-  "Returns game after setting bidding in state" ;; TODO is player-id in turns?
-  [game power-plant player-id starting-bid]
-  (assoc game :auction {:plant power-plant
-                        :player-id player-id ;; highest bidder
-                        :price starting-bid
-                        :turns (remove #{player-id} (game :turns))}))
+(defn current-auction [game] (game :auction))
 
+(defn init-power-plant-auction
+  "Returns game after setting bidding in state"
+  [game power-plant player-id starting-bid]
+  (assoc game :auction
+         (a/new-auction {:item power-plant
+                         :player-id player-id
+                         :price starting-bid
+                         :bidders (remove #{player-id} (game :turns))})))
 (defn auction-needed?
   "Returns true if a auction is necessary to buy power-plant"
   [game]
   (turns-remain? game))
-
-(defn bidders-remain?
-  "Returns true if current auction has completed"
-  [game]
-  (empty? (get-in game [:auction :turns])))
-
-(defn reserve-bidder
-  "Returns [updated-game bidder] where bidder was removed from turn queue
-  of updated-game"
-  [game]
-  [(update-in game [:auction :turns] rest)
-   (first (get-in game [:auction :turns]))])
 
 ;; RESOURCES
 
