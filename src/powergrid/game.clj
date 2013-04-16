@@ -162,7 +162,12 @@
 
 ;; TURNS
 
-(defn turns [game] (game :turns))
+(defn turns [game] (:turns game))
+
+(defn current-turn
+  "Returns id of player who's turn it currently is"
+  [game]
+  (first (turns game)))
 
 (defn turns-remain?
   "Returns true if turns still exist in phase, otherwise false."
@@ -189,16 +194,19 @@
 
 (defn remove-turn
   "Removes turn from turns in game state"
-  [game turn]
-  (update-in game [:turns] (partial remove #{turn})))
+  [game player-id]
+  (update-in game [:turns] (partial remove #{player-id})))
 
 ;; AUCTIONING
+
 
 (defn has-auction?  [game] (contains? game :auction))
 
 (defn cleanup-auction [game] (dissoc game :auction))
 
 (defn current-auction [game] (game :auction))
+
+(defn set-auction [game auction] (assoc game :auction auction))
 
 (defn init-power-plant-auction
   "Returns game after setting bidding in state"

@@ -9,7 +9,7 @@
 
 (defn- queue
   [m]
-  (if-not (instance? PersistentQueue)
+  (if-not (instance? PersistentQueue m)
     (reduce conj PersistentQueue/EMPTY (or m '()))
     m))
 
@@ -37,7 +37,13 @@
       (and (= (count bidders) 1)
            (= (first bidders) player-id))))
 
-(defn accept-bid
+(defn pass
+  "Returns updated auction after passing for current bidder"
+  [auction]
+  (when auction
+    (update-in auction [:bidders] pop)))
+
+(defn bid
   "Returns updated auction after accepting bid from current bidder (f"
   [{:keys [bidders] :as auction} player-id bid]
   {:pre [(>= bid (min-bid auction))]}
@@ -45,4 +51,3 @@
          :price bid
          :player-id player-id
          :bidders (conj (pop bidders) (peek bidders))))
-

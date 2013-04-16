@@ -35,7 +35,7 @@
   Passable
   (passable? [this game] (not= (g/current-round 1)))
   (pass [this game]
-    game))
+    (g/remove-turn game player-id)))
 
 ;; auctions always end on a pass
 
@@ -56,7 +56,15 @@
 
   Passable
   (passable? [_ _] true)
-  (pass [this game] game))
+  (pass [this game]
+    (if-let [auction (a/pass (g/current-auction game))]
+      (if (a/completed? auction)
+        (-> game
+            (g/remove-turn (:player auction))
+            (purchase-power-plant (:player auction))
+            (g/cleanup-auction))
+        (g/set-auction game auction))
+      game)))
 
 
 (def messages
