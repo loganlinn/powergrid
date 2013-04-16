@@ -5,12 +5,19 @@
 (def empty-queue clojure.lang.PersistentQueue/EMPTY)
 
 (fact bid
-  (let [i (new-auction {:player-id 3 :bidders (conj empty-queue 1 2 3) :price 200})
-        f (new-auction {:player-id 1 :bidders (conj empty-queue 2 3 1) :price 210})]
-    (bid i 1 210) => f))
+  (let [a0 (new-auction {:player-id 3 :bidders (conj empty-queue 1 2 3) :price 200})
+        a1 (bid a0 1 210)]
+    (:price a1) => 210
+    (:player-id a1) => 1
+    (= '(2 3 1) (seq (:bidders a1))) => truthy
+    (completed? a1) => falsey))
+
+(fact "forces queue"
+  (let [a (new-auction {:player-id 3 :bidders [1 2 3] :price 200})]
+    (instance? clojure.lang.PersistentQueue (:bidders a))
+    (= (conj empty-queue 1 2 3) (:bidders a))))
 
 (fact completed?
-  (let [i (new-auction {:player-id 3 :bidders (conj empty-queue 1 2 3) :price 200})
-        f (new-auction {:player-id 1 :bidders (conj empty-queue 2 3 1) :price 210})]
-    (bid i 1 210) => f))
+  (let [a (pass (new-auction {:player-id 3 :bidders (conj empty-queue 1 3) :price 200}))]
+    (completed? a) => truthy))
 

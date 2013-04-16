@@ -20,11 +20,6 @@
         bidders (:bidders auction )]
     (assoc auction :bidders (queue bidders))))
 
-(defn bidders-remain?
-  "Returns true if current auction has completed"
-  [auction]
-  (empty? (:bidders auction)))
-
 (defn min-bid
   "Returns the minimum bid for item currently at auction"
   [{:keys [price min-increment]}]
