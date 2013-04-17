@@ -25,7 +25,7 @@
 (defn set-color
   [player color]
   {:pre [(valid-color? color)]}
-  (assoc :color color))
+  (assoc player :color color))
 
 (defn network-size
   "Returns the number of cities in the player's network"
@@ -160,8 +160,8 @@
 (defn- distribute-resource
   [power-plants resource amt]
   ;; TODO generalize this type of iteration?
-  (loop [power-plants (sort-by is-hybrid? power-plants)
-         [[plant inventory] & r] power-plants
+  (loop [power-plants power-plants
+         [[plant inventory] & r] (sort-by (comp is-hybrid? key) power-plants)
          amt amt]
     (if (and plant (pos? amt))
       (let [space-left (if (accepts-resource? plant resource)
@@ -169,7 +169,8 @@
                             (get inventory resource 0))
                          0)
             amt-stored (min space-left amt)]
-        (recur (assoc power-plants plant (update-in inventory resource + amt-stored))
+        (recur (assoc power-plants plant
+                      (update-in inventory [resource] (fnil + 0) amt-stored))
                r
                (- amt amt-stored)))
       power-plants)))
