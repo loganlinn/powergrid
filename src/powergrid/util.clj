@@ -40,6 +40,6 @@
 
 (defn make-queue
   "Returns a queue with els"
-  [& els]
-  (queue els))
+  ([] (queue))
+  ([& els] (queue els)))
 
