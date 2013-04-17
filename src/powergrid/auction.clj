@@ -1,17 +1,11 @@
 (ns powergrid.auction
-  (:import [clojure.lang PersistentQueue]))
+  (:require [powergrid.util :refer [queue]]))
 
 (defrecord Auction [item player-id bidders price min-increment])
 
 (def ^:private defaults
   {:min-increment 1
    :price 0})
-
-(defn- queue
-  [m]
-  (if-not (instance? PersistentQueue m)
-    (reduce conj PersistentQueue/EMPTY (or m '()))
-    m))
 
 (defn new-auction
   "Returns a new auction"

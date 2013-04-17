@@ -3,7 +3,7 @@
             [powergrid.player :as p]
             [powergrid.auction :as a]
             [powergrid.resource :refer [map->Resource]]
-            [powergrid.util :refer [separate]]))
+            [powergrid.util :refer [separate queue]]))
 
 (defrecord Game [id phase step round resources power-plants players turns auction messages bank])
 
@@ -99,7 +99,8 @@
               :power-plants (init-power-plants (count players))
               :players (players-map players)
               :turns  '()
-              :messages clojure.lang.PersistentQueue/EMPTY
+              :messages {:in (queue)
+                         :out (queue)}
               :bank 0}))
 
 (defn current-step  [game] (:step game))
@@ -186,12 +187,6 @@
     (reverse (keys (game :players)))
     (keys (game :players))))
 
-(defn reserve-turn
-  "Returns [updated-game turn] where turn was removed from turn queue
-  of updated-game"
-  [game]
-  [(update-in game [:turns] rest) (first (game :turns))])
-
 (defn remove-turn
   "Removes turn from turns in game state"
   [game player-id]
@@ -250,13 +245,11 @@
 
 (defn receive-message
   [game msg]
-  (update-in game [:messages] conj msg))
+  (update-in game [:messages :in] conj msg))
 
-(defn reserve-message
-  "Returns [game msg] where msg is next message in queue (or nil if empty) and
-  game has had the message removed from msg queue."
-  [game]
-  [(update-in game [:messages] pop) (peek (game :messages))])
+(defn send-message
+  [game msg]
+  (update-in game [:messages :out] conj msg))
 
 ;; POWER PLANTS
 
