@@ -5,7 +5,7 @@
 (fact new-auction "defaults"
   (let [a (new-auction {:player-id 3 :bidders [1 2 3] :price 200})]
     (instance? clojure.lang.PersistentQueue (:bidders a))
-    (= (conj empty-queue 1 2 3) (:bidders a))
+    (= (conj clojure.lang.PersistentQueue/EMPTY 1 2 3) (:bidders a))
     (number? (:price a)) => true
     (number? (:min-increment a)) => true))
 
