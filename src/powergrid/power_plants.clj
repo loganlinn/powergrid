@@ -55,7 +55,7 @@
 (defn plant [plant-num]
   (power-plants plant-num))
 
-(defn min-price [plant] (plant :number))
+(defn min-price [plant] (:number plant))
 
 (defn is-hybrid?
   "Returns true if power-plant is hybrid, otherwise false"
