@@ -8,11 +8,11 @@
   (queue) => PersistentQueue/EMPTY
   (queue []) => PersistentQueue/EMPTY
   (queue '()) => PersistentQueue/EMPTY
-  (queue (make-queue 1 2 3)) => (make-queue 1 2 3)
+  (queue (conj PersistentQueue/EMPTY :a)) => (conj PersistentQueue/EMPTY :a)
   (peek (queue [1 2])) => 1
   (peek (queue '(1 2))) => 1
-  (pop (queue [1 2])) => (queue [2])
-  (pop (queue '(1 2))) => (queue '(2)))
+  (pop (queue [1 2])) => (conj PersistentQueue/EMPTY 2)
+  (pop (queue '(1 2))) => (conj PersistentQueue/EMPTY 2))
 
 (fact make-queue
   (make-queue) => PersistentQueue/EMPTY
