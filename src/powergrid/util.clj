@@ -25,7 +25,7 @@
   (to-queue [q] q)
 
   Seqable
-  (to-queue [q] (reduce conj PersistentQueue/EMPTY q))
+  (to-queue [q] (into PersistentQueue/EMPTY q))
 
   String
   (kw [s] (-> s clojure.string/lower-case keyword))
@@ -41,5 +41,5 @@
 (defn make-queue
   "Returns a queue with els"
   [& els]
-  (reduce conj PersistentQueue/EMPTY els))
+  (queue els))
 
