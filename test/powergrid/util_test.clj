@@ -17,3 +17,9 @@
 (fact make-queue
   (make-queue) => PersistentQueue/EMPTY
   (make-queue 1 2 3) => (queue [1 2 3]))
+
+(fact kw
+  (kw nil) => nil
+  (kw "blue") => :blue
+  (kw "BLUE") => :blue
+  (kw :blue) => :blue)
