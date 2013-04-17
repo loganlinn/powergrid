@@ -3,6 +3,12 @@
             [powergrid.util :refer :all])
   (:import [clojure.lang PersistentQueue]))
 
+(fact separate
+  (separate #{3} (range 5)) => ['(3) '(0 1 2 4)]
+  (separate #{3 4} (range 5)) => ['(3 4) '(0 1 2)]
+  (separate odd? (range 6)) => ['(1 3 5) '(0 2 4)]
+  (separate even? (range 6)) => ['(0 2 4) '(1 3 5)])
+
 (fact queue
   (queue nil) => nil
   (queue) => PersistentQueue/EMPTY
