@@ -7,6 +7,8 @@
             [powergrid.resource :as r]))
 
 (defn purchase-power-plant
+  "Returns game after performing the necssary tasks for player-id to purchase
+  power-plant. Asserts that power-plant is in the market."
   [game power-plant player-id amt]
   {:pre [(g/power-plant-buyable? game power-plant)]}
   (-> game
@@ -28,16 +30,23 @@
   (update-game [this game]
     (let [plant (pp/plant plant-id)]
       (if (g/auction-needed? game)
+        (let [auction (a/new-auction {:item plant
+                                      :player-id player-id
+                                      :price amt
+                                      :bidders (remove #{player-id} (g/turns game))})]
+          (-> game
+              (g/set-auction auction)
+              (g/expect-message BidPowerPlantMessage
+                                (a/current-bidder auction)
+                                {:plant-id plant-id})))
         (-> game
-            (g/init-power-plant-auction plant player-id amt))
-        (-> game
-            (purchase-power-plant plant player-id amt)))))
+            (purchase-power-plant plant player-id amt)
+            (g/advance-turns)))))
+
   Passable
   (passable? [this game] (not= (g/current-round 1)))
   (pass [this game]
     (g/remove-turn game player-id)))
-
-;; auctions always end on a pass
 
 (defrecord BidPowerPlantMessage [player-id plant-id bid]
   Validated
@@ -61,14 +70,13 @@
     (if-let [auction (a/pass (g/current-auction game))]
       (if (a/completed? auction)
         (-> game
-            (g/remove-turn (:player auction))
             (purchase-power-plant (pp/plant plant-id)
                                   (:player auction)
                                   (:price auction))
+            (g/remove-turn (:player auction))
             (g/cleanup-auction))
         (g/set-auction game auction))
       game)))
-
 
 (def messages
   {:buy map->BuyPowerPlantMessage

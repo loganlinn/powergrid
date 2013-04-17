@@ -192,6 +192,11 @@
   [game player-id]
   (update-in game [:turns] (partial remove #{player-id})))
 
+(defn advance-turns
+  "Removes the current player from the turns list"
+  [game]
+  (update-in game [:turns] rest))
+
 ;; AUCTIONING
 
 
@@ -203,14 +208,6 @@
 
 (defn set-auction [game auction] (assoc game :auction auction))
 
-(defn init-power-plant-auction
-  "Returns game after setting bidding in state"
-  [game power-plant player-id starting-bid]
-  (assoc game :auction
-         (a/new-auction {:item power-plant
-                         :player-id player-id
-                         :price starting-bid
-                         :bidders (remove #{player-id} (game :turns))})))
 (defn auction-needed?
   "Returns true if a auction is necessary to buy power-plant"
   [game]
@@ -243,19 +240,39 @@
   [game resource f & args]
   (apply update-in game [:resources resource] f args))
 
+;; MESSAGES
+
 (defn receive-message
+  "Returns game after putting msg into inbound message queue"
   [game msg]
   (update-in game [:messages :in] conj msg))
+
+(defn send-message
+  "Returns game after putting msg into outbound message queue"
+  [game msg]
+  (update-in game [:messages :out] conj msg))
+
+(defn expect-message
+  "Specifies the next message the game should receive. Returns updated game."
+  [game msg-type player-id & props]
+  (assoc-in game [:messages :expecting] {:type msg-type
+                                         :player-id player-id
+                                         :props props}))
+(defn has-messages?
+  ""
+  [game]
+  (get-in game [:messages :in]))
+
+(defn expecting-message?
+  "Returns true if there is a message that we are expeting, otherwise false"
+  [game]
+  (get-in game [:messages :expecting]))
 
 (defn reserve-message
   "Returns [game msg] where msg is next message in queue (or nil if empty) and
   game has had the message removed from msg queue."
   [game]
   [(update-in game [:messages :in] pop) (peek (get-in game [:messages :in]))])
-
-(defn send-message
-  [game msg]
-  (update-in game [:messages :out] conj msg))
 
 ;; POWER PLANTS
 

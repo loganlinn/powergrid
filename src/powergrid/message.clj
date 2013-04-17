@@ -26,7 +26,8 @@
   [{:keys [player-id] :as msg} game]
   ;; TODO ensure msg is authorized (check users match)
   (cond
-    (not (g/player player-id)) "Invalid player"))
+    (not (g/player player-id)) "Invalid player"
+    (= player-id (g/current-turn game)) "Not your turn"))
 
 (defn throw-validation-errors
   [msg game]
