@@ -22,6 +22,12 @@
   (is-hybrid? (plant 5)) => truthy
   (is-hybrid? (plant 3)) => falsey)
 
+(fact consumes-resources?
+  (consumes-resources? (plant 3)) => truthy
+  (consumes-resources? (plant 5)) => truthy
+  (consumes-resources? (plant 13)) => falsey
+  (consumes-resources? (plant 50)) => falsey)
+
 (fact min-price
   (min-price (plant 3)) => 3
   (min-price (plant 50)) => 50)
