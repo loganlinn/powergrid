@@ -22,6 +22,18 @@
   (is-hybrid? (plant 5)) => truthy
   (is-hybrid? (plant 3)) => falsey)
 
+(fact "sort-by is-hybrid?"
+  (fact (first (sort-by is-hybrid? [...pp1... ...pp2... ...pp3...])) => ...pp1...
+    (provided
+      (is-hybrid? ...pp1...) => false
+      (is-hybrid? ...pp2...) => true
+      (is-hybrid? ...pp3...) => true))
+  (fact (last (sort-by is-hybrid? [...pp1... ...pp2... ...pp3...])) => ...pp1...
+    (provided
+      (is-hybrid? ...pp1...) => true
+      (is-hybrid? ...pp2...) => false
+      (is-hybrid? ...pp3...) => false)))
+
 (fact consumes-resources?
   (consumes-resources? (plant 3)) => truthy
   (consumes-resources? (plant 5)) => truthy
