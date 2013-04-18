@@ -222,9 +222,11 @@
 
 (defn contains-resource?
   "Returns true if there is at least amt of resource in the resource market"
-  [game resource amt]
-  {:pre [(not (neg? amt))]}
-  (>= (:market (resource game resource) 0) amt))
+  ([game resource amt]
+   {:pre [(not (neg? amt))]}
+   (>= (:market (resource game resource) 0) amt))
+  ([game resources]
+   (every? #(contains-resource? game (key %) (val %)) resources)))
 
 (defn resource-supply
   "Returns map of resource to amount left in supply"

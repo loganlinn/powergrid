@@ -14,7 +14,8 @@
       (every? r/types (keys resources)) "Invalid resources specified"
       (every? pos? (vals resources)) "Invalid resource amount"
       (= player-id (g/current-turn game)) "Not your turn"
-      (p/has-capacity? (g/player player-id) resources) "Insufficient capacity"
+      (not (p/has-capacity? (g/player player-id) resources)) "Insufficient power-plant capacity"
+      (not (g/contains-resource? game resources)) "Insufficient resources in market"
       ))
 
   GameUpdate
