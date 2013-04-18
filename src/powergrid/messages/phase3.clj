@@ -29,9 +29,10 @@
   (validate [this game]
     (let [player (g/player player-id)]
       (cond
-        (empty? resources) "Invalid resources specified"
-        (every? r/types (keys resources)) "Invalid resources specified"
-        (every? (not neg?) (vals resources)) "Invalid resource amount"
+        (or (not (map? resources))
+            (empty? resources)) "Invalid resources"
+        (not (every? r/types (keys resources))) "Unknown resource(s) specified"
+        (some neg? (vals resources)) "Invalid resource amount"
         (= player-id (g/current-turn game)) "Not your turn"
         (not (p/has-capacity? player resources)) "Insufficient power-plant capacity"
         (not (g/contains-resource? game resources)) "Insufficient resources in market"
