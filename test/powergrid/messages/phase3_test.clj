@@ -4,6 +4,15 @@
             [powergrid.message :refer :all]
             [powergrid.game :as g]
             [powergrid.player :as p]
+            [powergrid.resource :as r]
             [powergrid.power-plants :as pp]))
+
+(fact total-price
+  (total-price ...game... {:coal 5 :oil 3}) => 15
+  (provided
+    (g/resource ...game... :coal) => ...coal...
+    (g/resource ...game... :oil) => ...oil...
+    (r/resource-price ...coal... 5) => 10
+    (r/resource-price ...oil... 3) => 5))
 
 
