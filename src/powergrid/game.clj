@@ -2,7 +2,7 @@
   (:require [powergrid.power-plants :as pp]
             [powergrid.player :as p]
             [powergrid.auction :as a]
-            [powergrid.resource :refer [map->Resource]]
+            [powergrid.resource :as r]
             [powergrid.util :refer [separate queue]]))
 
 (defrecord Game [id phase step round resources power-plants players turns auction messages bank])
@@ -59,10 +59,10 @@
 (defn init-resources []
   (let [std-pricing (for [p (range 1 9) _ (range 3)] p)
         uranium-pricing '(1 2 3 4 5 6 7 8 12 14 15 16)]
-    {:coal (map->Resource {:market 24 :supply 0 :pricing std-pricing})
-     :oil  (map->Resource {:market 18 :supply 6 :pricing std-pricing})
-     :garbage (map->Resource {:market 6 :supply 18 :pricing std-pricing})
-     :uranium (map->Resource {:market 2 :supply 10 :pricing uranium-pricing})}))
+    {:coal (r/map->Resource {:market 24 :supply 0 :pricing std-pricing})
+     :oil  (r/map->Resource {:market 18 :supply 6 :pricing std-pricing})
+     :garbage (r/map->Resource {:market 6 :supply 18 :pricing std-pricing})
+     :uranium (r/map->Resource {:market 2 :supply 10 :pricing uranium-pricing})}))
 
 (defn- init-power-plant-deck
   [power-plants num-players]
@@ -215,20 +215,21 @@
 
 ;; RESOURCES
 
-(defn resource-market
-  "Returns current resource market"
-  [game]
-  (get-in game [:resources :market]))
+(defn resource
+  [game resource]
+  {:pre [(r/types resource)]}
+  (get-in game [:resources resource]))
 
-(defn set-resource-market
-  "Updates current resource market in game"
-  [game resource-market]
-  (assoc-in game [:resources :market] resource-market))
+(defn contains-resource?
+  "Returns true if there is at least amt of resource in the resource market"
+  [game resource amt]
+  {:pre [(not (neg? amt))]}
+  (>= (:market (resource game resource) 0) amt))
 
 (defn resource-supply
-  "Returns resource supply"
+  "Returns map of resource to amount left in supply"
   [game]
-  (get-in game [:resources :supply]))
+  (into {} (for [[rtype r] (:resources game)] [rtype (:supply r)])))
 
 (defn max-network-size
   "Returns the maximum number of cities a single player has built"
