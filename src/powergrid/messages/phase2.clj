@@ -32,12 +32,13 @@
   (pass [_ game]
     (if-let [auction (a/pass (g/current-auction game))]
       (if (a/completed? auction)
-        (-> game
+        (let [power-plant (pp/plant plant-id)]
+         (-> game
             (g/remove-power-plant :market power-plant)
             (g/update-player player-id p/add-power-plant power-plant)
-            (g/purchase player-id price)
+            (g/purchase player-id (:price auction))
             (g/remove-turn player-id)
-            (g/cleanup-auction))
+            (g/cleanup-auction)))
         (g/set-auction game auction))
       (g/remove-turn game player-id)))
 
@@ -52,5 +53,4 @@
         (g/set-auction game auction)))))
 
 (def messages
-  {:buy map->BuyPowerPlantMessage
-   :bid map->BidPowerPlantMessage})
+  {:bid map->BidPowerPlantMessage})

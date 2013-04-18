@@ -6,19 +6,22 @@
             [powergrid.player :as p]
             [powergrid.power-plants :as pp]))
 
-(defn mock-buy
+(defn mock-bid
   [& args]
-  (let [m (map->BuyPowerPlantMessage {:player-id 1 :plant-d 3 :amt 3})]
+  (let [m (map->BidPowerPlantMessage {:player-id 1 :plant-d 3 :bid 3})]
     (if (seq args) (apply assoc m args) m)))
 
-(fact BuyPowerPlantMessage
-
+(fact BidPowerPlantMessage
   (fact passable?
     (fact "1st round"
-      (passable? (mock-buy) ...game...) => falsey
-      (provided (g/current-round ...game...) => 1))
+      (passable? (mock-bid) ...game...) => falsey
+      (provided
+        (g/has-auction? ...game...) => false
+        (g/current-round ...game...) => 1))
     (fact "not 1st round"
-      (passable? (mock-buy) ...game...) => truthy
-      (provided (g/current-round ...game...) => 2)))
-  )
+      (passable? (mock-bid) ...game...) => truthy
+      (provided
+        (g/has-auction? ...game...) => false
+        (g/current-round ...game...) => 2))))
+
 
