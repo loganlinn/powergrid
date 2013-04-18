@@ -31,7 +31,7 @@
       (cond
         (empty? resources) "Invalid resources specified"
         (every? r/types (keys resources)) "Invalid resources specified"
-        (every? pos? (vals resources)) "Invalid resource amount"
+        (every? (not neg?) (vals resources)) "Invalid resource amount"
         (= player-id (g/current-turn game)) "Not your turn"
         (not (p/has-capacity? player resources)) "Insufficient power-plant capacity"
         (not (g/contains-resource? game resources)) "Insufficient resources in market"
