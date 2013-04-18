@@ -6,13 +6,21 @@
             [powergrid.power-plants :as pp]
             [powergrid.resource :as r]))
 
-(defn- new-auction
-  [game plant]
-  (a/new-auction
-    {:item plant :bidders (g/turns game)}
-    (pp/min-price plant)))
+(defn new-auction
+  "Returns new auction new auction for power-plant"
+  [game plant-id]
+  (let [plant (pp/plant plant-id)]
+    (a/new-auction
+      {:item plant :bidders (g/turns game)}
+      (pp/min-price plant))))
 
-(defn- complete-auction
+(defn auction
+  "Returns current auction if it exists, otherwise a new auction"
+  [game plant-id]
+  (or (g/current-auction game)
+      (new-auction game plant-id)))
+
+(defn complete-auction
   "Updates and returns game for a finshed auction"
   [game {:keys [item price player-id]}]
   (-> game
@@ -31,9 +39,10 @@
         (not plant) "Unknown plant"
         (not (g/power-plant-buyable? game plant)) "Cannot purchase that power-plant"
         (not= player-id (a/current-bidder auction)) "Not your bid"
-        (or (g/has-auction? game) (= player-id (g/current-turn game))) "Not your bid"
+        (or auction (= player-id (g/current-turn game))) "Not your bid"
         (not (p/can-afford? (g/player player-id) bid)) "Insufficient funds"
-        (< bid (a/min-bid auction)) (str "Minimum bid is " (a/min-bid auction)))))
+        (and auction (< bid (a/min-bid auction))) (str "Minimum bid is " (a/min-bid auction))
+        (or auction (< bid plant-id)) (str "Minimum bid is " plant-id))))
 
   Passable
   (passable? [_ game]
@@ -49,9 +58,7 @@
   GameUpdate
   (update-game [_ game]
     (let [plant (pp/plant plant-id)
-          auction (-> (or (g/current-auction game)
-                          (new-auction game plant))
-                      (a/bid player-id bid))]
+          auction (a/bid (auction game plant-id) player-id bid)]
       (if (a/completed? auction)
         (complete-auction game auction)
         (g/set-auction game auction)))))
