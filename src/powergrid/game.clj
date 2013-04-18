@@ -5,7 +5,7 @@
             [powergrid.resource :as r]
             [powergrid.util :refer [separate queue]]))
 
-(defrecord Game [id phase step round resources power-plants players turns auction messages bank])
+(defrecord Game [id phase step round resources power-plants cities players turns auction messages bank])
 
 (defn num-regions-chosen
   "Returns the number of regions chosen on map"
@@ -368,3 +368,9 @@
           (assoc-in [:power-plants :deck] deck)
           (add-to-power-plant-market draw)))))
 
+;; CITIES
+
+(defn cities
+  "Returns cities for game"
+  [game]
+  (:cities game))
