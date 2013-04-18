@@ -36,8 +36,8 @@
   ResourceTrader
   (accept-resource [resource dest amt]
     (update-in resource [dest] (fnil + 0) amt))
-  (send-resource [resource dest amt]
-    (update-in resource [dest] (fnil - 0) amt)))
+  (send-resource [resource src amt]
+    (update-in resource [src] (fnil - 0) amt)))
 
 (defn resource-price
   "Returns the price of purchasing amt of resource in current market.
