@@ -12,6 +12,16 @@
     {:item plant :bidders (g/turns game)}
     (pp/min-price plant)))
 
+(defn- complete-auction
+  "Updates and returns game for a finshed auction"
+  [game {:keys [item price player-id]}]
+  (-> game
+      (g/remove-power-plant :market item)
+      (g/update-player player-id p/add-power-plant item)
+      (g/purchase player-id price)
+      (g/remove-turn player-id)
+      (g/cleanup-auction)))
+
 (defrecord BidPowerPlantMessage [player-id plant-id bid]
   Validated
   (validate [_ game]
@@ -32,13 +42,7 @@
   (pass [_ game]
     (if-let [auction (a/pass (g/current-auction game))]
       (if (a/completed? auction)
-        (let [power-plant (pp/plant plant-id)]
-         (-> game
-            (g/remove-power-plant :market power-plant)
-            (g/update-player player-id p/add-power-plant power-plant)
-            (g/purchase player-id (:price auction))
-            (g/remove-turn player-id)
-            (g/cleanup-auction)))
+        (complete-auction game auction)
         (g/set-auction game auction))
       (g/remove-turn game player-id)))
 
@@ -49,7 +53,7 @@
                           (new-auction game plant))
                       (a/bid player-id bid))]
       (if (a/completed? auction)
-        (finalize-auction game auction)
+        (complete-auction game auction)
         (g/set-auction game auction)))))
 
 (def messages
