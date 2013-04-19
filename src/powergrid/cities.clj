@@ -17,7 +17,7 @@
 (defn connection-cost
   "Returns price to add a connection in city."
   [cities city]
-  (case (num-connections cities city)
+  (case (int (num-connections cities city))
     0 10, 1 15, 2 20))
 
 (defn player-in-city?
