@@ -1,5 +1,5 @@
 (ns powergrid.player
-  (:require [powergrid.power-plants :refer [is-hybrid? accepts-resource?]]
+  (:require [powergrid.power-plants :as pp]
             [powergrid.resource :refer [ResourceTrader]]))
 
 (defrecord Player [id ctx color money cities power-plants])
@@ -38,17 +38,9 @@
   (keys (:power-plants player)))
 
 (defn power-plant-resources
-  "Returns a map of resource-type to amt for resources on player's power-plant."
+  "Returns a map of resource-type to amt on player's power-plant."
   [player power-plant]
   (get-in player [:power-plants power-plant] {}))
-
-(defn has-plant-resources?
-  "Returns true if user has the resources specified on the plant.
-  resources maps resource-type to amt"
-  [player plant resources]
-  (let [r (power-plant-resources player plant)]
-    (every? (fn [[resource amt]]
-              (>= (r resource 0) amt)))))
 
 (defn max-power-plant
   "Returns the highest power-plant number the player owns"
@@ -75,7 +67,7 @@
   "Returns true if player can buy resource type, otherwise false. User must own
   power plant that accepts the resource"
   [player resource]
-  (some #(accepts-resource? % resource) (power-plants player)))
+  (some #(pp/accepts-resource? % resource) (power-plants player)))
 
 (defn add-power-plant
   "Returns updated player after adding power-plant"
@@ -92,11 +84,20 @@
   [player power-plant]
   (contains? (:power-plants player) power-plant))
 
+(defn can-power-plant?
+  "Returns true if player has sufficient resources on plant to power it, if any
+  are needed. Will always return true for green power-plants, assuming player owns it"
+  [player power-plant]
+  (when (owns-power-plant? player power-plant)
+    (or (not (pp/consumes-resources? power-plant))
+        (>= (reduce + (vals (power-plant-resources player power-plant)))
+            (:capacity power-plant)))))
+
 (defn assign-resource
   "Returns updated player after storing resource in power plant.
   Asserts that power-plant accepts resource and player owns it."
   [player power-plant resource amount]
-  {:pre [(accepts-resource? power-plant resource)
+  {:pre [(pp/accepts-resource? power-plant resource)
          (owns-power-plant? player power-plant)]}
   (update-in player
              [:power-plants power-plant resource]
@@ -161,10 +162,10 @@
   [power-plants resource amt]
   ;; TODO generalize this type of iteration?
   (loop [power-plants power-plants
-         [[plant inventory] & r] (sort-by (comp is-hybrid? key) power-plants)
+         [[plant inventory] & r] (sort-by (comp pp/is-hybrid? key) power-plants)
          amt amt]
     (if (and plant (pos? amt))
-      (let [space-left (if (accepts-resource? plant resource)
+      (let [space-left (if (pp/accepts-resource? plant resource)
                          (- (* 2 (:capacity plant))
                             (get inventory resource 0))
                          0)

@@ -97,3 +97,15 @@
               (accept-resource :oil 4)
               (send-resource [pp :oil] 2))]
     (power-plant-resources p pp) => {:oil 2}))
+
+(fact can-power-plant?
+  (fact "ecological"
+    (let [plant (pp/plant 13)]
+     (can-power-plant? ...player... plant) => truthy
+     (provided
+       (owns-power-plant? ...player... plant) => true)))
+  (future-fact "can power")
+  (future-fact "can power, hybrid")
+  (future-fact "can't power"))
+
+(future-fact has-capacity?)
