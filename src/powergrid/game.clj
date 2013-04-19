@@ -370,7 +370,19 @@
 
 ;; CITIES
 
+(defn max-city-connections
+  "Returns the maximum number of connections allowed in a city based on current
+  step of game"
+  [game]
+  (current-step game))
+
 (defn cities
   "Returns cities for game"
   [game]
   (:cities game))
+
+(defn connections
+  "Returns map of connections for game's board"
+  [game]
+  ;; TODO set connections in new-game based on board-type
+  (:connections game))
