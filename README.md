@@ -1,5 +1,7 @@
 # powergrid
 
+[![Build Status](https://travis-ci.org/loganlinn/powergrid.png?branch=master)](https://travis-ci.org/loganlinn/powergrid)
+
 [Power Grid](http://www.riograndegames.com/games.html?id=5) board game in
 Clojure! **Work in progress**
 
