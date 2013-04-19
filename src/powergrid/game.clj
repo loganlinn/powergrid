@@ -5,7 +5,7 @@
             [powergrid.resource :as r]
             [powergrid.util :refer [separate queue]]))
 
-(defrecord Game [id phase step round resources power-plants cities players turns auction messages bank])
+(defrecord Game [id phase step round resources power-plants cities players turns auction bank])
 
 (defn num-regions-chosen
   "Returns the number of regions chosen on map"
@@ -99,8 +99,6 @@
               :power-plants (init-power-plants (count players))
               :players (players-map players)
               :turns  '()
-              :messages {:in (queue)
-                         :out (queue)}
               :bank 0}))
 
 (defn current-step  [game] (:step game))
@@ -242,40 +240,6 @@
   "Returns game after updating resource via (apply f resource args)"
   [game resource f & args]
   (apply update-in game [:resources resource] f args))
-
-;; MESSAGES
-
-(defn receive-message
-  "Returns game after putting msg into inbound message queue"
-  [game msg]
-  (update-in game [:messages :in] conj msg))
-
-(defn send-message
-  "Returns game after putting msg into outbound message queue"
-  [game msg]
-  (update-in game [:messages :out] conj msg))
-
-(defn expect-message
-  "Specifies the next message the game should receive. Returns updated game."
-  [game msg-type player-id & props]
-  (assoc-in game [:messages :expecting] {:type msg-type
-                                         :player-id player-id
-                                         :props props}))
-(defn has-messages?
-  ""
-  [game]
-  (get-in game [:messages :in]))
-
-(defn expecting-message?
-  "Returns true if there is a message that we are expeting, otherwise false"
-  [game]
-  (get-in game [:messages :expecting]))
-
-(defn reserve-message
-  "Returns [game msg] where msg is next message in queue (or nil if empty) and
-  game has had the message removed from msg queue."
-  [game]
-  [(update-in game [:messages :in] pop) (peek (get-in game [:messages :in]))])
 
 ;; POWER PLANTS
 

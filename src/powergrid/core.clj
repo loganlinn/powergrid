@@ -131,26 +131,82 @@
 
 ;; =============================================================================
 
-(defn apply-message
-  [game m]
-  (when-let [msg (msgs/create-message m)]
-    (when (satisfies? msg/Validated msg)
-      (try+
-        (msg/throw-validation-errors msg game)
-        (if (satisfies? msg/GameUpdate msg)
-          (msg/update-game msg game)
-          game)
-        (catch ValidateError e
-          (log/error e)
-          (if-not (:silent? e)
-            (throw+ e))
-          game)))))
+(comment
 
-(defn apply-messages
-  "Returns game after processing messages recursively"
-  [game]
-  (loop [game game]
-    (let [[game msg] (reserve-message game)]
-      (if msg
-        (recur (apply-message game msg))
-        game))))
+  (defn apply-message
+    [game m]
+    (when-let [msg (msgs/create-message m)]
+      (when (satisfies? msg/Validated msg)
+        (try+
+          (msg/throw-validation-errors msg game)
+          (if (satisfies? msg/GameUpdate msg)
+            (msg/update-game msg game)
+            game)
+          (catch ValidateError e
+            (log/error e)
+            (if-not (:silent? e)
+              (throw+ e))
+            game)))))
+
+  (defn apply-messages
+    "Returns game after processing messages recursively"
+    [game]
+    (loop [game game]
+      (let [[game msg] (reserve-message game)]
+        (if msg
+          (recur (apply-message game msg))
+          game))))
+
+  (defn next-phase
+    [game]
+    (-> game post-phase inc-phase prep-phase))
+
+  (defn next-step
+    [game]
+    (-> game post-step inc-step prep-step))
+
+  (defn tick-game
+    [game]
+    (cond
+      (or (nil? game) (game-over? game)) nil
+      (has-messages? game) (apply-messages game)
+      (step-complete? game) (next-step game)
+      (phase-complete? game) (next-phase game)
+      (expecting-message? game) game
+      :else game))
+
+  (defn recursive-expansion
+    [expander input]
+    (let [output (expander input)]
+      (if (= input output)
+        input
+        (recur expander output))))
+  (defn update-state [current-state event]
+    ;; return updated state
+    )
+
+  (defn consequences [current-state event]
+    ;; return sequence of events
+    )
+
+  (defn apply-consequences [current-state event]
+    (reduce update-state current-state
+            (consequences current-state event)))
+
+  (defn recursive-consequences [current-state event]
+    (reduce (fn [state event]
+              (recursive-consequences
+                state (update-state state event)))
+            current-state
+            (consequences current-state event)))
+
+  (defn chain-consequences [initial-state consequences-fns]
+    (loop [state initial-state
+           fs    consequences-fns
+           output []]
+      (if (seq fs)
+        (let [events ((first fs) state)
+              new-state (reduce update-state state events)]
+          (recur new-state (rest fs) (into output events)))
+        output)))
+  )
