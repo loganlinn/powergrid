@@ -284,6 +284,7 @@
   [game power-plant]
   (some #{power-plant} (power-plants game :market)))
 
+;; TODO move to powergrid.power_plants
 (defn power-plant-order
   "Returns power-plants after re-ordering"
   [{:keys [market future] :as power-plants} step]
