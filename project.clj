@@ -11,4 +11,5 @@
                  [org.slf4j/jul-to-slf4j "1.7.2"]
                  [org.slf4j/jcl-over-slf4j "1.7.2"]
                  [org.slf4j/log4j-over-slf4j "1.7.2"]
-                 [midje "1.5.1"]])
+                 [midje "1.5.1"]]
+  :profiles {:dev {:plugins [[lein-midje "3.0.0"]]}})
