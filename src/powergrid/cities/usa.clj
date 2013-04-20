@@ -1,4 +1,4 @@
-(ns powergrid.boards.usa)
+(ns powergrid.cities.usa)
 
 (def cities
   [:atlanta
@@ -53,6 +53,13 @@
    [:philadelphia :washington] 3
    [:pittsburgh :washington] 6
    [:norfolk :washington] 5})
+
+(def connection-costs)
 ;; TODO
 ;; TODO
 ;; TODO
+(use 'powergrid.cities.dijkstra)
+(use 'clojure.pprint)
+
+(dijkstra (edges->graph connection-costs) :buffalo)
+
