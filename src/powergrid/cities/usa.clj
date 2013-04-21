@@ -54,12 +54,6 @@
    [:pittsburgh :washington] 6
    [:norfolk :washington] 5})
 
-(def connection-costs)
 ;; TODO
 ;; TODO
 ;; TODO
-(use 'powergrid.cities.dijkstra)
-(use 'clojure.pprint)
-
-(dijkstra (edges->graph connection-costs) :buffalo)
-
