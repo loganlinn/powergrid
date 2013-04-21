@@ -21,19 +21,27 @@
 
 (defn update-neighbor-cost
   [curr costs [nbr nbr-cost]]
-  (update-in costs [nbr] (partial min (+ (curr costs) nbr-cost))))
+  (update-in costs [nbr] (partial min (+ (costs curr) nbr-cost))))
+
+(defn update-costs
+  [g costs curr unvisited]
+  (reduce
+    (partial update-neighbor-cost curr)
+    costs
+    (neighbors g curr unvisited)))
 
 (defn dijkstra
   [g src & {:keys [target]}]
   (loop [costs (assoc (zipmap (nodes g) (repeat inf)) src 0)
          curr src
-         unvisited (disj (apply hash-set (nodes g)) src)]
+         unvisited (apply hash-set (nodes g))]
     ;; sorted set?
-    (let [nbrs (neighbors g curr unvisited)
-          costs' (reduce (partial update-neighbor-cost curr) costs nbrs)
-          curr' (first (sort-by #(% costs') (keys nbrs)))
-          unvisited' (disj unvisited curr)]
-      (if (or (empty? unvisited' ) (= target curr) (= inf (curr' costs')))
-        costs'
-        (recur costs' curr' unvisited')))))
-
+    (let [unvisited (disj unvisited curr)]
+      (if (or (empty? unvisited) (= inf (costs curr)))
+        costs
+        (let [costs' (update-costs g costs curr unvisited)]
+          (if (= target curr)
+            costs'
+            (recur costs'
+                   (first (sort-by costs' unvisited))
+                   unvisited)))))))
