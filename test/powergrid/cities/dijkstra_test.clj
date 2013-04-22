@@ -50,5 +50,6 @@
                        [:d :f] 5
                        [:e :g] 14
                        [:g :f] 3})]
-      (dijkstra g :a :target :b) => (contains {:b 3}))))
+      (dijkstra g :a :target :b) => (contains {:b 3})
+      (future-fact "dijkstra tests"))))
 
