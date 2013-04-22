@@ -16,12 +16,14 @@
   ([g n uv] (select-keys (neighbors g n) uv)))
 
 (defn update-costs
-  "Returns "
+  "Returns costs updated with any shorter paths found to curr's unvisisted
+  neighbors by using curr's shortest path"
   [g costs curr unvisited]
-  (reduce
-    (fn [c [nbr nbr-cost]] (update-in c [nbr] (partial min (+ (c curr) nbr-cost))))
-    costs
-    (neighbors g curr unvisited)))
+  (let [curr-cost (costs curr)]
+    (reduce
+      (fn [c [nbr nbr-cost]] (update-in c [nbr] (partial min (+ curr-cost nbr-cost))))
+      costs
+      (neighbors g curr unvisited))))
 
 (defn dijkstra
   "Returns a mapping of nodes to minimum cost from src using Dijkstra algorithm.
