@@ -29,16 +29,26 @@
                          3 9
                          4 20
                          5 20
-                         6 11})))
-(fact dijkstra "http://www.cs.auckland.ac.nz/~jmor159/PLDS210/dij-op.html"
-  (let [g {:s {:y 7 :u 10 :x 5}
-           :x {:y 2 :s 5 :u 3 :v 9}
-           :y {:x 2 :s 7 :v 6}
-           :u {:s 10 :x 2 :v 1}
-           :v {:u 1 :x 5 :y 4}}]
-    (dijkstra g :s) => {:s 0 :x 5 :y 7 :u 8 :v 9}
-    (dijkstra g :s :target :x) => (contains {:x 5})
-    (dijkstra g :y :target :v) => (contains {:v 6})
-    (dijkstra g :v :target :y) => (contains {:y 4})
-    (dijkstra g :v :target :x) => (contains {:x 3})))
+                         6 11}))
+
+  (fact "http://www.cs.auckland.ac.nz/~jmor159/PLDS210/dij-op.html"
+    (let [g {:s {:y 7 :u 10 :x 5}
+             :x {:y 2 :s 5 :u 3 :v 9}
+             :y {:x 2 :s 7 :v 6}
+             :u {:s 10 :x 2 :v 1}
+             :v {:u 1 :x 5 :y 4}}]
+      (dijkstra g :s) => {:s 0 :x 5 :y 7 :u 8 :v 9}
+      (dijkstra g :s :target :x) => (contains {:x 5})
+      (dijkstra g :y :target :v) => (contains {:v 6})
+      (dijkstra g :v :target :y) => (contains {:y 4})
+      (dijkstra g :v :target :x) => (contains {:x 3})))
+
+  (fact "http://www.youtube.com/watch?v=Ef8RzA9C_bA"
+    (let [g (as-graph {[:a :b] 3 [:a :c] 8 [:a :d] 12
+                       [:b :c] 4 [:b :e] 2
+                       [:c :d] 3 [:c :f] 9 [:c :g] 12 [:c :e] 1
+                       [:d :f] 5
+                       [:e :g] 14
+                       [:g :f] 3})]
+      (dijkstra g :a :target :b) => (contains {:b 3}))))
 
