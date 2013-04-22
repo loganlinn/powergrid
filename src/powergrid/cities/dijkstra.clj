@@ -1,7 +1,7 @@
 (ns powergrid.cities.dijkstra
   (:require [clojure.set :as s]))
 
-(def ^:private inf (Integer/MAX_VALUE))
+(def ^:private inf (Long/MAX_VALUE))
 
 (defn as-graph
   "Converts a map of edges to cost to a 2d graph"
