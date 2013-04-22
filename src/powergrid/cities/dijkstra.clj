@@ -34,14 +34,13 @@
   [g src & {:keys [target]}]
   (loop [costs (assoc (zipmap (nodes g) (repeat inf)) src 0)
          curr src
-         unvisited (apply hash-set (nodes g))]
-    ;; sorted set?
-    (let [unvisited (disj unvisited curr)]
-      (if (or (empty? unvisited) (= inf (costs curr)))
-        costs
-        (let [costs' (update-costs g costs curr unvisited)]
-          (if (= target curr)
-            costs'
-            (recur costs'
-                   (first (sort-by costs' unvisited))
-                   unvisited)))))))
+         unvisited (disj (apply hash-set (nodes g)) src)]
+    (if (or (empty? unvisited) (= inf (costs curr)))
+      costs
+      (let [costs' (update-costs g costs curr unvisited)
+            curr' (first (sort-by costs' unvisited))]
+        (if (= target curr)
+          costs'
+          (recur costs'
+                 curr'
+                 (disj unvisited curr')))))))

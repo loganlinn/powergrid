@@ -14,7 +14,7 @@
     (let [g (as-graph {[:a :b] 1, [:a :c] 2, [:b :c] 3})]
       (dijkstra g :a) => {:a 0 :b 1 :c 2}))
 
-  (fact "wikipedia example"
+  (fact "http://en.wikipedia.org/wiki/Dijkstra%27s_algorithm"
     (let [g (as-graph {[1 2] 7
                        [1 3] 9
                        [1 6] 14
@@ -30,3 +30,15 @@
                          4 20
                          5 20
                          6 11})))
+(fact dijkstra "http://www.cs.auckland.ac.nz/~jmor159/PLDS210/dij-op.html"
+  (let [g {:s {:y 7 :u 10 :x 5}
+           :x {:y 2 :s 5 :u 3 :v 9}
+           :y {:x 2 :s 7 :v 6}
+           :u {:s 10 :x 2 :v 1}
+           :v {:u 1 :x 5 :y 4}}]
+    (dijkstra g :s) => {:s 0 :x 5 :y 7 :u 8 :v 9}
+    (dijkstra g :s :target :x) => (contains {:x 5})
+    (dijkstra g :y :target :v) => (contains {:v 6})
+    (dijkstra g :v :target :y) => (contains {:y 4})
+    (dijkstra g :v :target :x) => (contains {:x 3})))
+
