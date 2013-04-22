@@ -38,10 +38,10 @@
              :u {:s 10 :x 2 :v 1}
              :v {:u 1 :x 5 :y 4}}]
       (dijkstra g :s) => {:s 0 :x 5 :y 7 :u 8 :v 9}
-      (dijkstra g :s :target :x) => (contains {:x 5})
-      (dijkstra g :y :target :v) => (contains {:v 6})
-      (dijkstra g :v :target :y) => (contains {:y 4})
-      (dijkstra g :v :target :x) => (contains {:x 3})))
+      (dijkstra g :s :target :x) => 5
+      (dijkstra g :y :target :v) => 6
+      (dijkstra g :v :target :y) => 4
+      (dijkstra g :v :target :x) => 3))
 
   (fact "http://www.youtube.com/watch?v=Ef8RzA9C_bA"
     (let [g (as-graph {[:a :b] 3 [:a :c] 8 [:a :d] 12
@@ -50,6 +50,6 @@
                        [:d :f] 5
                        [:e :g] 14
                        [:g :f] 3})]
-      (dijkstra g :a :target :b) => (contains {:b 3})
+      (dijkstra g :a :target :b) => 3
       (future-fact "dijkstra tests"))))
 

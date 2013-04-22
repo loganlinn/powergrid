@@ -10,37 +10,33 @@
             (-> g (assoc-in [n1 n2] cost) (assoc-in [n2 n1] cost)))
           {} cs))
 
-(defn nodes [g] (keys g))
-
 (defn neighbors
   "Returns n's neighbors, optionally filtered if unvisited"
   ([g n] (get g n {}))
   ([g n uv] (select-keys (neighbors g n) uv)))
 
-(defn edge-cost [g n1 n2] (get-in g [n1 n2]))
-
-(defn update-neighbor-cost
-  [curr costs [nbr nbr-cost]]
-  (update-in costs [nbr] (partial min (+ (costs curr) nbr-cost))))
-
 (defn update-costs
+  "Returns "
   [g costs curr unvisited]
   (reduce
-    (partial update-neighbor-cost curr)
+    (fn [c [nbr nbr-cost]] (update-in c [nbr] (partial min (+ (c curr) nbr-cost))))
     costs
     (neighbors g curr unvisited)))
 
 (defn dijkstra
+  "Returns a mapping of nodes to minimum cost from src using Dijkstra algorithm.
+  Graph is a mapping of nodes to map of neighboring nodes and associated cost.
+  Optionally, specify :target node to return only the min price for target"
   [g src & {:keys [target]}]
-  (loop [costs (assoc (zipmap (nodes g) (repeat inf)) src 0)
+  (loop [costs (assoc (zipmap (keys g) (repeat inf)) src 0)
          curr src
-         unvisited (disj (apply hash-set (nodes g)) src)]
+         unvisited (disj (apply hash-set (keys g)) src)]
     (if (or (empty? unvisited) (= inf (costs curr)))
       costs
       (let [costs' (update-costs g costs curr unvisited)
             curr' (first (sort-by costs' unvisited))]
         (if (= target curr)
-          costs'
+          (costs' target)
           (recur costs'
                  curr'
                  (disj unvisited curr')))))))
