@@ -30,6 +30,7 @@
 (defn network-size
   "Returns the number of cities in the player's network"
   [player]
+  ;; TODO REMOVE, need to ask cities for this
   (count (:cities player)))
 
 (defn power-plants
@@ -77,6 +78,7 @@
 (defn owns-city?
   "Returns true if the player owns city, otherwise false"
   [player city]
+  ;; TODO REMOVE, need to ask cities for this
   (contains? (:cities player) city))
 
 (defn owns-power-plant?
@@ -106,6 +108,7 @@
 (defn add-city
   "Returns updated player after adding city"
   [player city]
+  ;; TODO REMOVE, need to ask cities for this
   (update-in player [:cities] conj city))
 
 (defn resource-capacities
