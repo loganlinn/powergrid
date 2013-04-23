@@ -29,6 +29,6 @@
   (let [cities {:boston [1]
                 :new-york [2 1 3]
                 :buffalo [3]}]
-    (fact (player-cities cities 1) => (just [:boston :new-york] :in-any-order))
-    (fact (player-cities cities 2) => (just [:new-york] :in-any-order))
-    (fact (player-cities cities 3) => (just [:new-york :buffalo] :in-any-order))))
+    (fact (player-cities cities 1) => (just #{:boston :new-york}))
+    (fact (player-cities cities 2) => (just #{:new-york}))
+    (fact (player-cities cities 3) => (just #{:new-york :buffalo}))))
