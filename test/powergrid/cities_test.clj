@@ -9,11 +9,11 @@
       :c {:a 2 :b 3}})
 
 (tabular
-  (fact player-owns-city?
-    (let [cities {:boston [1]
-                  :new-york [2 1 3]
-                  :buffalo [3]}]
-      (fact (player-owns-city? cities ?player ?city) => ?expected)))
+  (fact owner?
+    (let [cities {:owners {:boston   [1]
+                           :new-york [2 1 3]
+                           :buffalo  [3]}}]
+      (fact (owner? cities ?city ?player) => ?expected)))
   ?player ?city     ?expected
   1       :boston   truthy
   1       :new-york truthy
@@ -26,9 +26,9 @@
   3       :buffalo  truthy)
 
 (fact player-cities
-  (let [cities {:boston [1]
-                :new-york [2 1 3]
-                :buffalo [3]}]
+  (let [cities {:owners {:boston [1]
+                         :new-york [2 1 3]
+                         :buffalo [3]}}]
     (fact (player-cities cities 1) => (just #{:boston :new-york}))
     (fact (player-cities cities 2) => (just #{:new-york}))
     (fact (player-cities cities 3) => (just #{:new-york :buffalo}))))
