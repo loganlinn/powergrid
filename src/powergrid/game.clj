@@ -235,16 +235,6 @@
   [game]
   (into {} (for [[rtype r] (:resources game)] [rtype (:supply r)])))
 
-(defn network-size
-  "Returns the number of cities player owns"
-  [game player-id]
-  (c/network-size (:cities game) player-id))
-
-(defn max-network-size
-  "Returns the maximum number of cities a single player has built"
-  [game]
-  (apply max (vals (c/network-sizes (:cities game)))))
-
 (defn update-resource
   "Returns game after updating resource via (apply f resource args)"
   [game resource f & args]
@@ -343,6 +333,16 @@
           (add-to-power-plant-market draw)))))
 
 ;; CITIES
+
+(defn network-size
+  "Returns the number of cities player owns"
+  [game player-id]
+  (c/network-size (:cities game) player-id))
+
+(defn max-network-size
+  "Returns the maximum number of cities a single player has built"
+  [game]
+  (apply max (vals (c/network-sizes (:cities game)))))
 
 (defn max-city-connections
   "Returns the maximum number of connections allowed in a city based on current
