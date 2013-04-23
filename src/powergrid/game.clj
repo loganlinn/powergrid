@@ -3,11 +3,11 @@
             [powergrid.player :as p]
             [powergrid.auction :as a]
             [powergrid.resource :as r]
+            [powergrid.cities :refer [as-graph]]
             [powergrid.cities.usa :as usa]
-            [powergrid.cities.dijkstra :refer [as-graph]]
             [powergrid.util :refer [separate queue]]))
 
-(defrecord Game [id phase step round resources power-plants cities players turns auction bank])
+(defrecord Game [id phase step round resources power-plants cities connections players turns auction bank])
 
 (defn num-regions-chosen
   "Returns the number of regions chosen on map"
@@ -101,7 +101,8 @@
               :power-plants (init-power-plants (count players))
               :players (players-map players)
               :turns  '()
-              :cities (as-graph usa/connections)
+              :cities usa/cities
+              :connections (as-graph usa/connections)
               :bank 0}))
 
 (defn current-step  [game] (:step game))
@@ -352,5 +353,4 @@
 (defn connections
   "Returns map of connections for game's board"
   [game]
-  ;; TODO set connections in new-game based on board-type
   (:connections game))

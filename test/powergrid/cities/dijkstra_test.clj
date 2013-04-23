@@ -1,13 +1,8 @@
 (ns powergrid.cities.dijkstra-test
   (:require [midje.sweet :refer :all]
+            [powergrid.cities :refer [as-graph]]
             [powergrid.cities.dijkstra :refer :all]
             [powergrid.cities.usa :as usa]))
-
-(fact as-graph
-  (as-graph {[:a :b] 1, [:a :c] 2, [:b :c] 3})
-  => {:a {:b 1 :c 2}
-      :b {:a 1 :c 3}
-      :c {:a 2 :b 3}})
 
 (fact dijkstra
   (fact "simple graph"
@@ -59,4 +54,3 @@
       (dijkstra g :raleigh :target :washington) => 8
       (dijkstra g :atlanta :target :kansas-city) => 18
       (dijkstra g :houston :target :duluth) => 34)))
-
