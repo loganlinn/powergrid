@@ -51,5 +51,12 @@
                        [:e :g] 14
                        [:g :f] 3})]
       (dijkstra g :a :target :b) => 3
-      (future-fact "dijkstra tests"))))
+      (future-fact "dijkstra tests")))
+
+  (fact "usa board"
+    (let [g (as-graph usa/connections)]
+      (dijkstra g :boston :target :new-york) => 3
+      (dijkstra g :raleigh :target :washington) => 8
+      (dijkstra g :atlanta :target :kansas-city) => 18
+      (dijkstra g :houston :target :duluth) => 34)))
 
