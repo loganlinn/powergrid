@@ -1,4 +1,5 @@
-(ns powergrid.cities)
+(ns powergrid.cities
+  (require [powergrid.cities.dijkstra :refer [dijkstra]]))
 
 (comment
   {:city [player-id-1 player-id-2 player-id-3]})
@@ -20,7 +21,7 @@
   [cities city]
   (count (get cities city)))
 
-(defn connection-cost
+(defn connection-cost-base
   "Returns price to add a connection in city."
   [cities city]
   (case (int (num-connections cities city))
@@ -40,7 +41,17 @@
          (not (player-in-city? cities city player-id))]}
   (update-in cities [city] conj player-id))
 
+(defn player-owns-city?
+  "Returns true of player owns city"
+  [cities player-id city]
+  (some #{player-id} (cities city)))
+
+(defn player-cities
+  "Returns collection of cities the player owns"
+  [cities player-id]
+  (filter (partial player-owns-city? cities player-id) (keys cities)))
+
 (defn connection-cost
   [cities city player-id]
-  ;; TODO IMPLEMENT
-  0)
+  (+ (connection-cost-base cities city)
+     ))
