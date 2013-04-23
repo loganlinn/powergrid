@@ -15,8 +15,8 @@
   are tied for the most number of cities, if the first player is the player
   among them with the largest-numbered power plant. Determine remaining player
   order using same rules"
-  [players]
-  (let [order-cols (juxt p/network-size p/max-power-plant)]
+  [game players]
+  (let [order-cols (juxt (partial network-size game) p/max-power-plant)]
     (into {} (sort #(compare (order-cols (val %2))
                              (order-cols (val %1)))
                    players))))
@@ -24,7 +24,8 @@
 (defn update-player-order
   "Returns game after updating player order"
   [game]
-  (update-players game player-order))
+  ;; TODO CLEANUP
+  (update-players game (partial player-order game)))
 
 (defmulti prep-phase current-phase)
 (defmulti post-phase current-phase)

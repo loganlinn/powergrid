@@ -75,12 +75,6 @@
   [player power-plant]
   (assoc-in player [:power-plants power-plant] {}))
 
-(defn owns-city?
-  "Returns true if the player owns city, otherwise false"
-  [player city]
-  ;; TODO REMOVE, need to ask cities for this
-  (contains? (:cities player) city))
-
 (defn owns-power-plant?
   "Returns true if the player owns power-plant, otherwise false"
   [player power-plant]
@@ -104,12 +98,6 @@
   (update-in player
              [:power-plants power-plant resource]
              (fnil #(+ % amount) 0)))
-
-(defn add-city
-  "Returns updated player after adding city"
-  [player city]
-  ;; TODO REMOVE, need to ask cities for this
-  (update-in player [:cities] conj city))
 
 (defn resource-capacities
   "Returns map from resource to amount of remaining capacity for player based on

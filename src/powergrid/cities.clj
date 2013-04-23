@@ -51,6 +51,14 @@
   [cities player-id]
   (filter (partial player-owns-city? cities player-id) (keys cities)))
 
+(defn network-size
+  [cities player-id]
+  (count (player-cities cities player-id)))
+
+(defn network-sizes
+  [cities]
+  (frequencies (flatten (vals cities))))
+
 (defn connection-cost
   [cities city player-id]
   (+ (connection-cost-base cities city)

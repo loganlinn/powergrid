@@ -3,7 +3,7 @@
             [powergrid.player :as p]
             [powergrid.auction :as a]
             [powergrid.resource :as r]
-            [powergrid.cities :refer [as-graph]]
+            [powergrid.cities :as c]
             [powergrid.cities.usa :as usa]
             [powergrid.util :refer [separate queue]]))
 
@@ -101,8 +101,8 @@
               :power-plants (init-power-plants (count players))
               :players (players-map players)
               :turns  '()
-              :cities usa/cities
-              :connections (as-graph usa/connections)
+              :cities {}
+              :connections (c/as-graph usa/connections)
               :bank 0}))
 
 (defn current-step  [game] (:step game))
@@ -235,10 +235,15 @@
   [game]
   (into {} (for [[rtype r] (:resources game)] [rtype (:supply r)])))
 
+(defn network-size
+  "Returns the number of cities player owns"
+  [game player-id]
+  (c/network-size (:cities game) player-id))
+
 (defn max-network-size
   "Returns the maximum number of cities a single player has built"
   [game]
-  (apply max (map p/network-size (players game))))
+  (apply max (vals (c/network-sizes (:cities game)))))
 
 (defn update-resource
   "Returns game after updating resource via (apply f resource args)"
