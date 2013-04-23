@@ -44,7 +44,7 @@
     :tampa
     :washington})
 
-(def connection-costs
+(def connections
   {[:atlanta :knoxville] 5
    [:atlanta :birmingham] 3
    [:atlanta :raleigh] 7
