@@ -38,16 +38,6 @@
       (dijkstra g :v :target :y) => 4
       (dijkstra g :v :target :x) => 3))
 
-  (fact "http://www.youtube.com/watch?v=Ef8RzA9C_bA"
-    (let [g (as-graph {[:a :b] 3 [:a :c] 8 [:a :d] 12
-                       [:b :c] 4 [:b :e] 2
-                       [:c :d] 3 [:c :f] 9 [:c :g] 12 [:c :e] 1
-                       [:d :f] 5
-                       [:e :g] 14
-                       [:g :f] 3})]
-      (dijkstra g :a :target :b) => 3
-      (future-fact "dijkstra tests")))
-
   (fact "usa board"
     (let [g (as-graph usa/connections)]
       (dijkstra g :boston :target :new-york) => 3
