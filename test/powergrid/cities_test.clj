@@ -8,19 +8,22 @@
       :b {:a 1 :c 3}
       :c {:a 2 :b 3}})
 
-(fact player-owns-city?
-  (let [cities {:boston [1]
-                :new-york [2 1 3]
-                :buffalo [3]}]
-    (fact (player-owns-city? cities 1 :boston) => truthy)
-    (fact (player-owns-city? cities 1 :new-york) => truthy)
-    (fact (player-owns-city? cities 1 :buffalo) => falsey)
-    (fact (player-owns-city? cities 2 :boston) => falsey)
-    (fact (player-owns-city? cities 2 :new-york) => truthy)
-    (fact (player-owns-city? cities 2 :buffalo) => falsey)
-    (fact (player-owns-city? cities 3 :boston) => falsey)
-    (fact (player-owns-city? cities 3 :new-york) => truthy)
-    (fact (player-owns-city? cities 3 :buffalo) => truthy)))
+(tabular
+  (fact player-owns-city?
+    (let [cities {:boston [1]
+                  :new-york [2 1 3]
+                  :buffalo [3]}]
+      (fact (player-owns-city? cities ?player ?city) => ?expected)))
+  ?player ?city     ?expected
+  1       :boston   truthy
+  1       :new-york truthy
+  1       :buffalo  falsey
+  2       :boston   falsey
+  2       :new-york truthy
+  2       :buffalo  falsey
+  3       :boston   falsey
+  3       :new-york truthy
+  3       :buffalo  truthy)
 
 (fact player-cities
   (let [cities {:boston [1]
