@@ -133,7 +133,3 @@
    [:raleigh :savannah] 7
    [:salt-lake-city :san-francisco] 27
    [:salt-lake-city :santa-fe] 28})
-
-;; TODO
-;; TODO
-;; TODO
