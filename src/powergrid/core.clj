@@ -45,7 +45,7 @@
   (clear-turns game))
 
 (defmethod prep-phase 2 [game]
-  (-> game (set-turns :buy)))
+  (-> game (set-turns)))
 
 (defn post-phase-2-step-3-card
   [game]
@@ -59,10 +59,10 @@
     (= round 1) (update-player-order)))
 
 (defmethod prep-phase 3 [game]
-  (-> game (set-turns :buy)))
+  (-> game (set-turns)))
 
 (defmethod prep-phase 4 [game]
-  (-> game (set-turns :buy)))
+  (-> game (set-turns)))
 
 (defmethod post-phase 5 [game]
   (-> game (inc-round)))

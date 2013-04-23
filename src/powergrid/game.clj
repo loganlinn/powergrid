@@ -184,7 +184,7 @@
 
 (defn set-turns
   "Returns game after setting turns"
-  [game turn-type]
+  [game]
   (if (turns-reverse-order? game)
     (reverse (keys (game :players)))
     (keys (game :players))))
