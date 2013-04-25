@@ -5,8 +5,15 @@
             [powergrid.power-plants :as pp]
             [powergrid.resource :as r]))
 
-;; { plant-id { resource amt } }
-;; { plant-id { ecological 0 } }
+(def payout-values [10 22 33 44 54 64 73 82 90 98 105 112 118 124 129 134 138 142 145 148 150])
+
+(defn payout
+  "Returns the payout amount to receive from powering num-powered cities"
+  [num-powered]
+  {:pre [(not (neg? num-powered))]}
+  (if (> num-powered (dec (count payout-values)))
+    (last payout-values)
+    (get payout-values num-powered)))
 
 (defn invalid-sale?
   "Returns true of the plant-id and resource amt combo is valid.
