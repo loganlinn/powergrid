@@ -27,7 +27,7 @@
          curr src
          unvisited (disj (apply hash-set (keys g)) src)]
     (if (or (empty? unvisited) (= inf (costs curr)))
-      costs
+      (if target (costs target) costs)
       (let [costs' (update-costs g costs curr unvisited)
             curr' (first (sort-by costs' unvisited))]
         (if (= target curr)

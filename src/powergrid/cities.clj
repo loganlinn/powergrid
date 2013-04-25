@@ -25,44 +25,71 @@
 
 (def num-owners (comp count city-owners))
 
-(defn connection-cost-base
-  "Returns price to add a connection in city."
-  [cities city]
-  (case (int (num-owners cities city))
-    0 10, 1 15, 2 20))
-
 (defn owner?
   "Returns true if player owns a connection in city, otherwise false"
   [cities city player-id]
   (some #{player-id} (city-owners cities city)))
 
-(defn add-connection
-  "Returns cities after player builds next connection in city.
+(defn owned-cities
+  "Returns collection of cities the player owns"
+  [cities player-id]
+  (keep #(when (some #{player-id} (val %)) (key %)) (owners cities)))
+
+(defn build-cost
+  "Returns price to build in city (excludes connection cost)"
+  [cities city]
+  (case (int (num-owners cities city))
+    0 10, 1 15, 2 20))
+
+(defn buildable-city?
+  "Returns true if player-id can build in city, otherwise false"
+  [cities city player-id game-step]
+  (let [owners (city-owners cities city)]
+    (and (< (count owners) game-step)
+         (not-any? #{player-id} owners))))
+
+(defn add-owner
+  "Returns cities after associating player-id as owner of city.
   Asserts that city has capacity for new connections and that player does not
   already occupy city"
   [cities city player-id]
   {:pre [(< (num-owners cities city) 3)
          (not (owner? cities city player-id))]}
-  (update-in cities [city] conj player-id))
-
-(defn player-cities
-  "Returns collection of cities the player owns"
-  [cities player-id]
-  (filter #(owner? cities % player-id) (keys (owners cities))))
+  (update-in cities [:owners city] conj player-id))
 
 (defn network-size
   [cities player-id]
-  (count (player-cities cities player-id)))
+  (count (owned-cities cities player-id)))
 
 (defn network-sizes
   [cities]
   (frequencies (flatten (vals cities))))
 
 (defn connection-cost
-  [cities src dst]
-  (dijkstra ))
+  "Returns connection cost (exlcludes building cost) between two cities given
+  the connections graph, conns"
+  [conns src dst]
+  (dijkstra conns src :target dst))
 
-(defn player-connection-cost
-  [cities city player-id]
-  (+ (connection-cost-base cities city)
-     (apply min (map ))))
+(defn min-connection-cost
+  "Returns the minimum connection cost (excludes building cost) to a city from
+  any of player-id's current cities"
+  [cities player-id dst]
+  (let [conns (connections cities)]
+    (apply min (for [src (owned-cities cities player-id)]
+                 (connection-cost conns src dst)))))
+
+(defn min-purchase-cost
+  "Returns minimum cost to build to each city in purchases
+  Assumes player is permitted to build in each city"
+  [cities player-id purchase]
+  (loop [cities cities
+         purchase purchase
+         total-cost 0]
+    (if (seq purchase)
+      (let [costs (map (juxt identity (partial min-connection-cost cities player-id)) purchase)
+            [city cost] (apply min-key second costs)]
+        (recur (add-owner cities city player-id)
+               (remove #{city} purchase)
+               (+ total-cost cost)))
+      total-cost)))
