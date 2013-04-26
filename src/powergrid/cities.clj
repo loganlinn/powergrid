@@ -1,5 +1,5 @@
 (ns powergrid.cities
-  (require [powergrid.cities.dijkstra :refer [dijkstra]]))
+  (require [powergrid.cities.dijkstra :as d]))
 
 (defn as-graph
   "Converts a map of edges to cost to a 2d graph"
@@ -71,7 +71,7 @@
   "Returns connection cost (exlcludes building cost) between two cities given
   the connections graph, conns"
   [conns src dst]
-  (dijkstra conns src :target dst))
+  (d/dijkstra conns src :target dst))
 
 (defn min-connection-cost
   "Returns the minimum connection cost (excludes building cost) to a city from
@@ -93,5 +93,5 @@
             [city cost] (apply min-key second costs)]
         (recur (add-owner cities city player-id)
                (remove #{city} purchase)
-               (+ total-cost cost)))
+               (if (= cost d/inf) d/inf (+ total-cost cost))))
       total-cost)))

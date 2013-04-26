@@ -1,7 +1,7 @@
 (ns powergrid.cities.dijkstra
   (:require [clojure.set :as s]))
 
-(def ^:private inf (Long/MAX_VALUE))
+(def inf (Long/MAX_VALUE))
 
 (defn neighbors
   "Returns n's neighbors, optionally filtered if unvisited"
