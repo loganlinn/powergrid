@@ -58,12 +58,14 @@
   (update-in cities [:owners city] conj player-id))
 
 (defn network-size
+  "Returns number of cities a player owns"
   [cities player-id]
-  (count (owned-cities cities player-id)))
+  (reduce #(if (some #{player-id} %2) (inc %1) %1) 0 (vals (owners cities))))
 
 (defn network-sizes
+  "Returns map of player-id to number of cities they own (for the players who own cities)"
   [cities]
-  (frequencies (flatten (vals cities))))
+  (frequencies (flatten (vals (owners cities)))))
 
 (defn connection-cost
   "Returns connection cost (exlcludes building cost) between two cities given

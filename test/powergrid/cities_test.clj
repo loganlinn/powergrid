@@ -63,6 +63,13 @@
         after {:owners {...city... [...x... ...pid...]}}]
    (add-owner before ...city... ...pid...) => after))
 
+(fact network-size
+  (let [cities {:owners {:a [1] :b [2 3 1] :c [2] :d [3 1 2]}}]
+    (network-size cities 1) => 3
+    (network-size cities 2) => 3
+    (network-size cities 3) => 2
+    (network-sizes cities) => {1 3, 2 3, 3 2}))
+
 (fact buildable-city?
   (fact "by ownership"
     (buildable-city? {:owners {:city [1]}} :city 1 3) => falsey)
