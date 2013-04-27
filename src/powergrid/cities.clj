@@ -78,20 +78,20 @@
   any of player-id's current cities"
   [cities player-id dst]
   (let [conns (connections cities)]
-    (apply min (for [src (owned-cities cities player-id)]
-                 (connection-cost conns src dst)))))
+    (apply min (map #(connection-cost conns % dst) ;; TODO pmap helpful?
+                    (owned-cities cities player-id)))))
 
-(defn min-purchase-cost
-  "Returns minimum cost to build to each city in purchases
-  Assumes player is permitted to build in each city"
-  [cities player-id purchase]
+(defn purchase-cost
+  "Returns cost for player-id to purchase cities in purchase. Total cost is
+  calculated by purchasing cities in the order they appear.  Assumes player is
+  permitted to build in each city"
+  [cities player-id purchase game-step]
   (loop [cities cities
-         purchase purchase
+         [city & cs] purchase
          total-cost 0]
-    (if (seq purchase)
-      (let [costs (map (juxt identity (partial min-connection-cost cities player-id)) purchase)
-            [city cost] (apply min-key second costs)]
+    (if city
+      (let [cost (min-connection-cost cities player-id city)]
         (recur (add-owner cities city player-id)
-               (remove #{city} purchase)
+               cs
                (if (= cost d/inf) d/inf (+ total-cost cost))))
       total-cost)))
