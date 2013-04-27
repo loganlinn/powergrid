@@ -18,7 +18,7 @@
 (defn valid-sale?
   "Returns true of the plant-id and resource amt combo is valid.
   Does not validate the user owns the power-plants & resources"
-  [plant-id resources]
+  [[plant-id resources]]
   {:pre [(map? resources)]}
   (when-let [plant (pp/plant plant-id)]
     (let [total (reduce (fnil + 0) 0 (vals resources))]
@@ -44,7 +44,7 @@
     (cond
       (not (and (map? powered-cities)
                 (every? map? (vals powered-cities)))) "Invalid message"
-      (every? #(valid-sale? (key %) (val %)) powered-cities) "Invalid sale"
+      (every? valid-sale? powered-cities) "Invalid sale"
       (every? (partial can-sell? player-id) powered-cities) "Invalid sale"))
 
   GameUpdate
