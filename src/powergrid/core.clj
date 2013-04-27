@@ -65,7 +65,11 @@
   (-> game (set-turns)))
 
 (defmethod post-phase 5 [game]
-  (-> game (inc-round)))
+  (-> game
+      (drop-lowest-power-plant)
+      (draw-power-plant)
+      (resupply-resources)
+      (inc-round)))
 
 (defmethod prep-step 2 [game]
   (-> game
