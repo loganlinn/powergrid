@@ -58,7 +58,7 @@
     step-3-card? (post-phase-2-step-3-card)
     (= round 1) (update-player-order)))
 
-(defmethod pcep-phase 3 [game]
+(defmethod prep-phase 3 [game]
   (-> game (set-turns)))
 
 (defmethod prep-phase 4 [game]
