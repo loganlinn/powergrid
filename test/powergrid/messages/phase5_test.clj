@@ -52,3 +52,7 @@
       (pp/consumes-resources? ...pp..) => true
       (p/owns-power-plant? ...p... ...pp...) => true
       (p/can-power-plant? ...p... ...pp...) => false)))
+
+(fact flatten-sale
+  (flatten-sale {10 {:coal 1 :oil 1} 11 {:trash 1}})
+  => (just #{[10 :coal 1] [10 :oil 1] [11 :trash 1]}))

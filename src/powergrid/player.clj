@@ -89,7 +89,7 @@
         (>= (reduce + (vals (power-plant-resources player power-plant)))
             (pp/capacity power-plant)))))
 
-(defn assign-resource
+(defn add-power-plant-resources
   "Returns updated player after storing resource in power plant.
   Asserts that power-plant accepts resource and player owns it."
   [player power-plant resource amount]
@@ -147,7 +147,7 @@
   (send-resource [player [power-plant resource] amt]
     {:pre [(owns-power-plant? player power-plant)
            (>= (get-in player [:power-plants power-plant resource]) amt)]}
-    (update-in player [:power-plants power-plant resource] - amt)))
+    (add-power-plant-resources player power-plant resource (- amt))))
 
 (defn- distribute-resource
   [power-plants resource amt]
