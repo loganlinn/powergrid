@@ -58,7 +58,7 @@
     step-3-card? (post-phase-2-step-3-card)
     (= round 1) (update-player-order)))
 
-(defmethod prep-phase 3 [game]
+(defmethod pcep-phase 3 [game]
   (-> game (set-turns)))
 
 (defmethod prep-phase 4 [game]
@@ -91,24 +91,6 @@
   [game]
   (>= (max-network-size game)
       (num-cities-trigger-end (num-players game))))
-
-(defn get-resource
-  "Returns the current game of resource"
-  [game resource]
-  (get-in game [:resources resource]))
-
-(defn purchase-resources
-  "Returns game after processing player's purchases"
-  [game player-id purchases]
-  (reduce
-    (fn [game [resource amt]]
-      (let [price (r/resource-price (get-resource game resource) amt)]
-        (-> game
-            (update-resource resource r/send-resource :market amt)
-            (update-player player-id r/accept-resource resource amt)
-            (purchase player-id price))))
-    game
-    purchases))
 
 (defn resupply-rate
   "Returns a map of resources to amounts to resupply for game"
