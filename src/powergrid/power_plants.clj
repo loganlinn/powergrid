@@ -2,7 +2,9 @@
 
 (defrecord PowerPlant [number resource capacity yield])
 
-(def plant-number :number)
+(defn capacity [power-plant] (:capacity power-plant))
+(defn yield [power-plant] (:yield power-plant))
+(defn plant-number [power-plant] (:number power-plant))
 
 (def power-plants
   {3 (PowerPlant.  3 :oil 2 1)

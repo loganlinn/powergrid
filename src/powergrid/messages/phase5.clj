@@ -15,18 +15,18 @@
     (last payout-values)
     (get payout-values num-powered)))
 
-(defn invalid-sale?
+(defn valid-sale?
   "Returns true of the plant-id and resource amt combo is valid.
   Does not validate the user owns the power-plants & resources"
-  [[plant-id resources]]
-  (if-let [plant (pp/plant plant-id)]
-    (let [total (reduce (fnil + 0 0) (vals resources))]
+  [plant-id resources]
+  {:pre [(map? resources)]}
+  (when-let [plant (pp/plant plant-id)]
+    (let [total (reduce (fnil + 0) 0 (vals resources))]
       (if (pp/consumes-resources? plant)
-        (or (not= total (:capacity plant))
-            (some #(not (pp/accepts-resource? plant %)) (keys resources))
-            (some neg? (vals resources)))
-        (not= total 0)))
-    true))
+        (and (= (pp/capacity plant) total)
+             (every? (partial pp/accepts-resource? plant) (keys resources))
+             (every? (complement neg?) (vals resources)))
+        (zero? total)))))
 
 (defn can-sell?
   "Returns true if the user owns the power plant and has the valid amount of
@@ -38,15 +38,18 @@
            (or (not (pp/consumes-resources? plant))
                (p/can-power-plant? player plant))))))
 
-(defrecord PowerCitiesMessage [player-id sale]
+(defrecord PowerCitiesMessage [player-id powered-cities]
   Validated
   (validate [this game]
     (cond
-      (some invalid-sale? sale) "Invalid sale"
-      (every? (partial can-sell? player-id) sale) "Invalid sale"))
+      (not (and (map? powered-cities)
+                (every? map? (vals powered-cities)))) "Invalid message"
+      (every? #(valid-sale? (key %) (val %)) powered-cities) "Invalid sale"
+      (every? (partial can-sell? player-id) powered-cities) "Invalid sale"))
 
   GameUpdate
-  (update-game [this game] game))
+  (update-game [this game]
+    game))
 
 (def messages
   {:sell map->PowerCitiesMessage})

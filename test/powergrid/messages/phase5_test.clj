@@ -6,3 +6,24 @@
             [powergrid.player :as p]
             [powergrid.power-plants :as pp]))
 
+(fact valid-sale?
+  (fact "ecological power-plants"
+    (valid-sale? 13 {}) => truthy
+    (valid-sale? 13 {anything 0}) => truthy
+    (valid-sale? 50 {anything 1}) => falsey)
+  (fact "invalid numbers"
+    (valid-sale? 20 {:coal -1}) => falsey)
+  (fact "incorrect resource"
+    (fact
+      (valid-sale? ...p... {...r... 3}) => falsey
+      (provided
+        (pp/plant ...p...) => ...plant...
+        (pp/capacity ...plant...) => 3
+        (pp/accepts-resource? ...plant... ...r...) => false))
+    (fact
+      (valid-sale? ...p... {...r1... 1, ...r2... 1}) => falsey
+      (provided
+        (pp/plant ...p...) => ...plant...
+        (pp/capacity ...plant...) => 2
+        (pp/accepts-resource? ...plant... ...r1...) => true
+        (pp/accepts-resource? ...plant... ...r2...) => false))))
