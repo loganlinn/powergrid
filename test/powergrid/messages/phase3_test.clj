@@ -16,3 +16,6 @@
     (r/resource-price ...oil... 3) => 5))
 
 
+(fact "passable"
+  (passable? (map->BuyResourcesMessage {}) ...game...) => truthy
+  (pass (map->BuyResourcesMessage {}) ...game...) => ..game...)
