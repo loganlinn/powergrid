@@ -60,7 +60,7 @@
       (add-power-plant ...pp...)
       (owns-power-plant? ...pp...)) => truthy)
 
-(fact assign-resources
+(fact assign-resource
   (-> (mock-player)
       (add-power-plant ...pp...)
       (assign-resource ...pp... ...r... 4)
