@@ -27,6 +27,33 @@
   ;; TODO CLEANUP
   (update-players game (partial player-order game)))
 
+(defn game-over?
+  "Returns true if conditions have been to end the game, otherwise false"
+  [game]
+  (>= (max-network-size game)
+      (num-cities-trigger-end (num-players game))))
+
+(defn resupply-rate
+  "Returns a map of resources to amounts to resupply for game"
+  [game]
+  (r/resupply-rate (num-players game)
+                   (current-step game)
+                   (resource-supply game)))
+
+(defn resupply-resources
+  "Returns game after resupplying the resource market according to rules."
+  ([game]
+   (resupply-resources (resupply-rate game)))
+  ([game rate]
+   (reduce
+     (fn [game [resource amt]]
+       (-> game
+           (update-resource resource r/send-resource :supply amt)
+           (update-resource resource r/accept-resource :market amt)))
+     game
+     rate)))
+
+
 (defmulti prep-phase current-phase)
 (defmulti post-phase current-phase)
 (defmulti prep-step current-step)
@@ -89,32 +116,6 @@
 
 (defmethod step-complete? 2 [game]
   (:step-3-card? game false))
-
-(defn game-over?
-  "Returns true if conditions have been to end the game, otherwise false"
-  [game]
-  (>= (max-network-size game)
-      (num-cities-trigger-end (num-players game))))
-
-(defn resupply-rate
-  "Returns a map of resources to amounts to resupply for game"
-  [game]
-  (r/resupply-rate (num-players game)
-                   (current-step game)
-                   (resource-supply game)))
-
-(defn resupply-resources
-  "Returns game after resupplying the resource market according to rules."
-  ([game]
-   (resupply-resources (resupply-rate game)))
-  ([game rate]
-   (reduce
-     (fn [game [resource amt]]
-       (-> game
-           (update-resource resource r/send-resource :supply amt)
-           (update-resource resource r/accept-resource :market amt)))
-     game
-     rate)))
 
 ;; =============================================================================
 
