@@ -53,7 +53,7 @@
       (if (a/completed? auction)
         (complete-auction game auction)
         (g/set-auction game auction))
-      (g/remove-turn game player-id)))
+      game))
 
   GameUpdate
   (update-game [_ game]
