@@ -354,3 +354,8 @@
   "Returns cities for game"
   [game]
   (:cities game))
+
+(defn update-cities
+  "Returns game after updating cities via (apply f cities args)"
+  [game f & args]
+  (apply update-in game [:cities] f args))

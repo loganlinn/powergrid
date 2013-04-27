@@ -13,7 +13,7 @@
     (let [cities {:owners {:boston   [1]
                            :new-york [2 1 3]
                            :buffalo  [3]}}]
-      (fact (owner? cities ?city ?player) => ?expected)))
+      (fact (owner? cities ?player ?city) => ?expected)))
   ?player ?city     ?expected
   1       :boston   truthy
   1       :new-york truthy
@@ -48,15 +48,15 @@
 
 (fact purchase-cost
   (fact "should choose sides of square"
-    (let [cities {:owners {:a [1] :b [1]}
+    (let [cities {:owners {:a [1] :b [1] :c [] :d []}
                   :connections (as-graph {[:a :c] 10 [:a :d] 14
                                           [:b :d] 10 [:b :c] 14})}]
-      (purchase-cost cities 1 [:c :d]) => 20))
+      (purchase-cost cities 1 [:c :d]) => (+ 20 20)))
   (fact "should go through first purchase"
     (let [cities {:owners {:a [1]}
                   :connections (as-graph {[:a :c] 4 [:a :d] 8
                                           [:c :d] 2})}]
-      (purchase-cost cities 1 [:c :d]) => 6))
+      (purchase-cost cities 1 [:c :d]) => (+ 6 20)))
   (fact "shouldn't fail when unreachable"
     (let [cities {:owners {:a [1]}
                   :connections (as-graph {[:a :x] 100
@@ -66,7 +66,7 @@
 (fact add-owner
   (let [before {:owners {...city... [...x...]}}
         after {:owners {...city... [...x... ...pid...]}}]
-   (add-owner before ...city... ...pid...) => after))
+   (add-owner before ...pid... ...city...) => after))
 
 (fact network-size
   (let [cities {:owners {:a [1] :b [2 3 1] :c [2] :d [3 1 2]}}]

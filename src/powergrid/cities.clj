@@ -27,7 +27,7 @@
 
 (defn owner?
   "Returns true if player owns a connection in city, otherwise false"
-  [cities city player-id]
+  [cities player-id city]
   (some #{player-id} (city-owners cities city)))
 
 (defn owned-cities
@@ -52,7 +52,7 @@
   "Returns cities after associating player-id as owner of city.
   Asserts that city has capacity for new connections and that player does not
   already occupy city"
-  [cities city player-id]
+  [cities player-id city]
   {:pre [(< (num-owners cities city) 3)
          (not (owner? cities city player-id))]}
   (update-in cities [:owners city] conj player-id))
@@ -82,16 +82,16 @@
                     (owned-cities cities player-id)))))
 
 (defn purchase-cost
-  "Returns cost for player-id to purchase cities in purchase. Total cost is
-  calculated by purchasing cities in the order they appear.  Assumes player is
+  "Returns cost for player-id to purchase new-cities. Total cost is building cost
+  plus cost to purchase cities in the order they appear.  Assumes player is
   permitted to build in each city"
-  [cities player-id purchase]
+  [cities player-id new-cities]
   (loop [cities cities
-         [city & cs] purchase
-         total-cost 0]
+         [city & cs] new-cities
+         total-cost (apply + (map (partial build-cost cities) new-cities))]
     (if city
       (let [cost (min-connection-cost cities player-id city)]
-        (recur (add-owner cities city player-id)
+        (recur (add-owner cities player-id city)
                cs
                (if (= cost d/inf) d/inf (+ total-cost cost))))
       total-cost)))

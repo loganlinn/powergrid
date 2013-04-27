@@ -5,17 +5,32 @@
             [powergrid.player :as p]
             [powergrid.resource :as r]))
 
-(defn can-afford-cities?
-  [game player-id cities]
-  (let [player (g/player player-id)
-        cost (c/purchase-cost (g/cities game) player-id cities)]
-    (p/can-afford? cost)))
-
 (defn valid-city?
+  "Returns true if player can build in city, otherwise false"
   [game player-id city]
-  (let [cities (g/cities game)]
+  (let [cities (g/cities game)
+        step (g/current-step game)]
     (and (c/valid-city? cities city)
-         (c/buildable-city? cities city player-id (g/current-step game)))))
+         (c/buildable-city? cities city player-id step))))
+
+(defn purchase-cost
+  "Returns the cost for player to purchase new-cities"
+  [game player-id new-cities]
+  (c/purchase-cost (g/cities game) player-id new-cities))
+
+(defn can-afford-cities?
+  "Returns true if player can afford to purchase connections to new-cities.
+  Cost is calculated by purchasing cheapest connection to each city in new-cities
+  sequentially"
+  [game player-id new-cities]
+  (let [player (g/player player-id)
+        cost (purchase-cost game player-id new-cities)]
+    (p/can-afford? player cost)))
+
+(defn own-cities
+  "Returns game after adding player-id as owner to all new-cities"
+  [game player-id new-cities]
+  (reduce #(g/update-cities %1 c/add-owner player-id %2) game new-cities))
 
 (defrecord BuyCitiesMessage [player-id new-cities]
   Validated
@@ -28,7 +43,11 @@
         )))
 
   GameUpdate
-  (update-game [this game] game)
+  (update-game [this game]
+    (let [cost (purchase-cost game player-id new-cities)]
+      (-> game
+          (own-cities player-id new-cities)
+          (g/purchase player-id cost))))
 
   Passable
   (passable? [_ _] true)
