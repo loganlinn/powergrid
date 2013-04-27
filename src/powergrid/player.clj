@@ -87,7 +87,7 @@
   (when (owns-power-plant? player power-plant)
     (or (not (pp/consumes-resources? power-plant))
         (>= (reduce + (vals (power-plant-resources player power-plant)))
-            (:capacity power-plant)))))
+            (pp/capacity power-plant)))))
 
 (defn assign-resource
   "Returns updated player after storing resource in power plant.
@@ -105,7 +105,7 @@
   [player]
   (reduce
     (fn [m [power-plant utilization]]
-      (let [avail-cap (- (* 2 (:capacity power-plant))
+      (let [avail-cap (- (pp/max-capacity power-plant)
                          (apply + (vals utilization)))]
         (update-in m [(:resource power-plant)]
                    (fnil #(+ avail-cap %) 0))))
@@ -157,7 +157,7 @@
          amt amt]
     (if (and plant (pos? amt))
       (let [space-left (if (pp/accepts-resource? plant resource)
-                         (- (* 2 (:capacity plant))
+                         (- (pp/max-capacity plant)
                             (get inventory resource 0))
                          0)
             amt-stored (min space-left amt)]
