@@ -35,12 +35,9 @@
 (defrecord BuyCitiesMessage [player-id new-cities]
   Validated
   (validate [this game]
-    (let [cities (g/cities game)
-          in-city? #(c/owner? (g/cities game) % player-id)]
-      (cond
-        (not (every? (partial valid-city? game player-id) new-cities)) "Invalid city"
-        (not (can-afford-cities? game player-id new-cities)) "Insufficient funds"
-        )))
+    (cond
+      (not (every? (partial valid-city? game player-id) new-cities)) "Invalid city"
+      (not (can-afford-cities? game player-id new-cities)) "Insufficient funds"))
 
   GameUpdate
   (update-game [this game]
