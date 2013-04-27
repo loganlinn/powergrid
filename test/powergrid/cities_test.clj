@@ -51,17 +51,17 @@
     (let [cities {:owners {:a [1] :b [1]}
                   :connections (as-graph {[:a :c] 10 [:a :d] 14
                                           [:b :d] 10 [:b :c] 14})}]
-      (purchase-cost cities 1 [:c :d] ...step...) => 20))
+      (purchase-cost cities 1 [:c :d]) => 20))
   (fact "should go through first purchase"
     (let [cities {:owners {:a [1]}
                   :connections (as-graph {[:a :c] 4 [:a :d] 8
                                           [:c :d] 2})}]
-      (purchase-cost cities 1 [:c :d] ...step...) => 6))
+      (purchase-cost cities 1 [:c :d]) => 6))
   (fact "shouldn't fail when unreachable"
     (let [cities {:owners {:a [1]}
                   :connections (as-graph {[:a :x] 100
                                           [:c :y] 100})}]
-      (purchase-cost cities 1 [:c] ...step...) => anything)))
+      (purchase-cost cities 1 [:c]) => anything)))
 
 (fact add-owner
   (let [before {:owners {...city... [...x...]}}

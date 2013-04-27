@@ -5,23 +5,26 @@
             [powergrid.player :as p]
             [powergrid.resource :as r]))
 
-(defn connection-cost
-  [connections cities]
-  ;; TODO IMPLEMENT
-  0)
-
 (defn can-afford-cities?
   [game player-id cities]
-  ;; TODO IMPLEMENT
-  true)
+  (let [player (g/player player-id)
+        cost (c/purchase-cost (g/cities game) player-id cities)]
+    (p/can-afford? cost)))
 
-(defrecord BuyCitiesMessage [player-id cities]
+(defn valid-city?
+  [game player-id city]
+  (let [cities (g/cities game)]
+    (and (c/valid-city? cities city)
+         (c/buildable-city? cities city player-id (g/current-step game)))))
+
+(defrecord BuyCitiesMessage [player-id new-cities]
   Validated
   (validate [this game]
-    (let [in-city? #(c/owner? (g/cities game) % player-id)]
+    (let [cities (g/cities game)
+          in-city? #(c/owner? (g/cities game) % player-id)]
       (cond
-        (some in-city? cities) "You may only build in a city once"
-        (not (can-afford-cities? game player-id cities)) "Insufficient funds"
+        (not (every? (partial valid-city? game player-id) new-cities)) "Invalid city"
+        (not (can-afford-cities? game player-id new-cities)) "Insufficient funds"
         )))
 
   GameUpdate

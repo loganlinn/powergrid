@@ -85,7 +85,7 @@
   "Returns cost for player-id to purchase cities in purchase. Total cost is
   calculated by purchasing cities in the order they appear.  Assumes player is
   permitted to build in each city"
-  [cities player-id purchase game-step]
+  [cities player-id purchase]
   (loop [cities cities
          [city & cs] purchase
          total-cost 0]
