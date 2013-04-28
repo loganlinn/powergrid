@@ -17,10 +17,16 @@
   (passable? [this game] "Returns true if passing is allowed")
   (pass [this game] "Returns (modified) game from passing msg"))
 
-(extend-protocol Passable
-  clojure.lang.IPersistentMap
+(extend-type clojure.lang.IPersistentMap
+  Validated
+  (validate [_ _] nil)
+
+  Passable
   (passable? [_ _] false)
-  (pass [_ game] game))
+  (pass [_ game] game)
+
+  GameUpdate
+  (update-game [_ game] game))
 
 (defn base-validate
   [{:keys [player-id] :as msg} game]
