@@ -37,6 +37,7 @@
   (turn? [_] true)
   (validate [this game]
     (cond
+      (not (seq? new-cities)) "Invalid purchase"
       (not (every? (partial valid-city? game player-id) new-cities)) "Invalid city"
       (not (can-afford-cities? game player-id new-cities)) "Insufficient funds"))
 

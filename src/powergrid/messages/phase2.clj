@@ -37,6 +37,7 @@
     (let [auction (g/current-auction game)
           plant (pp/plant plant-id)]
       (cond
+        (not bid) "Invalid bid"
         (not plant) "Unknown plant"
         (not (g/power-plant-buyable? game plant)) "Cannot purchase that power-plant"
         (not= player-id (a/current-bidder auction)) "Not your bid"
