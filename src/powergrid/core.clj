@@ -125,17 +125,13 @@
   [game]
   (-> game post-step inc-step prep-step))
 
-(comment
+(defn update-game
+  [game msg]
+  (cond-> (msg/apply-message game msg)
+    (step-complete? game) (next-step)
+    (phase-complete? game) (next-phase)))
 
-  (defn tick-game
-    [game]
-    (cond
-      (or (nil? game) (game-over? game)) nil
-      (has-messages? game) (apply-messages game)
-      (step-complete? game) (next-step game)
-      (phase-complete? game) (next-phase game)
-      (expecting-message? game) game
-      :else game))
+(comment
 
   (defn recursive-expansion
     [expander input]
@@ -143,6 +139,7 @@
       (if (= input output)
         input
         (recur expander output))))
+
   (defn update-state [current-state event]
     ;; return updated state
     )
