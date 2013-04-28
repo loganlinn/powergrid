@@ -125,12 +125,6 @@
   [game]
   (-> game post-step inc-step prep-step))
 
-(defn apply-message
-  [game message]
-  (if-let [err (msg/validate message game)]
-    (println "ERROR" err)
-    ()))
-
 (comment
 
   (defn tick-game
