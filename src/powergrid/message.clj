@@ -32,18 +32,20 @@
 
 (defrecord ValidationError [message])
 
-(defn- apply-message*
-  [f msg game]
-  (cond-> (f msg game)
-    (turn? msg) g/advance-turns))
+(defn- handle-turns
+  "Returns game after updating turns as needed"
+  [game msg]
+  (if (turn? msg)
+    (g/advance-turns game)
+    game))
 
 (defn apply-message
   "Returns game after applying message. Throws exception if message fails validation"
   [game msg]
   {:pre [(satisfies? Message msg)]}
   (if (and (passable? msg game) (pass? msg))
-    (apply-message* pass msg game)
+    (handle-turns (pass msg game) msg)
     (if-let [err (or (base-validate msg game) (validate msg game))]
       (throw+ (->ValidationError err))
-      (apply-message* update-game msg game))))
+      (handle-turns (update-game msg game) msg))))
 
