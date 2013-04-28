@@ -157,6 +157,8 @@
   (assoc game :players (players-map (apply f (players game) args))))
 
 (defn transfer-money
+  "Returns game after transfering money between player and bank. Second argument
+  specifies whether transfer is to or from player"
   [game dir player-id amt]
   {:pre [(or (= dir :to) (= dir :from))]}
   (let [amt (if (= dir :from) (- amt) amt)]
