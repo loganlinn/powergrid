@@ -22,7 +22,7 @@
   (-> game
       (g/update-resource resource r/send-resource :market n)
       (g/update-player player-id r/accept-resource resource n)
-      (g/purchase player-id (resource-price game resource n))))
+      (g/transfer-money :from player-id (resource-price game resource n))))
 
 (defrecord BuyResourcesMessage [player-id resources]
   Validated

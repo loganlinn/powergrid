@@ -156,12 +156,13 @@
   [game f & args]
   (assoc game :players (players-map (apply f (players game) args))))
 
-(defn purchase
-  "Returns game after transferring amt Elektro from player to bank"
-  [game player-id price]
-  (-> game
-      (update-player player-id p/update-money (- price))
-      (update-in [:bank] (fnil + 0) price)))
+(defn transfer-money
+  [game dir player-id amt]
+  {:pre [(or (= dir :to) (= dir :from))]}
+  (let [amt (if (= dir :from) (- amt) amt)]
+    (-> game
+        (update-player player-id p/update-money (+ amt))
+        (update-in [:bank] (fnil - 0) amt))))
 
 ;; TURNS
 

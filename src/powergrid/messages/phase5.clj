@@ -84,7 +84,7 @@
   (update-game [this game]
     (-> game
         (consume-resources player-id powered-cities)
-        (g/purchase player-id (- (total-payout game player-id powered-cities))))))
+        (g/transfer-money :to player-id (total-payout game player-id powered-cities)))))
 
 (def messages
   {:sell map->PowerCitiesMessage})

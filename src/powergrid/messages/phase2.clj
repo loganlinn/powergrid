@@ -26,7 +26,7 @@
   (-> game
       (g/remove-power-plant :market item)
       (g/update-player player-id p/add-power-plant item)
-      (g/purchase player-id price)
+      (g/transfer-money :from player-id price)
       (g/remove-turn player-id)
       (g/cleanup-auction)))
 

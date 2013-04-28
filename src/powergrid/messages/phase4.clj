@@ -44,7 +44,7 @@
     (let [cost (purchase-cost game player-id new-cities)]
       (-> game
           (own-cities player-id new-cities)
-          (g/purchase player-id cost))))
+          (g/transfer-money :from player-id cost))))
 
   Passable
   (passable? [_ _] true)
