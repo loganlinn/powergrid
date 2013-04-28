@@ -30,13 +30,14 @@
   {:pre [(satisfies? Message msg)]}
   (if (and (passable? msg game) (pass? msg))
     (pass msg game)
-    (if-let [err (validate msg game)]
+    (if-let [err (or (base-validate msg game) (validate msg game))]
       (handle-error msg err)
       (update-game msg game))))
 
 (defn base-validate
+  "Default set of validation rules. Returns error message if fails validation,
+  otherwise nil"
   [{:keys [player-id] :as msg} game]
-  ;; TODO ensure msg is authorized (check users match)
   (cond
     (not (g/player player-id)) "Invalid player"
     (= player-id (g/current-turn game)) "Not your turn"))
