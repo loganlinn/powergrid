@@ -26,6 +26,7 @@
 
 (defrecord BuyResourcesMessage [player-id resources]
   Message
+  (turn? [_] true)
   (validate [this game]
     (let [player (g/player player-id)]
       (cond

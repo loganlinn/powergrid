@@ -34,6 +34,7 @@
 
 (defrecord BuyCitiesMessage [player-id new-cities]
   Message
+  (turn? [_] true)
   (validate [this game]
     (cond
       (not (every? (partial valid-city? game player-id) new-cities)) "Invalid city"

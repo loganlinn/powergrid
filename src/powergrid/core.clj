@@ -6,7 +6,8 @@
             [powergrid.message :as msg]
             [powergrid.messages.factory :as msgs]
             [io.pedestal.service.log :as log]
-            [slingshot.slingshot :refer [try+ throw+]]))
+            [slingshot.slingshot :refer [try+ throw+]])
+  (:import [powergrid.message ValidationError]))
 
 (defn player-order
   "Returns sorted players map using the following rules:

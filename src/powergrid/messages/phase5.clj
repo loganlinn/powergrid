@@ -75,6 +75,7 @@
 
 (defrecord PowerCitiesMessage [player-id powered-cities]
   Message
+  (turn? [_] true)
   (validate [this game]
     (cond
       (not (and (map? powered-cities)

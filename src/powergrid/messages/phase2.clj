@@ -32,6 +32,7 @@
 
 (defrecord BidPowerPlantMessage [player-id plant-id bid]
   Message
+  (turn? [_] true)
   (validate [_ game]
     (let [auction (g/current-auction game)
           plant (pp/plant plant-id)]
