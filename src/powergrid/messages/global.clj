@@ -1,5 +1,5 @@
 (ns powergrid.messages.global
-  (:require [powergrid.message :refer [Validated GameUpdate]]
+  (:require [powergrid.message :refer [Message]]
             [powergrid.game :as g]
             [powergrid.player :as p]
             [powergrid.resource :as r]
@@ -8,14 +8,14 @@
 (def ^:private player-color (comp p/color g/player))
 
 (defrecord SetColorMessage [player-id color]
-  Validated
+  Message
   (validate [this game]
     (let [color (kw color)]
       (cond
         (not (p/valid-color? color)) "Invalid color"
         (= color (player-color player-id)) "Already using that color"
         (g/color-taken? game color) "Color taken")))
-  GameUpdate
+
   (update-game [this game]
     (g/update-player game player-id p/set-color color)))
 

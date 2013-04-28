@@ -1,5 +1,5 @@
 (ns powergrid.messages.phase3
-  (:require [powergrid.message :refer [Validated GameUpdate Passable]]
+  (:require [powergrid.message :refer [Message]]
             [powergrid.game :as g]
             [powergrid.player :as p]
             [powergrid.resource :as r]))
@@ -25,7 +25,7 @@
       (g/transfer-money :from player-id (resource-price game resource n))))
 
 (defrecord BuyResourcesMessage [player-id resources]
-  Validated
+  Message
   (validate [this game]
     (let [player (g/player player-id)]
       (cond
@@ -38,13 +38,11 @@
         (not (g/contains-resource? game resources)) "Insufficient resources in market"
         (p/can-afford? player (total-price game resources)) "Insufficient funds")))
 
-  GameUpdate
   (update-game [this game]
     (reduce (fn [game [r n]] (buy-resource game player-id r n))
             game
             resources))
 
-  Passable
   (passable? [_ _] true)
   (pass [_ game] game))
 

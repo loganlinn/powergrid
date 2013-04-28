@@ -1,5 +1,5 @@
 (ns powergrid.messages.phase2
-  (:require [powergrid.message :refer [Validated GameUpdate Passable]]
+  (:require [powergrid.message :refer [Message]]
             [powergrid.game :as g]
             [powergrid.player :as p]
             [powergrid.auction :as a]
@@ -31,7 +31,7 @@
       (g/cleanup-auction)))
 
 (defrecord BidPowerPlantMessage [player-id plant-id bid]
-  Validated
+  Message
   (validate [_ game]
     (let [auction (g/current-auction game)
           plant (pp/plant plant-id)]
@@ -44,7 +44,6 @@
         (and auction (< bid (a/min-bid auction))) (str "Minimum bid is " (a/min-bid auction))
         (or auction (< bid plant-id)) (str "Minimum bid is " plant-id))))
 
-  Passable
   (passable? [_ game]
     (or (g/has-auction? game)
         (not= (g/current-round game) 1)))
@@ -55,7 +54,6 @@
         (g/set-auction game auction))
       game))
 
-  GameUpdate
   (update-game [_ game]
     (let [plant (pp/plant plant-id)
           auction (a/bid (auction game plant-id) player-id bid)]

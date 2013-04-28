@@ -1,5 +1,5 @@
 (ns powergrid.messages.phase5
-  (:require [powergrid.message :refer [Validated GameUpdate]]
+  (:require [powergrid.message :refer [Message]]
             [powergrid.game :as g]
             [powergrid.player :as p]
             [powergrid.cities :as c]
@@ -74,7 +74,7 @@
     (payout (min yield net-size))))
 
 (defrecord PowerCitiesMessage [player-id powered-cities]
-  Validated
+  Message
   (validate [this game]
     (cond
       (not (and (map? powered-cities)
@@ -82,7 +82,6 @@
       (every? valid-sale? powered-cities) "Invalid sale"
       (every? (partial can-sell? player-id) powered-cities) "Invalid sale"))
 
-  GameUpdate
   (update-game [this game]
     (-> game
         (consume-resources player-id powered-cities)

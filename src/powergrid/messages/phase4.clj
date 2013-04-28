@@ -1,5 +1,5 @@
 (ns powergrid.messages.phase4
-  (:require [powergrid.message :refer [Validated GameUpdate Passable]]
+  (:require [powergrid.message :refer [Message]]
             [powergrid.game :as g]
             [powergrid.cities :as c]
             [powergrid.player :as p]
@@ -33,20 +33,18 @@
   (reduce #(g/update-cities %1 c/add-owner player-id %2) game new-cities))
 
 (defrecord BuyCitiesMessage [player-id new-cities]
-  Validated
+  Message
   (validate [this game]
     (cond
       (not (every? (partial valid-city? game player-id) new-cities)) "Invalid city"
       (not (can-afford-cities? game player-id new-cities)) "Insufficient funds"))
 
-  GameUpdate
   (update-game [this game]
     (let [cost (purchase-cost game player-id new-cities)]
       (-> game
           (own-cities player-id new-cities)
           (g/transfer-money :from player-id cost))))
 
-  Passable
   (passable? [_ _] true)
   (pass [_ game] game))
 

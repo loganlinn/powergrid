@@ -6,8 +6,7 @@
             [powergrid.message :as msg]
             [powergrid.messages.factory :as msgs]
             [io.pedestal.service.log :as log]
-            [slingshot.slingshot :refer [try+ throw+]])
-  (:import [powergrid.message ValidateError]))
+            [slingshot.slingshot :refer [try+ throw+]]))
 
 (defn player-order
   "Returns sorted players map using the following rules:
@@ -118,39 +117,21 @@
 
 ;; =============================================================================
 
+(defn next-phase
+  [game]
+  (-> game post-phase inc-phase prep-phase))
+
+(defn next-step
+  [game]
+  (-> game post-step inc-step prep-step))
+
+(defn apply-message
+  [game message]
+  (if-let [err (msg/validate message game)]
+    (println "ERROR" err)
+    ()))
+
 (comment
-
-  (defn apply-message
-    [game m]
-    (when-let [msg (msgs/create-message m)]
-      (when (satisfies? msg/Validated msg)
-        (try+
-          (msg/throw-validation-errors msg game)
-          (if (satisfies? msg/GameUpdate msg)
-            (msg/update-game msg game)
-            game)
-          (catch ValidateError e
-            (log/error e)
-            (if-not (:silent? e)
-              (throw+ e))
-            game)))))
-
-  (defn apply-messages
-    "Returns game after processing messages recursively"
-    [game]
-    (loop [game game]
-      (let [[game msg] (reserve-message game)]
-        (if msg
-          (recur (apply-message game msg))
-          game))))
-
-  (defn next-phase
-    [game]
-    (-> game post-phase inc-phase prep-phase))
-
-  (defn next-step
-    [game]
-    (-> game post-step inc-step prep-step))
 
   (defn tick-game
     [game]
