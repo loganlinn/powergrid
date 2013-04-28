@@ -4,6 +4,7 @@
 
 (def topic :topic)
 (def title :title)
+(def pass ::pass)
 
 (defprotocol Message
   (turn? [this] "Returns true if turns should be advanced after hanlding message")
@@ -11,7 +12,7 @@
   (update-game [update game])
   (passable? [this game] "Returns true if passing is allowed, otherwise false")
   (pass? [this] "Returns true if this message represents a pass, otherwise false")
-  (pass [this game] "Returns (modified) game from passing msg"))
+  (update-pass [this game] "Returns (modified) game from passing msg"))
 
 (extend-protocol Message
   clojure.lang.IPersistentMap
@@ -19,7 +20,7 @@
   (update-game [_ game] game)
   (passable? [_ _] false)
   (pass? [this] (::pass? this))
-  (pass [_ game] game)
+  (update-pass [_ game] game)
   (turn? [_] false))
 
 (defn base-validate
@@ -44,7 +45,7 @@
   [game msg]
   {:pre [(satisfies? Message msg)]}
   (if (and (passable? msg game) (pass? msg))
-    (handle-turns (pass msg game) msg)
+    (handle-turns (update-pass msg game) msg)
     (if-let [err (or (base-validate msg game) (validate msg game))]
       (throw+ (->ValidationError err))
       (handle-turns (update-game msg game) msg))))

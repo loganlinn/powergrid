@@ -9,4 +9,4 @@
 
 (fact "passable"
   (passable? (map->BuyCitiesMessage {}) ...game...) => truthy
-  (pass (map->BuyCitiesMessage {}) ...game...) => ..game...)
+  (update-pass (map->BuyCitiesMessage {}) ...game...) => ..game...)

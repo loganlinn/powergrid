@@ -48,7 +48,7 @@
   (passable? [_ game]
     (or (g/has-auction? game)
         (not= (g/current-round game) 1)))
-  (pass [_ game]
+  (update-pass [_ game]
     (if-let [auction (a/pass (g/current-auction game))]
       (if (a/completed? auction)
         (complete-auction game auction)

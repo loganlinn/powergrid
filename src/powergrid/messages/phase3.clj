@@ -45,7 +45,7 @@
             resources))
 
   (passable? [_ _] true)
-  (pass [_ game] game))
+  (update-pass [_ game] game))
 
 (def messages
   {:buy map->BuyResourcesMessage})
