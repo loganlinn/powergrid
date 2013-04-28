@@ -27,6 +27,7 @@
 (defn apply-message
   "Returns game after applying message"
   [game msg]
+  {:pre [(satisfies? Message msg)]}
   (if (and (passable? msg game) (pass? msg))
     (pass msg game)
     (if-let [err (validate msg game)]
