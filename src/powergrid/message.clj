@@ -20,6 +20,14 @@
   (pass? [this] (::pass? this))
   (pass [_ game] game))
 
+(defn base-validate
+  "Default set of validation rules. Returns error message if fails validation,
+  otherwise nil"
+  [{:keys [player-id] :as msg} game]
+  (cond
+    (not (g/player player-id)) "Invalid player"
+    (= player-id (g/current-turn game)) "Not your turn"))
+
 (defn handle-error
   [msg err]
   (println "ERROR:" err msg))
@@ -34,10 +42,3 @@
       (handle-error msg err)
       (update-game msg game))))
 
-(defn base-validate
-  "Default set of validation rules. Returns error message if fails validation,
-  otherwise nil"
-  [{:keys [player-id] :as msg} game]
-  (cond
-    (not (g/player player-id)) "Invalid player"
-    (= player-id (g/current-turn game)) "Not your turn"))
