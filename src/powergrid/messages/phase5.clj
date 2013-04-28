@@ -44,8 +44,10 @@
   resource supply"
   [game player-id plant-id resource n]
   (-> game
-      (g/update-player player-id r/send-resource [(pp/plant plant-id) resource] n)
-      (g/update-resource resource r/accept-resource :supply n)))
+      (g/update-player player-id r/send-resource
+                       [(pp/plant plant-id) resource] n)
+      (g/update-resource resource r/accept-resource
+                         :supply n)))
 
 (defn flatten-sale
   "Returns sequence of [plant-id resource amt] by flattening sale (nested maps)"
@@ -84,7 +86,8 @@
   (update-game [this game]
     (-> game
         (consume-resources player-id powered-cities)
-        (g/transfer-money :to player-id (total-payout game player-id powered-cities)))))
+        (g/transfer-money :to player-id
+                          (total-payout game player-id powered-cities)))))
 
 (def messages
   {:sell map->PowerCitiesMessage})
