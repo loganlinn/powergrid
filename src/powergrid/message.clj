@@ -27,10 +27,10 @@
 (defn apply-message
   "Returns game after applying message"
   [game msg]
-  (if-let [err (validate msg game)]
-    (handle-error msg err)
-    (if (and (passable? msg game) (pass? msg))
-      (pass msg game)
+  (if (and (passable? msg game) (pass? msg))
+    (pass msg game)
+    (if-let [err (validate msg game)]
+      (handle-error msg err)
       (update-game msg game))))
 
 (defn base-validate
