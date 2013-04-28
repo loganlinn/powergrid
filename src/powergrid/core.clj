@@ -127,9 +127,12 @@
 
 (defn update-game
   [game msg]
-  (cond-> (msg/apply-message game msg)
-    (step-complete? game) (next-step)
-    (phase-complete? game) (next-phase)))
+  (try+
+    (cond-> (msg/apply-message game msg)
+      (step-complete? game) (next-step)
+      (phase-complete? game) (next-phase))
+    (catch ValidationError e
+      game)))
 
 (comment
 

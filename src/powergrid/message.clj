@@ -34,13 +34,16 @@
   (println "ERROR:" err msg)
   game)
 
+(defrecord ValidtionError [message])
+
 (defn apply-message
-  "Returns game after applying message"
+  "Returns game after applying message. Throws exception if message fails validation"
   [game msg]
   {:pre [(satisfies? Message msg)]}
   (if (and (passable? msg game) (pass? msg))
     (pass msg game)
     (if-let [err (or (base-validate msg game) (validate msg game))]
-      (handle-error msg game err)
+      (do (handle-error msg game err)
+          (throw+ (->ValidationError err)))
       (update-game msg game))))
 
