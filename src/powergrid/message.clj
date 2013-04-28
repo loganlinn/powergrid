@@ -29,8 +29,10 @@
     (= player-id (g/current-turn game)) "Not your turn"))
 
 (defn handle-error
-  [msg err]
-  (println "ERROR:" err msg))
+  "Handles error, returns game"
+  [msg game err]
+  (println "ERROR:" err msg)
+  game)
 
 (defn apply-message
   "Returns game after applying message"
@@ -39,6 +41,6 @@
   (if (and (passable? msg game) (pass? msg))
     (pass msg game)
     (if-let [err (or (base-validate msg game) (validate msg game))]
-      (handle-error msg err)
+      (handle-error msg game err)
       (update-game msg game))))
 
