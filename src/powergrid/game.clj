@@ -81,15 +81,6 @@
    :future (pp/initial-future)
    :deck (init-power-plant-deck (pp/initial-deck) num-players)})
 
-(defprotocol PlayersMap
-  (players-map [this]))
-
-(extend-protocol PlayersMap
-  clojure.lang.IPersistentMap
-  (players-map [this] this)
-  clojure.lang.Seqable
-  (players-map [this] (apply hash-map (mapcat (juxt p/id identity) this))))
-
 (defn new-game
   "Returns new Game for vector of players"
   [players]
@@ -99,7 +90,7 @@
               :round 1
               :resources (init-resources)
               :power-plants (init-power-plants (count players))
-              :players (players-map players)
+              :players (into {} (map (juxt p/id identity) players))
               :turns  '()
               :cities (c/map->Cities {:owners (zipmap usa/cities (repeat []))
                                       :connections (c/as-graph usa/connections)})
@@ -122,6 +113,11 @@
   (update-in game [:round] inc))
 
 ;; PLAYERS
+
+(defn players-map
+  "Returns map of player-id to player from game"
+  [game]
+  (:players game))
 
 (defn players
   "Returns players"
@@ -151,11 +147,6 @@
   [game player-id f & args]
   (apply update-in game [:players player-id] f args))
 
-(defn update-players
-  "Returns game after updating players via (apply f players args)"
-  [game f & args]
-  (assoc game :players (players-map (apply f (players game) args))))
-
 (defn transfer-money
   "Returns game after transfering money between player and bank. Second argument
   specifies whether transfer is to or from player"
@@ -165,6 +156,26 @@
     (-> game
         (update-player player-id p/update-money (+ amt))
         (update-in [:bank] (fnil - 0) amt))))
+
+(declare network-size)
+
+(defn sorted-players-map
+  "Returns sorted players using the following rules:
+  First player is player with most cities in network. If two or more players
+  are tied for the most number of cities, if the first player is the player
+  among them with the largest-numbered power plant. Determine remaining player
+  order using same rules"
+  [game]
+  (let [ps (players-map game)
+        num-cities (partial network-size game)
+        max-plant (comp p/max-power-plant ps)
+        c (juxt num-cities max-plant identity)]
+    (into (sorted-map-by #(compare (c %2) (c %1))) ps)))
+
+(defn update-player-order
+  "Returns game after updating player order"
+  [game]
+  (assoc game :players (sorted-players-map game)))
 
 ;; TURNS
 
@@ -338,26 +349,26 @@
 
 ;; CITIES
 
+(defn cities
+  "Returns cities for game"
+  [game]
+  (:cities game))
+
 (defn network-size
   "Returns the number of cities player owns"
   [game player-id]
-  (c/network-size (:cities game) player-id))
+  (c/network-size (cities game) player-id))
 
 (defn max-network-size
   "Returns the maximum number of cities a single player has built"
   [game]
-  (apply max (vals (c/network-sizes (:cities game)))))
+  (apply max (vals (c/network-sizes (cities game)))))
 
 (defn max-city-connections
   "Returns the maximum number of connections allowed in a city based on current
   step of game"
   [game]
   (current-step game))
-
-(defn cities
-  "Returns cities for game"
-  [game]
-  (:cities game))
 
 (defn update-cities
   "Returns game after updating cities via (apply f cities args)"

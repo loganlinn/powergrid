@@ -9,24 +9,6 @@
             [slingshot.slingshot :refer [try+ throw+]])
   (:import [powergrid.message ValidationError]))
 
-(defn player-order
-  "Returns sorted players using the following rules:
-  First player is player with most cities in network. If two or more players
-  are tied for the most number of cities, if the first player is the player
-  among them with the largest-numbered power plant. Determine remaining player
-  order using same rules"
-  [game players]
-  (let [order-cols (juxt (partial network-size game) p/max-power-plant)]
-    (sort #(compare (order-cols %2)
-                    (order-cols %1))
-          players)))
-
-(defn update-player-order
-  "Returns game after updating player order"
-  [game]
-  ;; TODO CLEANUP
-  (update-players game (partial player-order game)))
-
 (defn game-over?
   "Returns true if conditions have been to end the game, otherwise false"
   [game]
