@@ -24,7 +24,7 @@
   "Updates and returns game for a finshed auction"
   [game {:keys [item price player-id]}]
   (-> game
-      (g/remove-power-plant :market item)
+      (g/remove-power-plant item :market)
       (g/update-player player-id p/add-power-plant item)
       (g/transfer-money :from player-id price)
       (g/remove-turn player-id)
@@ -33,18 +33,6 @@
 (defrecord BidPowerPlantMessage [player-id plant-id bid]
   Message
   (turn? [_] true)
-  (validate [_ game]
-    (let [auction (g/current-auction game)
-          plant (pp/plant plant-id)]
-      (cond
-        (not bid) "Invalid bid"
-        (not plant) "Unknown plant"
-        (not (g/power-plant-buyable? game plant)) "Cannot purchase that power-plant"
-        (not= player-id (a/current-bidder auction)) "Not your bid"
-        (or auction (= player-id (g/current-turn game))) "Not your bid"
-        (not (p/can-afford? (g/player player-id) bid)) "Insufficient funds"
-        (and auction (< bid (a/min-bid auction))) (str "Minimum bid is " (a/min-bid auction))
-        (or auction (< bid plant-id)) (str "Minimum bid is " plant-id))))
 
   (passable? [_ game]
     (or (g/has-auction? game)
@@ -55,6 +43,19 @@
         (complete-auction game auction)
         (g/set-auction game auction))
       game))
+
+  (validate [_ game]
+    (let [auction (g/current-auction game)
+          plant (pp/plant plant-id)]
+      (cond
+        (not bid) "Invalid bid"
+        (not plant) "Unknown plant"
+        (not (g/power-plant-buyable? game plant)) "Cannot purchase that power-plant"
+        (not= player-id
+              (if auction (a/current-bidder auction) (g/current-turn game))) "Not your bid"
+        (not (p/can-afford? (g/player game player-id) bid)) "Insufficient funds"
+        (if auction (< bid (a/min-bid auction))) (str "Minimum bid is " (a/min-bid auction))
+        (if (not auction) (< bid plant-id)) (str "Minimum bid is " plant-id))))
 
   (update-game [_ game]
     (let [plant (pp/plant plant-id)

@@ -27,6 +27,9 @@
 (defrecord BuyResourcesMessage [player-id resources]
   Message
   (turn? [_] true)
+  (passable? [_ _] true)
+  (update-pass [_ game] game)
+
   (validate [this game]
     (let [player (g/player player-id)]
       (cond
@@ -42,10 +45,7 @@
   (update-game [this game]
     (reduce (fn [game [r n]] (buy-resource game player-id r n))
             game
-            resources))
-
-  (passable? [_ _] true)
-  (update-pass [_ game] game))
+            resources)))
 
 (def messages
   {:buy map->BuyResourcesMessage})

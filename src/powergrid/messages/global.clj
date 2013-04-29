@@ -9,6 +9,10 @@
 
 (defrecord SetColorMessage [player-id color]
   Message
+  (turn? [_] false)
+  (passable? [_ _] false)
+  (update-pass [_ game] game)
+
   (validate [this game]
     (let [color (kw color)]
       (cond

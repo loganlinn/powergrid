@@ -134,7 +134,7 @@
 (defn player
   "Returns player by id if exists, otherwise nil"
   [game id]
-  (get-in [:players id]))
+  (get-in game [:players id]))
 
 (defn num-players
   [game]
@@ -188,9 +188,10 @@
 (defn set-turns
   "Returns game after setting turns"
   [game]
-  (if (turns-reverse-order? game)
-    (reverse (keys (game :players)))
-    (keys (game :players))))
+  (let [turns (if (turns-reverse-order? game)
+                (reverse (keys (:players game)))
+                (keys (:players game)))]
+    (assoc game :turns turns)))
 
 (defn remove-turn
   "Removes turn from turns in game state"
@@ -205,11 +206,11 @@
 ;; AUCTIONING
 
 
-(defn has-auction?  [game] (contains? game :auction))
+(defn has-auction?  [game] (:auction game))
 
 (defn cleanup-auction [game] (dissoc game :auction))
 
-(defn current-auction [game] (game :auction))
+(defn current-auction [game] (:auction game))
 
 (defn set-auction [game auction] (assoc game :auction auction))
 
@@ -235,8 +236,8 @@
 
 (defn resource-supply
   "Returns map of resource to amount left in supply"
-  [game]
-  (into {} (for [[rtype r] (:resources game)] [rtype (:supply r)])))
+  [{:keys [resources]}]
+  (zipmap (keys resources) (map :supply (vals resources))))
 
 (defn update-resource
   "Returns game after updating resource via (apply f resource args)"
@@ -307,7 +308,7 @@
   re-ordering"
   [game power-plant]
   (-> game
-      (update-power-plant-market game :future conj power-plant)
+      (update-power-plant-market :future conj power-plant)
       (update-power-plant-order)))
 
 (defn- handle-step-3-card

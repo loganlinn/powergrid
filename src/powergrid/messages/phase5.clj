@@ -76,6 +76,9 @@
 (defrecord PowerCitiesMessage [player-id powered-cities]
   Message
   (turn? [_] true)
+  (passable? [_ _] false)
+  (update-pass [_ game] game)
+
   (validate [this game]
     (cond
       (not (and (map? powered-cities)

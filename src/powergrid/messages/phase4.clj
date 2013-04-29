@@ -35,6 +35,9 @@
 (defrecord BuyCitiesMessage [player-id new-cities]
   Message
   (turn? [_] true)
+  (passable? [_ _] true)
+  (update-pass [_ game] game)
+
   (validate [this game]
     (cond
       (not (seq? new-cities)) "Invalid purchase"
@@ -45,10 +48,7 @@
     (let [cost (purchase-cost game player-id new-cities)]
       (-> game
           (own-cities player-id new-cities)
-          (g/transfer-money :from player-id cost))))
-
-  (passable? [_ _] true)
-  (update-pass [_ game] game))
+          (g/transfer-money :from player-id cost)))))
 
 (def messages
   {:buy map->BuyCitiesMessage})

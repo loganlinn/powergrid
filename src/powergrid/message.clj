@@ -8,28 +8,28 @@
 
 (defprotocol Message
   (turn? [this] "Returns true if turns should be advanced after hanlding message")
-  (validate [msg game] "Retruns string of validation message if msg is invalid, otherwise nil")
-  (update-game [update game])
   (passable? [this game] "Returns true if passing is allowed, otherwise false")
-  (pass? [this] "Returns true if this message represents a pass, otherwise false")
-  (update-pass [this game] "Returns (modified) game from passing msg"))
+  (update-pass [this game] "Returns (modified) game from passing msg")
+  (validate [msg game] "Retruns string of validation message if msg is invalid, otherwise nil")
+  (update-game [update game]))
 
 (extend-protocol Message
   clojure.lang.IPersistentMap
-  (validate [_ _] nil)
-  (update-game [_ game] game)
+  (turn? [_] false)
   (passable? [_ _] false)
-  (pass? [this] (::pass? this))
   (update-pass [_ game] game)
-  (turn? [_] false))
+  (validate [_ _] nil)
+  (update-game [_ game] game))
+
+(defn pass? [msg] (pass msg))
 
 (defn base-validate
   "Default set of validation rules. Returns error message if fails validation,
   otherwise nil"
   [{:keys [player-id] :as msg} game]
   (cond
-    (not (g/player player-id)) "Invalid player"
-    (= player-id (g/current-turn game)) "Not your turn"))
+    (not (g/player game player-id)) "Invalid player"
+    (not= player-id (g/current-turn game)) "Not your turn"))
 
 (defrecord ValidationError [message])
 
@@ -47,6 +47,7 @@
   (if (and (passable? msg game) (pass? msg))
     (handle-turns (update-pass msg game) msg)
     (if-let [err (or (base-validate msg game) (validate msg game))]
-      (throw+ (->ValidationError err))
+      (do (println "ERROR" err)
+          (throw+ (->ValidationError err)))
       (handle-turns (update-game msg game) msg))))
 
