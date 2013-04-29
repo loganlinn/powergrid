@@ -128,11 +128,11 @@
 
 (defn tick-phase
   [game]
-  (if (phase-complete? game) (next-phase game) game))
+  (if (phase-complete? game) (recur (next-phase game)) game))
 
 (defn tick-step
   [game]
-  (if (step-complete? game) (next-step game) game))
+  (if (step-complete? game) (recur (next-step game)) game))
 
 (defn tick
   [game]
