@@ -29,7 +29,7 @@
   [{:keys [player-id] :as msg} game]
   (cond
     (not (g/player game player-id)) "Invalid player"
-    (not= player-id (g/current-turn game)) "Not your turn"))
+    (and (turn? msg) (not= player-id (g/current-turn game))) "Not your turn"))
 
 (defrecord ValidationError [message])
 

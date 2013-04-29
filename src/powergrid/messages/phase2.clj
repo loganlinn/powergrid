@@ -32,7 +32,7 @@
 
 (defrecord BidPowerPlantMessage [player-id plant-id bid]
   Message
-  (turn? [_] true)
+  (turn? [_] false)
 
   (passable? [_ game]
     (or (g/has-auction? game)

@@ -64,7 +64,7 @@
 (defmethod post-phase :default [game] game)
 (defmethod prep-step :default [game] game)
 (defmethod post-step :default [game] game)
-(defmethod phase-complete? :default [game] (turns-remain? game))
+(defmethod phase-complete? :default [game] (not (turns-remain? game)))
 (defmethod step-complete? :default [game] false)
 
 (defmethod prep-phase 1 [game]
