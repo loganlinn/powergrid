@@ -47,7 +47,7 @@
   (if (and (passable? msg game) (pass? msg))
     (handle-turns (update-pass msg game) msg)
     (if-let [err (or (base-validate msg game) (validate msg game))]
-      (do (println "ERROR" err)
+      (do (println "ValidationError:" err)
           (throw+ (->ValidationError err)))
       (handle-turns (update-game msg game) msg))))
 
