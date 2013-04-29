@@ -126,12 +126,22 @@
   [game]
   (-> game post-step inc-step prep-step))
 
+(defn tick-phase
+  [game]
+  (if (phase-complete? game) (next-phase game) game))
+
+(defn tick-step
+  [game]
+  (if (step-complete? game) (next-step game) game))
+
+(defn tick
+  [game]
+  (-> game tick-step tick-phase))
+
 (defn update-game
   [game msg]
   (try+
-    (cond-> (msg/apply-message game msg)
-      (step-complete? game) (next-step)
-      (phase-complete? game) (next-phase))
+    (tick (msg/apply-message game msg))
     (catch ValidationError e
       game)))
 
