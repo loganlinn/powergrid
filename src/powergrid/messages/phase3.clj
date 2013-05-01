@@ -31,16 +31,15 @@
   (update-pass [_ game] game)
 
   (validate [this game]
-    (let [player (g/player player-id)]
+    (let [player (g/player game player-id)]
       (cond
         (or (not (map? resources))
             (empty? resources)) "Invalid resources"
         (not (every? r/types (keys resources))) "Unknown resource(s) specified"
         (some neg? (vals resources)) "Invalid resource amount"
-        (= player-id (g/current-turn game)) "Not your turn"
         (not (p/has-capacity? player resources)) "Insufficient power-plant capacity"
-        (not (g/contains-resource? game resources)) "Insufficient resources in market"
-        (p/can-afford? player (total-price game resources)) "Insufficient funds")))
+        (not (g/contains-resources? game resources)) "Insufficient resources in market"
+        (not (p/can-afford? player (total-price game resources))) "Insufficient funds")))
 
   (update-game [this game]
     (reduce (fn [game [r n]] (buy-resource game player-id r n))

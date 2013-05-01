@@ -53,7 +53,7 @@
 (defn turns-reverse-order?
   "Returns true if the current phase uses reverse player order, otherwise false"
   [{:keys [phase]}]
-  (or (= 4 phase) (= 5 phase)))
+  (or (= 3 phase) (= 4 phase)))
 
 (def step-3-card :step-3)
 (defn step-3-card? [card] (= step-3-card card))
@@ -118,6 +118,11 @@
   "Returns map of player-id to player from game"
   [game]
   (:players game))
+
+(defn map-players
+  "Returns a mapping from player-id to result of (f player)"
+  [game f]
+  (into {} (for [p (players game)] [(p/id p) (f p)])))
 
 (defn players
   "Returns players"
@@ -232,6 +237,11 @@
 
 ;; RESOURCES
 
+(defn map-resources
+  "Returns mapping from resources to result of (f resource)"
+  [game f]
+  (into {} (for [[t r] (:resources game)] [t (f r)])))
+
 (defn resource
   [game resource]
   {:pre [(r/types resource)]}
@@ -239,11 +249,13 @@
 
 (defn contains-resource?
   "Returns true if there is at least amt of resource in the resource market"
-  ([game resource amt]
+  ([game rtype amt]
    {:pre [(not (neg? amt))]}
-   (>= (:market (resource game resource) 0) amt))
-  ([game resources]
-   (every? #(contains-resource? game (key %) (val %)) resources)))
+   (>= (:market (resource game rtype) 0) amt)))
+
+(defn contains-resources?
+  [game resources]
+  (every? #(contains-resource? game (key %) (val %)) resources))
 
 (defn resource-supply
   "Returns map of resource to amount left in supply"

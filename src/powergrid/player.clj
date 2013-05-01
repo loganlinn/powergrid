@@ -40,8 +40,8 @@
 
 (defn power-plant-resources
   "Returns a map of resource-type to amt on player's power-plant."
-  [player power-plant]
-  (get-in player [:power-plants power-plant] {}))
+  [player plant]
+  (get-in player [:power-plants plant] {}))
 
 (defn max-power-plant
   "Returns the highest power-plant number the player owns"
@@ -127,7 +127,7 @@
                         (let [[c* cap*]
                               (reduce
                                 (fn [[c cap] r]
-                                  (let [x (get c r)]
+                                  (let [x (get c r 0)]
                                     (if (and (neg? x) (> cap x))
                                       [(assoc c r 0) (+ cap x)]
                                       [c cap])))
