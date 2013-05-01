@@ -119,11 +119,6 @@
   [game]
   (:players game))
 
-(defn map-players
-  "Returns a mapping from player-id to result of (f player)"
-  [game f]
-  (into {} (for [p (players game)] [(p/id p) (f p)])))
-
 (defn players
   "Returns players"
   [game & {:keys [except]}]
@@ -131,6 +126,11 @@
     (if except
       (keep #(when-not (= except (key %)) (val %)) ps)
       (vals ps))))
+
+(defn map-players
+  "Returns a mapping from player-id to result of (f player)"
+  [game f]
+  (into {} (for [p (players game)] [(p/id p) (f p)])))
 
 (defn player
   "Returns player by id if exists, otherwise nil"
@@ -374,7 +374,9 @@
 (defn max-network-size
   "Returns the maximum number of cities a single player has built"
   [game]
-  (apply max (vals (c/network-sizes (cities game)))))
+  (if-let [sizes (seq (vals (c/network-sizes (cities game))))]
+   (apply max sizes)
+    0))
 
 (defn max-city-connections
   "Returns the maximum number of connections allowed in a city based on current
