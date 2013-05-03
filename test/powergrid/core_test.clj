@@ -64,9 +64,9 @@
                 money-states (mapv #(g/map-players % p/money) states)
                 ]
             ;(pprint (map #(-> (select-keys % [:turns :phase])
-                              ;(assoc :players (g/map-players % (fn [p] (select-keys p [:money :power-plants]))))
-                              ;(assoc :resources (g/map-resources % (fn [r] (select-keys r [:market :supply])))))
-                         ;states))
+            ;(assoc :players (g/map-players % (fn [p] (select-keys p [:money :power-plants]))))
+            ;(assoc :resources (g/map-resources % (fn [r] (select-keys r [:market :supply])))))
+            ;states))
 
             (get resource-states 0) => {a {} b {} c {}}
             (get resource-states 1) => {a {:oil 2} b {} c {}}
@@ -80,12 +80,23 @@
                     msgs (map msgs/create-message
                               [(msg :phase4 :buy 1 :pass)
                                (msg :phase4 :buy 3 :pass)
-                               (msg :phase4 :buy 2 :pass)
-                               ])
+                               (msg :phase4 :buy 2 :pass)])
                     states (reductions update-game game msgs)]
                 (pprint (map #(-> (select-keys % [:turns :phase])
                                   (assoc :cities (g/map-players % (fn [p]  (c/owned-cities (g/cities %) (p/id p)))  ))
                                   (assoc :players (g/map-players % (fn [p] (select-keys p [:money :power-plants])))))
                              states))
-                ))
-            )) ))))
+
+                (fact "phase 5"
+                  (let [game (last states)
+                        msgs (map msgs/create-message
+                                  [(msg :phase5 :sell 1 :pass)
+                                   (msg :phase5 :sell 3 :pass)
+                                   (msg :phase5 :sell 2 :pass)])
+                        states (reductions update-game game msgs)]
+                    (pprint (map #(-> (select-keys % [:turns :phase])
+                                      (assoc :cities (g/map-players % (fn [p]  (c/owned-cities (g/cities %) (p/id p)))  ))
+                                      (assoc :players (g/map-players % (fn [p] (select-keys p [:money :power-plants])))))
+                                 states))
+
+                    )))))) ))))
