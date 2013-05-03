@@ -23,9 +23,9 @@
 (use 'clojure.pprint)
 
 (fact "simple game"
-  (let [game (tick (g/new-game [(p/new-player 1 nil :blue)
-                                (p/new-player 2 nil :black)
-                                (p/new-player 3 nil :red)]))
+  (let [game (tick (g/new-game [(p/new-player 1 :blue)
+                                (p/new-player 2 :black)
+                                (p/new-player 3 :red)]))
         [a b c] (g/turns game)
         auction1 (map msgs/create-message
                       [(msg :phase2 :bid a {:plant-id 3 :bid 3})
@@ -61,8 +61,7 @@
                 states (vec (reductions update-game game msgs))
                 pplants {a (pp/plant 3) b (pp/plant 5) c (pp/plant 4)}
                 resource-states (mapv #(g/map-players % (fn [p] (p/power-plant-resources p (pplants (p/id p))))) states)
-                money-states (mapv #(g/map-players % p/money) states)
-                ]
+                money-states (mapv #(g/map-players % p/money) states) ]
             ;(pprint (map #(-> (select-keys % [:turns :phase])
             ;(assoc :players (g/map-players % (fn [p] (select-keys p [:money :power-plants]))))
             ;(assoc :resources (g/map-resources % (fn [r] (select-keys r [:market :supply])))))
