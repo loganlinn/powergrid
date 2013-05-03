@@ -77,7 +77,7 @@
             (fact "phase 4"
               (let [game (last states)
                     msgs (map msgs/create-message
-                              [(msg :phase4 :buy 1 :pass)
+                              [(msg :phase4 :buy 1 {:new-cities [:boston :new-york]})
                                (msg :phase4 :buy 3 :pass)
                                (msg :phase4 :buy 2 :pass)])
                     states (reductions update-game game msgs)]
@@ -86,16 +86,17 @@
                                   (assoc :players (g/map-players % (fn [p] (select-keys p [:money :power-plants])))))
                              states))
 
-                (fact "phase 5"
-                  (let [game (last states)
-                        msgs (map msgs/create-message
-                                  [(msg :phase5 :sell 1 :pass)
-                                   (msg :phase5 :sell 3 :pass)
-                                   (msg :phase5 :sell 2 :pass)])
-                        states (reductions update-game game msgs)]
-                    (pprint (map #(-> (select-keys % [:turns :phase])
-                                      (assoc :cities (g/map-players % (fn [p]  (c/owned-cities (g/cities %) (p/id p)))  ))
-                                      (assoc :players (g/map-players % (fn [p] (select-keys p [:money :power-plants])))))
-                                 states))
+                ;(fact "phase 5"
+                  ;(let [game (last states)
+                        ;msgs (map msgs/create-message
+                                  ;[(msg :phase5 :sell 1 :pass)
+                                   ;(msg :phase5 :sell 3 :pass)
+                                   ;(msg :phase5 :sell 2 :pass)])
+                        ;states (reductions update-game game msgs)]
+                    ;(pprint (map #(-> (select-keys % [:turns :phase])
+                                      ;(assoc :cities (g/map-players % (fn [p]  (c/owned-cities (g/cities %) (p/id p)))  ))
+                                      ;(assoc :players (g/map-players % (fn [p] (select-keys p [:money :power-plants])))))
+                                 ;states))
 
-                    )))))) ))))
+                    ;))
+                )))) ))))

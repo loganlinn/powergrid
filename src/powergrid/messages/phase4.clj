@@ -23,7 +23,7 @@
   Cost is calculated by purchasing cheapest connection to each city in new-cities
   sequentially"
   [game player-id new-cities]
-  (let [player (g/player player-id)
+  (let [player (g/player game player-id)
         cost (purchase-cost game player-id new-cities)]
     (p/can-afford? player cost)))
 
@@ -40,7 +40,7 @@
 
   (validate [this game]
     (cond
-      (not (seq? new-cities)) "Invalid purchase"
+      (not (coll? new-cities)) "Invalid purchase"
       (not (every? (partial valid-city? game player-id) new-cities)) "Invalid city"
       (not (can-afford-cities? game player-id new-cities)) "Insufficient funds"))
 

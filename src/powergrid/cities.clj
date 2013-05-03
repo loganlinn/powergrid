@@ -77,9 +77,12 @@
   "Returns the minimum connection cost (excludes building cost) to a city from
   any of player-id's current cities"
   [cities player-id dst]
-  (let [conns (connections cities)]
-    (apply min (map #(connection-cost conns % dst) ;; TODO pmap helpful?
-                    (owned-cities cities player-id)))))
+  (let [conns (connections cities)
+        owned-cs (owned-cities cities player-id)]
+    (if (seq owned-cs)
+      (apply min (map #(connection-cost conns % dst) ;; TODO pmap helpful?
+                      owned-cs))
+      0)))
 
 (defn purchase-cost
   "Returns cost for player-id to purchase new-cities. Total cost is building cost
