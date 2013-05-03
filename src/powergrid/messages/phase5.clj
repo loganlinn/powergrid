@@ -12,9 +12,7 @@
   "Returns the payout amount to receive from powering num-powered cities"
   [num-powered]
   {:pre [(not (neg? num-powered))]}
-  (if (> num-powered (dec (count payout-values)))
-    (last payout-values)
-    (get payout-values num-powered)))
+  (get payout-values (min num-powered (dec (count payout-values)))))
 
 (defn valid-sale?
   "Returns true of the plant-id and resource amt combo is valid.
@@ -76,8 +74,10 @@
 (defrecord PowerCitiesMessage [player-id powered-cities]
   Message
   (turn? [_] true)
-  (passable? [_ _] false)
-  (update-pass [_ game] game)
+  (passable? [_ _] true)
+  (update-pass [_ game]
+    (-> game
+        (g/transfer-money :to player-id (payout 0))))
 
   (validate [this game]
     (cond

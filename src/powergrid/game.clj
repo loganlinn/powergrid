@@ -102,10 +102,11 @@
 
 (defn inc-phase
   [game]
-  (update-in game [:phase] inc))
+  (update-in game [:phase] #(if (< % 5) (inc %) 1)))
 
 (defn inc-step
   [game]
+  {:pre [(< (current-step game) 3)]}
   (update-in game [:step] inc))
 
 (defn inc-round

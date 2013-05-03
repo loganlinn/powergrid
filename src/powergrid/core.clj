@@ -72,6 +72,9 @@
 (defmethod prep-phase 4 [game]
   (-> game (set-turns)))
 
+(defmethod prep-phase 5 [game]
+  (-> game (set-turns)))
+
 (defmethod post-phase 5 [game]
   (-> game
       (drop-lowest-power-plant)
