@@ -22,7 +22,14 @@
 
 (use 'clojure.pprint)
 
-(fact "simple game"
+(defn money-diff
+  [game-before player-id diff]
+  (fn [game-after]
+    (= (- (p/money (g/player game-before player-id))
+          (p/money (g/player game-after player-id)))
+       diff)))
+
+(fact "simple round"
   (let [game (tick (g/new-game [(p/new-player 1 :blue)
                                 (p/new-player 2 :black)
                                 (p/new-player 3 :red)]))
@@ -77,14 +84,15 @@
             (fact "phase 4"
               (let [game (last states)
                     msgs (map msgs/create-message
-                              [(msg :phase4 :buy 1 {:new-cities [:boston :new-york]})
-                               (msg :phase4 :buy 3 :pass)
-                               (msg :phase4 :buy 2 :pass)])
+                              [(msg :phase4 :buy a {:new-cities [:philadelphia :new-york]})
+                               (msg :phase4 :buy c {:new-cities [:atlanta]})
+                               (msg :phase4 :buy b :pass)])
                     states (reductions update-game game msgs)]
                 (pprint (map #(-> (select-keys % [:turns :phase])
                                   (assoc :cities (g/map-players % (fn [p]  (c/owned-cities (g/cities %) (p/id p)))  ))
                                   (assoc :players (g/map-players % (fn [p] (select-keys p [:money :power-plants])))))
                              states))
+                (second states) => (money-diff (first states) a 20)
 
                 ;(fact "phase 5"
                   ;(let [game (last states)
