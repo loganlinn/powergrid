@@ -87,12 +87,14 @@
                               [(msg :phase4 :buy a {:new-cities [:philadelphia :new-york]})
                                (msg :phase4 :buy c {:new-cities [:atlanta]})
                                (msg :phase4 :buy b :pass)])
-                    states (reductions update-game game msgs)]
+                    states (vec (reductions update-game game msgs))]
                 (pprint (map #(-> (select-keys % [:turns :phase])
                                   (assoc :cities (g/map-players % (fn [p]  (c/owned-cities (g/cities %) (p/id p)))  ))
                                   (assoc :players (g/map-players % (fn [p] (select-keys p [:money :power-plants])))))
                              states))
-                (second states) => (money-diff (first states) a 20)
+                (get states 1) => (money-diff (get states 0) a 20)
+                (get states 2) => (money-diff (get states 0) c 10)
+                (get states 3) => (money-diff (get states 0) b 0)
 
                 ;(fact "phase 5"
                   ;(let [game (last states)
