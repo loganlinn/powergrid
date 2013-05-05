@@ -49,16 +49,16 @@
 
 (defn flatten-sale
   "Returns sequence of [plant-id resource amt] by flattening sale (nested maps)"
-  [powered-cities]
-  (mapcat #(for [resources (val %)] (cons (key %) resources)) powered-cities))
+  [powered-plants]
+  (mapcat #(for [resources (val %)] (cons (key %) resources)) powered-plants))
 
 (defn consume-resources
-  [game player-id powered-cities]
+  [game player-id powered-plants]
   (reduce
     (fn [game [plant-id resource n]]
       (consume-resource game player-id resource n))
     game
-    (flatten-sale powered-cities)))
+    (flatten-sale powered-plants)))
 
 (defn total-yield
   "Returns number of cities that can be powered from operating power-plants"
@@ -66,31 +66,31 @@
   (apply + (map (comp pp/yield pp/plant) plant-ids)))
 
 (defn total-payout
-  [game player-id powered-cities]
-  (let [yield (total-yield (keys powered-cities))
+  [game player-id powered-plants]
+  (let [yield (total-yield (keys powered-plants))
         net-size (c/network-size (g/cities game) player-id)]
     (payout (min yield net-size))))
 
-(defrecord PowerCitiesMessage [player-id powered-cities]
+;; powered-plants {plant-id {resource amt}}
+(defrecord PowerCitiesMessage [player-id powered-plants]
   Message
   (turn? [_] true)
   (passable? [_ _] true)
   (update-pass [_ game]
-    (-> game
-        (g/transfer-money :to player-id (payout 0))))
+    (-> game (g/transfer-money :to player-id (payout 0))))
 
   (validate [this game]
     (cond
-      (not (and (map? powered-cities)
-                (every? map? (vals powered-cities)))) "Invalid message"
-      (every? valid-sale? powered-cities) "Invalid sale"
-      (every? (partial can-sell? player-id) powered-cities) "Invalid sale"))
+      (not (and (map? powered-plants)
+                (every? map? (vals powered-plants)))) "Invalid message"
+      (every? valid-sale? powered-plants) "Invalid sale"
+      (every? (partial can-sell? player-id) powered-plants) "Invalid sale"))
 
   (update-game [this game]
     (-> game
-        (consume-resources player-id powered-cities)
+        (consume-resources player-id powered-plants)
         (g/transfer-money :to player-id
-                          (total-payout game player-id powered-cities)))))
+                          (total-payout game player-id powered-plants)))))
 
 (def messages
   {:sell map->PowerCitiesMessage})
