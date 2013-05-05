@@ -39,14 +39,14 @@
 
 (defn power-plant-resources
   "Returns a map of resource-type to amt on player's power-plant."
-  [player plant]
-  (get-in player [:power-plants plant] {}))
+  [player plant-id]
+  (get-in player [:power-plants plant-id] {}))
 
 (defn max-power-plant
   "Returns the highest power-plant number the player owns"
   [player]
-  (when-let [players-plants (power-plants player)]
-    (apply max (map :number players-plants))))
+  (when-let [plant-ids (power-plants player)]
+    (apply max plant-ids)))
 
 (defn update-money
   "Updates player's money by amt"
@@ -71,31 +71,33 @@
 
 (defn add-power-plant
   "Returns updated player after adding power-plant"
-  [player power-plant]
-  (assoc-in player [:power-plants power-plant] {}))
+  [player plant-id]
+  {:pre [(pp/plant plant-id)]}
+  (assoc-in player [:power-plants plant-id] {}))
 
 (defn owns-power-plant?
   "Returns true if the player owns power-plant, otherwise false"
-  [player power-plant]
-  (contains? (:power-plants player) power-plant))
+  [player plant-id]
+  (contains? (:power-plants player) plant-id))
 
 (defn can-power-plant?
   "Returns true if player has sufficient resources on plant to power it, if any
   are needed. Will always return true for green power-plants, assuming player owns it"
-  [player power-plant]
-  (when (owns-power-plant? player power-plant)
-    (or (not (pp/consumes-resources? power-plant))
-        (>= (reduce + (vals (power-plant-resources player power-plant)))
-            (pp/capacity power-plant)))))
+  [player plant-id]
+  (when (owns-power-plant? player plant-id)
+    (when-let [power-plant (pp/plant plant-id)]
+      (or (not (pp/consumes-resources? power-plant))
+          (>= (reduce + (vals (power-plant-resources player plant-id)))
+              (pp/capacity power-plant))))))
 
 (defn add-power-plant-resources
   "Returns updated player after storing resource in power plant.
   Asserts that power-plant accepts resource and player owns it."
-  [player power-plant resource amount]
-  {:pre [(pp/accepts-resource? power-plant resource)
-         (owns-power-plant? player power-plant)]}
+  [player plant-id resource amount]
+  {:pre [(pp/accepts-resource? (pp/plant plant-id) resource)
+         (owns-power-plant? player plant-id)]}
   (update-in player
-             [:power-plants power-plant resource]
+             [:power-plants plant-id resource]
              (fnil #(+ % amount) 0)))
 
 (defn resource-capacities
@@ -103,8 +105,9 @@
   the power plants he owns and current resources"
   [player]
   (reduce
-    (fn [m [power-plant utilization]]
-      (let [avail-cap (- (pp/max-capacity power-plant)
+    (fn [m [plant-id utilization]]
+      (let [power-plant (pp/plant plant-id)
+            avail-cap (- (pp/max-capacity power-plant)
                          (apply + (vals utilization)))]
         (update-in m [(:resource power-plant)]
                    (fnil #(+ avail-cap %) 0))))
@@ -143,25 +146,26 @@
   ResourceTrader
   (accept-resource [player resource amt]
     (update-in player [:power-plants] distribute-resource resource amt))
-  (send-resource [player [power-plant resource] amt]
-    {:pre [(owns-power-plant? player power-plant)
-           (>= (get-in player [:power-plants power-plant resource]) amt)]}
-    (add-power-plant-resources player power-plant resource (- amt))))
+  (send-resource [player [plant-id resource] amt]
+    {:pre [(owns-power-plant? player plant-id)
+           (>= (get-in player [:power-plants plant-id resource]) amt)]}
+    (add-power-plant-resources player plant-id resource (- amt))))
 
 (defn- distribute-resource
   [power-plants resource amt]
   ;; TODO generalize this type of iteration?
   (loop [power-plants power-plants
-         [[plant inventory] & r] (sort-by (comp pp/is-hybrid? key) power-plants)
+         [[plant-id inventory] & r] (sort-by (comp pp/is-hybrid? pp/plant key) power-plants)
          amt amt]
-    (if (and plant (pos? amt))
-      (let [space-left (if (pp/accepts-resource? plant resource)
-                         (- (pp/max-capacity plant)
-                            (get inventory resource 0))
-                         0)
-            amt-stored (min space-left amt)]
-        (recur (assoc power-plants plant
-                      (update-in inventory [resource] (fnil + 0) amt-stored))
-               r
-               (- amt amt-stored)))
-      power-plants)))
+    (let [plant (pp/plant plant-id)]
+      (if (and plant (pos? amt))
+        (let [space-left (if (pp/accepts-resource? plant resource)
+                           (- (pp/max-capacity plant)
+                              (get inventory resource 0))
+                           0)
+              amt-stored (min space-left amt)]
+          (recur (assoc power-plants plant-id
+                        (update-in inventory [resource] (fnil + 0) amt-stored))
+                 r
+                 (- amt amt-stored)))
+        power-plants))))

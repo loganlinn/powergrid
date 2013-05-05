@@ -36,9 +36,9 @@
   [player [plant-id resources]]
   (when player
     (when-let [plant (pp/plant plant-id)]
-      (and (p/owns-power-plant? player plant)
+      (and (p/owns-power-plant? player plant-id)
            (or (not (pp/consumes-resources? plant))
-               (p/can-power-plant? player plant))))))
+               (p/can-power-plant? player plant-id))))))
 
 (defn consume-resource
   "Returns game after returning n-units or resource from player-id's plant-id to
@@ -46,7 +46,7 @@
   [game player-id plant-id resource n]
   (-> game
       (g/update-player player-id r/send-resource
-                       [(pp/plant plant-id) resource] n)
+                       [plant-id resource] n)
       (g/update-resource resource r/accept-resource
                          :supply n)))
 

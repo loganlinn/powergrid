@@ -2,6 +2,7 @@
 
 (defrecord PowerPlant [number resource capacity yield])
 
+(defn id [power-plant] (:number power-plant))
 (defn capacity [power-plant] (:capacity power-plant))
 (defn max-capacity [power-plant] (* 2 (capacity power-plant)))
 (defn yield [power-plant] (:yield power-plant))

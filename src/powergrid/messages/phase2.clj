@@ -25,7 +25,7 @@
   [game {:keys [item price player-id]}]
   (-> game
       (g/remove-power-plant item :market)
-      (g/update-player player-id p/add-power-plant item)
+      (g/update-player player-id p/add-power-plant (pp/id item))
       (g/transfer-money :from player-id price)
       (g/remove-turn player-id)
       (g/cleanup-auction)))

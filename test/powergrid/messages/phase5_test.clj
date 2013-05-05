@@ -39,14 +39,14 @@
     (can-sell? ...p... [...ppid... anything]) => falsey
     (provided
       (pp/plant ...ppid..) => ...pp...
-      (p/owns-power-plant? ...p... ...pp...) => false))
+      (p/owns-power-plant? ...p... ...ppid...) => false))
   (fact "insufficient resources on power-plant"
     (can-sell? ...p... [...ppid... anything]) => falsey
     (provided
       (pp/plant ...ppid..) => ...pp...
       (pp/consumes-resources? ...pp..) => true
-      (p/owns-power-plant? ...p... ...pp...) => true
-      (p/can-power-plant? ...p... ...pp...) => false)))
+      (p/owns-power-plant? ...p... ...ppid...) => true
+      (p/can-power-plant? ...p... ...ppid...) => false)))
 
 (fact flatten-sale
   (flatten-sale {10 {:coal 1 :oil 1} 11 {:trash 1}})

@@ -60,8 +60,7 @@
                   (get states 7) => (money-diff (get states 6) b 5))
         (fact "received power-plants"
           (map #(p/owns-power-plant? (g/player (last states) %1) %2)
-               [a b c]
-               (map pp/plant [3 5 4])) => [true true true])
+               [a b c] [3 5 4]) => [true true true])
         (fact "resulting phase, turns"
           (g/current-phase (last states)) => 3
           (g/turns (last states)) => (just [a c b]))
@@ -74,7 +73,7 @@
                            (msg :phase3 :buy c {:resources {:coal 2}})
                            (msg :phase3 :buy b {:resources {:coal 1}})])
                 states (vec (reductions update-game game msgs))
-                pplants {a (pp/plant 3) b (pp/plant 5) c (pp/plant 4)}
+                pplants {a 3 b 5 c 4}
                 resource-states (mapv #(g/map-players % (fn [p] (p/power-plant-resources p (pplants (p/id p))))) states)
                 money-states (mapv #(g/map-players % p/money) states) ]
             ;(pprint (map #(-> (select-keys % [:turns :phase])

@@ -27,7 +27,7 @@
 (fact max-power-plant
   (max-power-plant ...p...) => 25
   (provided
-    (power-plants ...p...) => [(pp/plant 3) (pp/plant 25) (pp/plant 13)]))
+    (power-plants ...p...) => [3 25 13]))
 
 (fact update-money
   (money (update-money (mock-player :money 50) 10)) => 60
@@ -57,53 +57,53 @@
 
 (fact add-power-plant
   (-> (mock-player)
-      (add-power-plant ...pp...)
-      (owns-power-plant? ...pp...)) => truthy)
+      (add-power-plant 19)
+      (owns-power-plant? 19)) => truthy)
 
 (fact add-power-plant-resources
   (-> (mock-player)
-      (add-power-plant ...pp...)
-      (add-power-plant-resources ...pp... ...r... 4)
-      (add-power-plant-resources ...pp... ...r... 1)
-      (power-plant-resources ...pp...))
+      (add-power-plant ...ppid...)
+      (add-power-plant-resources ...ppid... ...r... 4)
+      (add-power-plant-resources ...ppid... ...r... 1)
+      (power-plant-resources ...ppid...))
   => {...r... 5}
   (provided
+    (pp/plant ...ppid...) => ...pp...
     (pp/accepts-resource? ...pp... ...r...) => true))
 
 (fact accept-resource
   (let [p (-> (mock-player)
-              (add-power-plant (pp/plant 3)) ; oil
-              (add-power-plant (pp/plant 4)) ; coal
-              (add-power-plant (pp/plant 5)))] ; coal/oil hybrid
+              (add-power-plant 3) ; oil
+              (add-power-plant 4) ; coal
+              (add-power-plant 5))] ; coal/oil hybrid
     (fact "empty initially"
-      (:oil (power-plant-resources p (pp/plant 3)) 0) => 0
-      (:oil (power-plant-resources p (pp/plant 4)) 0) => 0
-      (:oil (power-plant-resources p (pp/plant 5)) 0) => 0)
+      (:oil (power-plant-resources p 3) 0) => 0
+      (:oil (power-plant-resources p 4) 0) => 0
+      (:oil (power-plant-resources p 5) 0) => 0)
     (fact "fills to capacity"
       (let [p  (accept-resource p :oil 4)]
-        (:oil (power-plant-resources p (pp/plant 3)) 0) => 4
-        (:oil (power-plant-resources p (pp/plant 4)) 0) => 0
-        (:oil (power-plant-resources p (pp/plant 5)) 0) => 0))
+        (:oil (power-plant-resources p 3) 0) => 4
+        (:oil (power-plant-resources p 4) 0) => 0
+        (:oil (power-plant-resources p 5) 0) => 0))
     (fact "adds to hybrid last"
       (let [p  (accept-resource p :oil 5)]
-        (:oil (power-plant-resources p (pp/plant 3)) 0) => 4
-        (:oil (power-plant-resources p (pp/plant 4)) 0) => 0
-        (:oil (power-plant-resources p (pp/plant 5)) 0) => 1))))
+        (:oil (power-plant-resources p 3) 0) => 4
+        (:oil (power-plant-resources p 4) 0) => 0
+        (:oil (power-plant-resources p 5) 0) => 1))))
 
 (fact send-resource
-  (let [pp (pp/plant 3)
+  (let [plant-id 3
         p (-> (mock-player)
-              (add-power-plant pp) ; oil
+              (add-power-plant plant-id) ; oil
               (accept-resource :oil 4)
-              (send-resource [pp :oil] 2))]
-    (power-plant-resources p pp) => {:oil 2}))
+              (send-resource [plant-id :oil] 2))]
+    (power-plant-resources p plant-id) => {:oil 2}))
 
 (fact can-power-plant?
   (fact "ecological"
-    (let [plant (pp/plant 13)]
-     (can-power-plant? ...player... plant) => truthy
-     (provided
-       (owns-power-plant? ...player... plant) => true)))
+    (can-power-plant? ...player... 13) => truthy
+    (provided
+      (owns-power-plant? ...player... 13) => true))
   (future-fact "can power")
   (future-fact "can power, hybrid")
   (future-fact "can't power"))
