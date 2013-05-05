@@ -6,22 +6,22 @@
             [powergrid.player :as p]
             [powergrid.power-plants :as pp]))
 
-(fact valid-sale?
+(fact validate-sale
   (fact "ecological power-plants"
-    (valid-sale? [13 {}]) => truthy
-    (valid-sale? [13 {anything 0}]) => truthy
-    (valid-sale? [50 {anything 1}]) => falsey)
+    (validate-sale [13 {}]) => falsey
+    (validate-sale [13 {anything 0}]) => falsey
+    (validate-sale [50 {anything 1}]) => truthy)
   (fact "invalid numbers"
-    (valid-sale? [20 {:coal -1}]) => falsey)
+    (validate-sale [20 {:coal -1}]) => truthy)
   (fact "incorrect resource"
     (fact
-      (valid-sale? [...p... {...r... 3}]) => falsey
+      (validate-sale [...p... {...r... 3}]) => truthy
       (provided
         (pp/plant ...p...) => ...plant...
         (pp/capacity ...plant...) => 3
         (pp/accepts-resource? ...plant... ...r...) => false))
     (fact
-      (valid-sale? [...p... {...r1... 1, ...r2... 1}]) => falsey
+      (validate-sale [...p... {...r1... 1, ...r2... 1}]) => truthy
       (provided
         (pp/plant ...p...) => ...plant...
         (pp/capacity ...plant...) => 2
@@ -30,24 +30,19 @@
 
 (fact can-sell?
   (fact "invalid player"
-    (can-sell? ...pid... [anything anything]) => falsey
-    (provided
-      (g/player ...pid...) => nil))
+    (can-sell? nil [anything anything]) => falsey)
   (fact "invalid plant"
-    (can-sell? ...pid... [...ppid... anything]) => falsey
+    (can-sell? ...p... [...ppid... anything]) => falsey
     (provided
-      (g/player ...pid...) => ...p...
       (pp/plant ...ppid..) => nil))
   (fact "non-owner"
-    (can-sell? ...pid... [...ppid... anything]) => falsey
+    (can-sell? ...p... [...ppid... anything]) => falsey
     (provided
-      (g/player ...pid...) => ...p...
       (pp/plant ...ppid..) => ...pp...
       (p/owns-power-plant? ...p... ...pp...) => false))
   (fact "insufficient resources on power-plant"
-    (can-sell? ...pid... [...ppid... anything]) => falsey
+    (can-sell? ...p... [...ppid... anything]) => falsey
     (provided
-      (g/player ...pid...) => ...p...
       (pp/plant ...ppid..) => ...pp...
       (pp/consumes-resources? ...pp..) => true
       (p/owns-power-plant? ...p... ...pp...) => true

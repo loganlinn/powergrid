@@ -14,7 +14,7 @@
   {:pre [(not (neg? num-powered))]}
   (get payout-values (min num-powered (dec (count payout-values)))))
 
-(defn valid-sale?
+(defn validate-sale
   "Returns true of the plant-id and resource amt combo is valid.
   Does not validate the user owns the power-plants & resources"
   [[plant-id resources]]
@@ -22,16 +22,19 @@
   (when-let [plant (pp/plant plant-id)]
     (let [total (reduce (fnil + 0) 0 (vals resources))]
       (if (pp/consumes-resources? plant)
-        (and (= (pp/capacity plant) total)
-             (every? (partial pp/accepts-resource? plant) (keys resources))
-             (every? (complement neg?) (vals resources)))
-        (zero? total)))))
+        (cond
+          (not= (pp/capacity plant) total) "Plant capacity mismatch"
+          (not (every? (partial pp/accepts-resource? plant)
+                       (keys resources))) "Invalid resources"
+          (some neg? (vals resources)) "Invalid resource amount")
+        (when-not (zero? total)
+          (str "Plant " plant-id " does not consume resources"))))))
 
 (defn can-sell?
   "Returns true if the user owns the power plant and has the valid amount of
   resources"
-  [player-id [plant-id resources]]
-  (when-let [player (g/player player-id)]
+  [player [plant-id resources]]
+  (when player
     (when-let [plant (pp/plant plant-id)]
       (and (p/owns-power-plant? player plant)
            (or (not (pp/consumes-resources? plant))
@@ -56,7 +59,7 @@
   [game player-id powered-plants]
   (reduce
     (fn [game [plant-id resource n]]
-      (consume-resource game player-id resource n))
+      (consume-resource game player-id plant-id resource n))
     game
     (flatten-sale powered-plants)))
 
@@ -80,11 +83,13 @@
     (-> game (g/transfer-money :to player-id (payout 0))))
 
   (validate [this game]
-    (cond
-      (not (and (map? powered-plants)
-                (every? map? (vals powered-plants)))) "Invalid message"
-      (every? valid-sale? powered-plants) "Invalid sale"
-      (every? (partial can-sell? player-id) powered-plants) "Invalid sale"))
+    (or
+      (cond
+        (not (and (map? powered-plants)
+                  (every? map? (vals powered-plants)))) "Invalid message"
+        (not (every? (partial can-sell? (g/player game player-id))
+                     powered-plants)) "Invalid sale")
+      (some validate-sale powered-plants)))
 
   (update-game [this game]
     (-> game

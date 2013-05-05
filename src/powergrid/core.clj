@@ -49,11 +49,13 @@
 (defmethod phase-complete? :default [game] (not (turns-remain? game)))
 (defmethod step-complete? :default [game] false)
 
-(defmethod prep-phase 1 [game]
-  (clear-turns game))
+(defmethod prep-phase 1 [{:keys [round] :as game}]
+  (cond-> game
+    (not= round 1) update-turn-order
+    true clear-turns))
 
 (defmethod prep-phase 2 [game]
-  (-> game (set-turns)))
+  (-> game (reset-turns)))
 
 (defn post-phase-2-step-3-card
   [game]
@@ -61,19 +63,20 @@
       (remove-power-plant (step-3-card) :future)
       (drop-lowest-power-plant)))
 
-(defmethod post-phase 2 [{:keys [round step-3-card?] :as game}]
+(defmethod post-phase 2 [{:keys [step-3-card?] :as game}]
   (cond-> game
-    step-3-card? (post-phase-2-step-3-card)
-    (= round 1) (update-player-order)))
+    step-3-card? (post-phase-2-step-3-card)))
 
-(defmethod prep-phase 3 [game]
-  (-> game (set-turns)))
+(defmethod prep-phase 3 [{:keys [round] :as game}]
+  (cond-> game
+    (= round 1) (update-turn-order)
+    true (reset-turns)))
 
 (defmethod prep-phase 4 [game]
-  (-> game (set-turns)))
+  (-> game (reset-turns)))
 
 (defmethod prep-phase 5 [game]
-  (-> game (set-turns)))
+  (-> game (reset-turns)))
 
 (defmethod post-phase 5 [game]
   (-> game
@@ -128,7 +131,7 @@
   (try+
     (tick (msg/apply-message game msg))
     (catch ValidationError e
-      game)))
+      (throw+ e))))
 
 (comment
 

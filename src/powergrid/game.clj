@@ -5,9 +5,10 @@
             [powergrid.resource :as r]
             [powergrid.cities :as c]
             [powergrid.cities.usa :as usa]
-            [powergrid.util :refer [separate queue]]))
+            [powergrid.util :refer [separate queue]]
+            [robert.hooke :as hook]))
 
-(defrecord Game [id phase step round resources power-plants cities players turns auction bank])
+(defrecord Game [id phase step round turns turn-order resources power-plants cities players auction bank])
 
 (defn num-regions-chosen
   "Returns the number of regions chosen on map"
@@ -92,6 +93,7 @@
               :power-plants (init-power-plants (count players))
               :players (into {} (map (juxt p/id identity) players))
               :turns  '()
+              :turn-order (shuffle (map p/id players))
               :cities (c/map->Cities {:owners (zipmap usa/cities (repeat []))
                                       :connections (c/as-graph usa/connections)})
               :bank 0}))
@@ -165,23 +167,15 @@
 
 (declare network-size)
 
-(defn sorted-players-map
-  "Returns sorted players using the following rules:
+(defn player-id-order
+  "Returns player ids sorted using the following rules:
   First player is player with most cities in network. If two or more players
   are tied for the most number of cities, if the first player is the player
   among them with the largest-numbered power plant. Determine remaining player
   order using same rules"
   [game]
-  (let [ps (players-map game)
-        num-cities (partial network-size game)
-        max-plant (comp p/max-power-plant ps)
-        c (juxt num-cities max-plant identity)]
-    (into (sorted-map-by #(compare (c %2) (c %1))) ps)))
-
-(defn update-player-order
-  "Returns game after updating player order"
-  [game]
-  (assoc game :players (sorted-players-map game)))
+  (let [c (juxt #(network-size game (p/id %)) p/max-power-plant p/id)]
+    (map p/id (sort #(compare (c %2) (c %1)) (players game)))))
 
 ;; TURNS
 
@@ -202,13 +196,18 @@
   [game]
   (assoc game :turns nil))
 
-(defn set-turns
-  "Returns game after setting turns"
+(defn update-turn-order
+  "Returns game after updating turn-order according to rules"
   [game]
-  (let [turns (if (turns-reverse-order? game)
-                (reverse (keys (:players game)))
-                (keys (:players game)))]
-    (assoc game :turns turns)))
+  (assoc game :turn-order (player-id-order game)))
+
+(defn reset-turns
+  "Returns game after setting turns to current turn-order.
+  Note: turn order is not (re)calculated."
+  [{:keys [turn-order] :as game}]
+  (assoc game :turns (if (turns-reverse-order? game)
+                       (reverse turn-order)
+                       turn-order)))
 
 (defn remove-turn
   "Removes turn from turns in game state"
