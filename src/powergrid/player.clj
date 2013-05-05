@@ -153,7 +153,7 @@
 
 (defn- distribute-resource
   [power-plants resource amt]
-  ;; TODO generalize this type of iteration?
+  ;; TODO use a reduce
   (loop [power-plants power-plants
          [[plant-id inventory] & r] (sort-by (comp pp/is-hybrid? pp/plant key) power-plants)
          amt amt]
