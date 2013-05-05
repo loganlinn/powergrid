@@ -79,7 +79,9 @@
             (get resource-states 2) => {a {:oil 2} b {} c {:coal 2}}
             (get resource-states 3) => {a {:oil 2} b {:coal 1} c {:coal 2}}
             (distinct money-states) => money-states
-            (:turns (last states)) => (just [1 3 2])
+            (:turns (last states)) => (just [a c b])
+            ;; resulting phase
+            (g/current-phase (last states)) => 4
 
             (fact "phase 4"
               (let [game (last states)
@@ -92,9 +94,17 @@
                                   (assoc :cities (g/map-players % (fn [p]  (c/owned-cities (g/cities %) (p/id p)))  ))
                                   (assoc :players (g/map-players % (fn [p] (select-keys p [:money :power-plants])))))
                              states))
+                ;; cities
+                (c/owner? (g/cities (get states 1)) a :philadelphia) => truthy
+                (c/owner? (g/cities (get states 1)) a :new-york) => truthy
+                (c/owner? (g/cities (get states 2)) c :atlanta) => truthy
+                (c/owned-cities (g/cities (get states 2)) b) => empty?
+                ;; money
                 (get states 1) => (money-diff (get states 0) a 20)
-                (get states 2) => (money-diff (get states 0) c 10)
-                (get states 3) => (money-diff (get states 0) b 0)
+                (get states 2) => (money-diff (get states 1) c 10)
+                (get states 3) => (money-diff (get states 2) b 0)
+                ;; resulting phase
+                (g/current-phase (last states)) => 5
 
                 ;(fact "phase 5"
                   ;(let [game (last states)
