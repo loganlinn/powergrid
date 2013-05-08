@@ -11,3 +11,28 @@ div {
   border: 1px solid gray;
   background-color: #baf0ba;
 }
+
+.oil {
+  background-color: #222;
+}
+.coal {
+  background-color: #888;
+}
+.garbage {
+  background-color: yellow;
+}
+.uranium {
+  background-color: red;
+}
+
+.resource {
+  height: 20px;
+  width: 20px;
+  display: block;
+  float: left;
+  border: 1px solid black;
+}
+
+.resource.unavailable {
+  background-color: transparent;
+}

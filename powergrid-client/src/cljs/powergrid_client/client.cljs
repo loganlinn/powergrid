@@ -2,9 +2,14 @@
   (:use-macros [dommy.macros :only [sel sel1 node deftemplate]])
   (:require [dommy.core :as dommy]
             [powergrid-client.power-plants :as pp]
-            [clojure.browser.repl :as repl]))
+            ;[clojure.browser.repl :as repl]
+            ))
 
 ;(repl/connect "http://localhost:9000/repl")
+
+(defn log
+  [& args]
+  (.log js/console (pr-str args)))
 
 (deftemplate player-tpl [{:keys [id username color money]}]
   [:div.player
@@ -18,28 +23,28 @@
   [:div#resources
    (concat
      (for [cost (range 1 9)]
-       [:li
+       [:div.resource-block
         {:data-resource-cost cost}
         [:div
-         [:span.resource-coal]
-         [:span.resource-coal]
-         [:span.resource-coal]]
+         [:span.resource.coal]
+         [:span.resource.coal]
+         [:span.resource.coal]]
         [:div
-         [:span.resource-oil]
-         [:span.resource-oil]
-         [:span.resource-oil]
-         [:span.resource-uranium]]
+         [:span.resource.oil]
+         [:span.resource.oil]
+         [:span.resource.oil]
+         [:span.resource.uranium]]
         [:div
-         [:span.resource-garbage]
-         [:span.resource-garbage]
-         [:span.resource-garbage]]])
+         [:span.resource.garbage]
+         [:span.resource.garbage]
+         [:span.resource.garbage]]])
      (for [cost (range 10 18 2)]
-       [:li {:data-resource-cost cost}
-        [:div [:span.resource-uranium]]]))])
+       [:div {:data-resource-cost cost}
+        [:div [:span.resource.uranium]]]))])
 
 (defn resource-name [r]
   (if (set? r)
-    (clojure.string/join "-" (sort (map name resource)))
+    (clojure.string/join "-" (sort (map name r)))
     (name r)))
 
 (deftemplate power-plant-tpl [{:keys [number resource capacity yield]}]
@@ -62,6 +67,23 @@
    (resources-tpl)
    (power-plants-tpl power-plants)])
 
+(defn update-resource
+  [{:keys [market pricing]} nodes]
+  (let [rfill (- (count pricing) market)]
+    (doall
+      (map-indexed
+        (fn [ind node]
+          (log ind node rfill)
+          (dommy/toggle-class! node "unavailable" (< ind rfill)))
+        nodes))))
+
+(defn update-resources
+  [resources]
+  (doseq [r [:coal :oil :garbage :uranium]]
+    (update-resource
+      (get resources r)
+      (sel (str "#resources ." (name r))))))
+
 (let [std-pricing (for [p (range 1 9) _ (range 3)] p)
       uranium-pricing '(1 2 3 4 5 6 7 8 12 14 15 16)]
   (def mock-game {:players {1 {:id 1 :username "Logan" :color :red :money 50 :power-plants {}}
@@ -76,6 +98,8 @@
 
 (dommy/replace! (sel1 :#game)
                 (game-tpl mock-game))
+
+(update-resources (:resources mock-game))
 
 
 ;(defn handle-click []
