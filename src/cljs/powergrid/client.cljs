@@ -69,9 +69,9 @@
   [:div#power-plants
    [:h3 "Power Plants"]
    [:div.market
-    (map power-plant-tpl (:market power-plants))]
+    (map (comp power-plant-tpl pp/plant) (:market power-plants))]
    [:div.future
-    (map power-plant-tpl (:future power-plants))]])
+    (map (comp power-plant-tpl pp/plant) (:future power-plants))]])
 
 (deftemplate game-tpl [{:keys [players power-plants]}]
   [:div#game
