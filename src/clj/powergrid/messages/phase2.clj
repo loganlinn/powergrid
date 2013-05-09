@@ -4,7 +4,7 @@
             [powergrid.common.player :as p]
             [powergrid.auction :as a]
             [powergrid.common.power-plants :as pp]
-            [powergrid.resource :as r]))
+            [powergrid.common.resource :as r]))
 
 (defn new-auction
   "Returns new auction new auction for power-plant"

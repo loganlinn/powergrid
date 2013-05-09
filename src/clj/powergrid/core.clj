@@ -2,7 +2,7 @@
   (:require [powergrid.game :refer :all]
             [powergrid.util :refer [separate]]
             [powergrid.common.player :as p]
-            [powergrid.resource :as r]
+            [powergrid.common.resource :as r]
             [powergrid.message :as msg]
             [powergrid.messages.factory :as msgs]
             [slingshot.slingshot :refer [try+ throw+]])

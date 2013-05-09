@@ -3,7 +3,7 @@
             [powergrid.game :as g]
             [powergrid.cities :as c]
             [powergrid.common.player :as p]
-            [powergrid.resource :as r]))
+            [powergrid.common.resource :as r]))
 
 (defn valid-city?
   "Returns true if player can build in city, otherwise false"

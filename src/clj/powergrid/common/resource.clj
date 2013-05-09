@@ -1,4 +1,4 @@
-(ns powergrid.resource)
+(ns powergrid.common.resource)
 
 (def types #{:coal :oil :garbage :uranium})
 

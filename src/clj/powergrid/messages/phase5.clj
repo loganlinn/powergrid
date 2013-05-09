@@ -4,7 +4,7 @@
             [powergrid.common.player :as p]
             [powergrid.cities :as c]
             [powergrid.common.power-plants :as pp]
-            [powergrid.resource :as r]))
+            [powergrid.common.resource :as r]))
 
 (def payout-values [10 22 33 44 54 64 73 82 90 98 105 112 118 124 129 134 138 142 145 148 150])
 

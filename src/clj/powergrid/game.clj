@@ -2,7 +2,7 @@
   (:require [powergrid.common.power-plants :as pp]
             [powergrid.common.player :as p]
             [powergrid.auction :as a]
-            [powergrid.resource :as r]
+            [powergrid.common.resource :as r]
             [powergrid.cities :as c]
             [powergrid.cities.usa :as usa]
             [powergrid.util :refer [separate queue]]

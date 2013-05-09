@@ -4,7 +4,7 @@
             [powergrid.message :refer :all]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
-            [powergrid.resource :as r]
+            [powergrid.common.resource :as r]
             [powergrid.common.power-plants :as pp]))
 
 (fact total-price

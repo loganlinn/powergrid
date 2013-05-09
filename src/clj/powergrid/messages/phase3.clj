@@ -2,7 +2,7 @@
   (:require [powergrid.message :refer [Message]]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
-            [powergrid.resource :as r]))
+            [powergrid.common.resource :as r]))
 
 (defn resource-price
   "Returns the current price for n-units of resource"
