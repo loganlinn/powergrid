@@ -3,7 +3,7 @@
             [powergrid.messages.phase2 :refer :all]
             [powergrid.message :refer :all]
             [powergrid.game :as g]
-            [powergrid.player :as p]
+            [powergrid.common.player :as p]
             [powergrid.auction :as a]
             [powergrid.common.power-plants :as pp]))
 

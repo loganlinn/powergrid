@@ -1,6 +1,6 @@
 (ns powergrid.game
   (:require [powergrid.common.power-plants :as pp]
-            [powergrid.player :as p]
+            [powergrid.common.player :as p]
             [powergrid.auction :as a]
             [powergrid.resource :as r]
             [powergrid.cities :as c]

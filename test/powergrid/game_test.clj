@@ -1,7 +1,7 @@
 (ns powergrid.game-test
   (:require [midje.sweet :refer :all]
             [powergrid.game :refer :all]
-            [powergrid.player :as p]
+            [powergrid.common.player :as p]
             [powergrid.cities :as c]
             [powergrid.common.power-plants :as pp]
             ))

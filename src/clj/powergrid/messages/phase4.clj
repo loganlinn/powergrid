@@ -2,7 +2,7 @@
   (:require [powergrid.message :refer [Message]]
             [powergrid.game :as g]
             [powergrid.cities :as c]
-            [powergrid.player :as p]
+            [powergrid.common.player :as p]
             [powergrid.resource :as r]))
 
 (defn valid-city?

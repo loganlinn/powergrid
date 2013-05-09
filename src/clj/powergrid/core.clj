@@ -1,7 +1,7 @@
 (ns powergrid.core
   (:require [powergrid.game :refer :all]
             [powergrid.util :refer [separate]]
-            [powergrid.player :as p]
+            [powergrid.common.player :as p]
             [powergrid.resource :as r]
             [powergrid.message :as msg]
             [powergrid.messages.factory :as msgs]

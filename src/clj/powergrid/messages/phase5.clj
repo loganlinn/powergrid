@@ -1,7 +1,7 @@
 (ns powergrid.messages.phase5
   (:require [powergrid.message :refer [Message]]
             [powergrid.game :as g]
-            [powergrid.player :as p]
+            [powergrid.common.player :as p]
             [powergrid.cities :as c]
             [powergrid.common.power-plants :as pp]
             [powergrid.resource :as r]))

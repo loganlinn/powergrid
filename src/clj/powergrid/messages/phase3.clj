@@ -1,7 +1,7 @@
 (ns powergrid.messages.phase3
   (:require [powergrid.message :refer [Message]]
             [powergrid.game :as g]
-            [powergrid.player :as p]
+            [powergrid.common.player :as p]
             [powergrid.resource :as r]))
 
 (defn resource-price

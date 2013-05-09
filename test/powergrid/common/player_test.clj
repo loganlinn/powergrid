@@ -1,6 +1,6 @@
-(ns powergrid.player-test
+(ns powergrid.common.player-test
   (:require [midje.sweet :refer :all]
-            [powergrid.player :refer :all]
+            [powergrid.common.player :refer :all]
             [powergrid.common.power-plants :as pp]
             [powergrid.resource :refer [accept-resource send-resource]]))
 
