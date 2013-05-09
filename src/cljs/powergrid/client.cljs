@@ -2,20 +2,28 @@
   (:use-macros [dommy.macros :only [sel sel1 node deftemplate]])
   (:require [dommy.core :as dommy]
             [powergrid.common.power-plants :as pp]
+            [powergrid.common.resource :as r]
+            [powergrid.common.player :as p]
             ;[clojure.browser.repl :as repl]
-            ))
+            [shoreleave.remotes.http-rpc :refer [remote-callback]]
+            [cljs.reader :refer  [read-string register-tag-parser!]]))
 
 ;(repl/connect "http://localhost:9000/repl")
+
+;; Register types for read-string
+(register-tag-parser! "powergrid.common.power_plants.PowerPlant" pp/map->PowerPlant)
+(register-tag-parser! "powergrid.common.resource.Resource" r/map->Resource)
+(register-tag-parser! "powergrid.common.player.Player" p/map->Player)
 
 (defn log
   [& args]
   (.log js/console (pr-str args)))
 
-(deftemplate player-tpl [{:keys [id username color money]}]
+(deftemplate player-tpl [{:keys [id handle color money]}]
   [:div.player
    {:class (str "player-" (name color))
     :id (str "player-" id)}
-   [:span.name username]
+   [:span.handle handle]
    [:div.money money]
    [:div.power-plants ""]])
 
@@ -33,8 +41,7 @@
       [:div
        [:span.resource.oil]
        [:span.resource.oil]
-       [:span.resource.oil]
-       ]
+       [:span.resource.oil]]
       [:div
        [:span.resource.garbage]
        [:span.resource.garbage]
@@ -78,7 +85,6 @@
     (doall
       (map-indexed
         (fn [ind node]
-          (log ind node rfill)
           (dommy/toggle-class! node "unavailable" (< ind rfill)))
         nodes))))
 
@@ -103,15 +109,21 @@
                   :turn-order [1 2]
                   :turns '()}))
 
-(dommy/replace! (sel1 :#game)
-                (game-tpl mock-game))
+(defn render-game [game]
+  (log "Drawing game" game)
+  (dommy/replace! (sel1 :#game) (game-tpl game))
+  (update-resources (:resources game)))
 
-(update-resources (:resources mock-game))
+;(defn call-remote [& args]
+  ;(remote-callback :calculate [1 5.00 0.08 0] (fn [& args] (log args))))
+;(dommy/listen! (sel1 :#clickable) :click call-remote)
 
 
-;(defn handle-click []
-  ;(js/alert "Hello!"))
-;(def clickable (.getElementById js/document "clickable"))
-;(.addEventListener clickable "click" handle-click)
-(dommy/listen! (sel1 :#clickable) :click #(js/alert "Helloheyy"))
+(def current-game (atom {:id 1}))
 
+(defn update-game [& args]
+  (remote-callback :game-state
+                   [(@current-game :id)]
+                   (fn [game] (render-game game))))
+
+(dommy/listen! (sel1 :#update-game) :click update-game)

@@ -30,9 +30,9 @@
        diff)))
 
 (fact "simple round"
-  (let [game (tick (g/new-game [(p/new-player 1 :blue)
-                                (p/new-player 2 :black)
-                                (p/new-player 3 :red)]))
+  (let [game (tick (g/new-game [(p/new-player 1 "Player1" :blue)
+                                (p/new-player 2 "Player2" :black)
+                                (p/new-player 3 "Player3" :red)]))
         [a b c] (g/turns game)]
     (fact "phase2"
       (let [msgs (map msgs/create-message
