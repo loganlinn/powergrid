@@ -15,13 +15,20 @@
 
 (swap! games assoc 1 (-> (g/new-game [(p/new-player 1 "Logan" :red)
                                       (p/new-player 2 "Maeby" :blue)])
-                         (assoc :id 1)))
+                         (assoc :id 1)
+                         c/tick))
 
 (defremote game-state [game-id]
   (if-let [game (@games game-id)]
-    (-> (select-keys game [:players :resources :turns])
+    (-> (select-keys game [:id :step :phase :round :players :resources :turns :auction])
         (assoc-in [:power-plants :market] (map pp/id (get-in game [:power-plants :market])))
         (assoc-in [:power-plants :future] (map pp/id (get-in game [:power-plants :future]))))))
+
+(defremote ^{:remote-name :send-message} recieve-message
+  [game-id msg]
+  (if-let [game (@games game-id)]
+    (try
+      (swap! games update-in [game-id] c/update-game msg))))
 
 (defroutes handler
   (GET "/" [] (redirect "/powergrid.html")))

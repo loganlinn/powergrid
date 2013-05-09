@@ -17,7 +17,7 @@
 (defn auction
   "Returns current auction if it exists, otherwise a new auction"
   [game plant-id]
-  (or (g/current-auction game)
+  (or (g/auction game)
       (new-auction game plant-id)))
 
 (defn complete-auction
@@ -38,14 +38,14 @@
     (or (g/has-auction? game)
         (not= (g/current-round game) 1)))
   (update-pass [_ game]
-    (if-let [auction (a/pass (g/current-auction game))]
+    (if-let [auction (a/pass (g/auction game))]
       (if (a/completed? auction)
         (complete-auction game auction)
         (g/set-auction game auction))
       game))
 
   (validate [_ game]
-    (let [auction (g/current-auction game)
+    (let [auction (g/auction game)
           plant (pp/plant plant-id)]
       (cond
         (not bid) "Invalid bid"

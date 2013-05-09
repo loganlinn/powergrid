@@ -4,11 +4,12 @@
             [powergrid.common.power-plants :as pp]
             [powergrid.common.resource :as r]
             [powergrid.common.player :as p]
-            ;[clojure.browser.repl :as repl]
+            [powergrid.common.game :as g]
+            [clojure.browser.repl :as repl]
             [shoreleave.remotes.http-rpc :refer [remote-callback]]
             [cljs.reader :refer  [read-string register-tag-parser!]]))
 
-;(repl/connect "http://localhost:9000/repl")
+(repl/connect "http://localhost:9000/repl")
 
 ;; Register types for read-string
 (register-tag-parser! "powergrid.common.power_plants.PowerPlant" pp/map->PowerPlant)
@@ -73,8 +74,15 @@
    [:div.future
     (map (comp power-plant-tpl pp/plant) (:future power-plants))]])
 
-(deftemplate game-tpl [{:keys [players power-plants]}]
+(defn current-turn [game]
+  (if-let [auction (:auction game)]
+    
+    (-> (:turns game) first )))
+(deftemplate game-tpl [{:keys [phase step players power-plants] :as game}]
   [:div#game
+   [:div
+    [:div (str "Step: " step)]
+    [:div (str "Phase: " phase)]]
    [:div#players [:h3 "Players"] (map player-tpl (vals players))]
    (resources-tpl)
    (power-plants-tpl power-plants)])
@@ -110,20 +118,21 @@
                   :turns '()}))
 
 (defn render-game [game]
-  (log "Drawing game" game)
   (dommy/replace! (sel1 :#game) (game-tpl game))
   (update-resources (:resources game)))
-
-;(defn call-remote [& args]
-  ;(remote-callback :calculate [1 5.00 0.08 0] (fn [& args] (log args))))
-;(dommy/listen! (sel1 :#clickable) :click call-remote)
-
 
 (def current-game (atom {:id 1}))
 
 (defn update-game [& args]
   (remote-callback :game-state
                    [(@current-game :id)]
-                   (fn [game] (render-game game))))
+                   (fn [game]
+                     (.log js/console (pr-str game))
+                     (render-game game))))
+
+(defn- send-message [msg & [f]]
+  (remote-callback :send-message
+                   [(@current-game :id) msg]
+                   (or f update-game)))
 
 (dommy/listen! (sel1 :#update-game) :click update-game)

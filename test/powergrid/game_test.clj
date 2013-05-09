@@ -3,8 +3,7 @@
             [powergrid.game :refer :all]
             [powergrid.common.player :as p]
             [powergrid.cities :as c]
-            [powergrid.common.power-plants :as pp]
-            ))
+            [powergrid.common.power-plants :as pp]))
 
 (fact player-id-order
   (player-id-order ...game...) => (just [2 1 3 4])

@@ -1,5 +1,6 @@
 (ns powergrid.game
-  (:require [powergrid.common.power-plants :as pp]
+  (:require [powergrid.common.game :as common]
+            [powergrid.common.power-plants :as pp]
             [powergrid.common.player :as p]
             [powergrid.auction :as a]
             [powergrid.common.resource :as r]
@@ -8,7 +9,32 @@
             [powergrid.util :refer [separate queue]]
             [robert.hooke :as hook]))
 
-(defrecord Game [id phase step round turns turn-order resources power-plants cities players auction bank])
+;; TODO Fix this mess
+(def ->Game common/->Game)
+(def map->Game common/map->Game)
+(def id common/id)
+(def current-step common/current-step)
+(def current-phase common/current-phase)
+(def current-round common/current-round)
+(def turns common/turns)
+(def turn-order common/turn-order)
+(def resources common/resources)
+(def cities common/cities)
+(def auction common/auction)
+(def current-turn common/current-turn)
+(def turns-remain? common/turns-remain?)
+(def has-auction? common/has-auction?)
+(def resource common/resource)
+(def map-resources common/map-resources)
+(def contains-resource? common/contains-resource?)
+(def contains-resources? common/contains-resources?)
+(def player common/player)
+(def players common/players)
+(def map-players common/map-players)
+(def num-players common/num-players)
+(def network-size common/network-size)
+(def max-network-size common/max-network-size)
+(def max-city-connections common/max-city-connections)
 
 (defn num-regions-chosen
   "Returns the number of regions chosen on map"
@@ -98,10 +124,6 @@
                                       :connections (c/as-graph usa/connections)})
               :bank 0}))
 
-(defn current-step  [game] (:step game))
-(defn current-phase [game] (:phase game))
-(defn current-round [game] (:round game))
-
 (defn inc-phase
   [game]
   (update-in game [:phase] #(if (< % 5) (inc %) 1)))
@@ -116,33 +138,6 @@
   (update-in game [:round] inc))
 
 ;; PLAYERS
-
-(defn players-map
-  "Returns map of player-id to player from game"
-  [game]
-  (:players game))
-
-(defn players
-  "Returns players"
-  [game & {:keys [except]}]
-  (let [ps (:players game {})]
-    (if except
-      (keep #(when-not (= except (key %)) (val %)) ps)
-      (vals ps))))
-
-(defn map-players
-  "Returns a mapping from player-id to result of (f player)"
-  [game f]
-  (into {} (for [p (players game)] [(p/id p) (f p)])))
-
-(defn player
-  "Returns player by id if exists, otherwise nil"
-  [game id]
-  (get-in game [:players id]))
-
-(defn num-players
-  [game]
-  (count (:players game)))
 
 (defn color-taken?
   "Returns true if a player in game is using color"
@@ -165,8 +160,6 @@
         (update-player player-id p/update-money (+ amt))
         (update-in [:bank] (fnil - 0) amt))))
 
-(declare network-size)
-
 (defn player-id-order
   "Returns player ids sorted using the following rules:
   First player is player with most cities in network. If two or more players
@@ -178,18 +171,6 @@
     (map p/id (sort #(compare (c %2) (c %1)) (players game)))))
 
 ;; TURNS
-
-(defn turns [game] (:turns game))
-
-(defn current-turn
-  "Returns id of player who's turn it currently is"
-  [game]
-  (first (turns game)))
-
-(defn turns-remain?
-  "Returns true if turns still exist in phase, otherwise false."
-  [game]
-  (boolean (seq (:turns game))))
 
 (defn clear-turns
   "Clears turns in game"
@@ -221,12 +202,7 @@
 
 ;; AUCTIONING
 
-
-(defn has-auction?  [game] (:auction game))
-
 (defn cleanup-auction [game] (dissoc game :auction))
-
-(defn current-auction [game] (:auction game))
 
 (defn set-auction [game auction] (assoc game :auction auction))
 
@@ -236,26 +212,6 @@
   (turns-remain? game))
 
 ;; RESOURCES
-
-(defn map-resources
-  "Returns mapping from resources to result of (f resource)"
-  [game f]
-  (into {} (for [[t r] (:resources game)] [t (f r)])))
-
-(defn resource
-  [game resource]
-  {:pre [(r/types resource)]}
-  (get-in game [:resources resource]))
-
-(defn contains-resource?
-  "Returns true if there is at least amt of resource in the resource market"
-  ([game rtype amt]
-   {:pre [(not (neg? amt))]}
-   (>= (:market (resource game rtype) 0) amt)))
-
-(defn contains-resources?
-  [game resources]
-  (every? #(contains-resource? game (key %) (val %)) resources))
 
 (defn resource-supply
   "Returns map of resource to amount left in supply"
@@ -360,29 +316,6 @@
           (add-to-power-plant-market draw)))))
 
 ;; CITIES
-
-(defn cities
-  "Returns cities for game"
-  [game]
-  (:cities game))
-
-(defn network-size
-  "Returns the number of cities player owns"
-  [game player-id]
-  (c/network-size (cities game) player-id))
-
-(defn max-network-size
-  "Returns the maximum number of cities a single player has built"
-  [game]
-  (if-let [sizes (seq (vals (c/network-sizes (cities game))))]
-   (apply max sizes)
-    0))
-
-(defn max-city-connections
-  "Returns the maximum number of connections allowed in a city based on current
-  step of game"
-  [game]
-  (current-step game))
 
 (defn update-cities
   "Returns game after updating cities via (apply f cities args)"

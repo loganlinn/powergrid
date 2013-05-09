@@ -39,9 +39,9 @@
   (fact "new auction"
     (auction ...game... ...plant-id...) => ...new-auction...
     (provided
-      (g/current-auction ...game...) => nil
+      (g/auction ...game...) => nil
       (new-auction ...game... ...plant-id...) => ...new-auction...))
   (fact "existing auction"
     (auction ...game... ...plant-id...) => ...auction...
     (provided
-      (g/current-auction ...game...) => ...auction...)))
+      (g/auction ...game...) => ...auction...)))

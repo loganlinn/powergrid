@@ -1,5 +1,14 @@
 (ns powergrid.cities
-  (require [powergrid.cities.dijkstra :as d]))
+  (require [powergrid.common.cities :as common]
+           [powergrid.cities.dijkstra :as d]))
+
+(def ->Cities common/->Cities)
+(def map->Cities common/map->Cities)
+(def owners common/owners)
+(def connections common/connections)
+(def valid-city? common/valid-city?)
+(def network-size common/network-size)
+(def network-sizes common/network-sizes)
 
 (defn as-graph
   "Converts a map of edges to cost to a 2d graph"
@@ -7,16 +16,6 @@
   (reduce (fn [g [[n1 n2] cost]]
             (-> g (assoc-in [n1 n2] cost) (assoc-in [n2 n1] cost)))
           {} cs))
-
-(defrecord Cities [owners connections])
-
-(defn owners [cities] (:owners cities))
-(defn connections [cities] (:connections cities))
-
-(defn valid-city?
-  "Returns true if city is a valid city within cities, otherwise false"
-  [cities city]
-  (contains? (connections cities) city))
 
 (defn city-owners
   "Returns vector of player-ids who own a connection in city"
@@ -57,15 +56,6 @@
          (not (owner? cities city player-id))]}
   (update-in cities [:owners city] conj player-id))
 
-(defn network-size
-  "Returns number of cities a player owns"
-  [cities player-id]
-  (reduce #(if (some #{player-id} %2) (inc %1) %1) 0 (vals (owners cities))))
-
-(defn network-sizes
-  "Returns map of player-id to number of cities they own (for the players who own cities)"
-  [cities]
-  (frequencies (flatten (vals (owners cities)))))
 
 (defn connection-cost
   "Returns connection cost (exlcludes building cost) between two cities given

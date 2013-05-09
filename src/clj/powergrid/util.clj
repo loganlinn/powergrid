@@ -43,3 +43,4 @@
   ([] (queue))
   ([& els] (queue els)))
 
+(macroexpand '(ns-include "powergrid.common.cities" ->Cities map->Cities))
