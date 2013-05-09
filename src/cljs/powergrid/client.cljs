@@ -1,7 +1,7 @@
-(ns powergrid-client.client
+(ns powergrid.client
   (:use-macros [dommy.macros :only [sel sel1 node deftemplate]])
   (:require [dommy.core :as dommy]
-            [powergrid-client.power-plants :as pp]
+            [powergrid.common.power-plants :as pp]
             ;[clojure.browser.repl :as repl]
             ))
 
@@ -34,11 +34,13 @@
        [:span.resource.oil]
        [:span.resource.oil]
        [:span.resource.oil]
-       [:span.resource.uranium]]
+       ]
       [:div
        [:span.resource.garbage]
        [:span.resource.garbage]
-       [:span.resource.garbage]]])
+       [:span.resource.garbage]]
+      [:div
+       [:span.resource.uranium]]])
    (for [cost (range 10 18 2)]
      [:div {:data-resource-cost cost}
       [:span.resource-block-cost cost]
@@ -111,4 +113,5 @@
   ;(js/alert "Hello!"))
 ;(def clickable (.getElementById js/document "clickable"))
 ;(.addEventListener clickable "click" handle-click)
-(dommy/listen! (sel1 :#clickable) :click #(js/alert "Hello!"))
+(dommy/listen! (sel1 :#clickable) :click #(js/alert "Helloheyy"))
+

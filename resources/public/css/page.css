@@ -6,9 +6,8 @@ body {
 
 div {
   background: green;
-  margin: 3em;
+  margin: 1em;
   padding: 1em;
-  border: 1px solid gray;
   background-color: #baf0ba;
 }
 
@@ -31,6 +30,7 @@ div {
   display: block;
   float: left;
   border: 1px solid black;
+  margin-right: -1px;
 }
 
 .resource.unavailable {
