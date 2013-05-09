@@ -2,7 +2,7 @@
   (:require [midje.sweet :refer :all]
             [powergrid.core :refer :all]
             [powergrid.player :as p]
-            [powergrid.power-plants :as pp]
+            [powergrid.common.power-plants :as pp]
             [powergrid.game :as g]
             [powergrid.cities :as c]
             [powergrid.message :as msg]

@@ -4,7 +4,7 @@
             [powergrid.message :refer :all]
             [powergrid.game :as g]
             [powergrid.player :as p]
-            [powergrid.power-plants :as pp]))
+            [powergrid.common.power-plants :as pp]))
 
 (fact validate-sale
   (fact "ecological power-plants"

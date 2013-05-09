@@ -5,7 +5,7 @@
             [powergrid.game :as g]
             [powergrid.player :as p]
             [powergrid.resource :as r]
-            [powergrid.power-plants :as pp]))
+            [powergrid.common.power-plants :as pp]))
 
 (fact total-price
   (total-price ...game... {:coal 5 :oil 3}) => 15

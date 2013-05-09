@@ -1,7 +1,7 @@
 (ns powergrid.player-test
   (:require [midje.sweet :refer :all]
             [powergrid.player :refer :all]
-            [powergrid.power-plants :as pp]
+            [powergrid.common.power-plants :as pp]
             [powergrid.resource :refer [accept-resource send-resource]]))
 
 (defn mock-player

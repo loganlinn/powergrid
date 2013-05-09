@@ -5,7 +5,7 @@
             [powergrid.game :as g]
             [powergrid.player :as p]
             [powergrid.auction :as a]
-            [powergrid.power-plants :as pp]))
+            [powergrid.common.power-plants :as pp]))
 
 (defn mock-bid
   [& args]

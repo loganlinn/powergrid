@@ -3,7 +3,7 @@
             [powergrid.game :refer :all]
             [powergrid.player :as p]
             [powergrid.cities :as c]
-            [powergrid.power-plants :as pp]
+            [powergrid.common.power-plants :as pp]
             ))
 
 (fact player-id-order
