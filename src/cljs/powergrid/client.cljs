@@ -23,7 +23,8 @@
 (register-tag-parser! "powergrid.common.power_plants.PowerPlant" pp/map->PowerPlant)
 
 (defn log [& args] (doseq [x args] (.log js/console (pr-str x))))
-(defn logg [& args] (doseq [x args] (.log js/console x)))
+(defn log-r [& args] (doseq [x args] (.log js/console x)))
+(defn log-g [f game] (.log js/console (name f) (f game)))
 
 (extend-type powergrid.common.player.Player
   dommy.template/PElement
@@ -58,8 +59,8 @@
       [:div
        [:span.resource.uranium]]])
    (for [cost (range 10 18 2)]
-     [:div {:data-resource-cost cost}
-      [:span.resource-block-cost cost]
+     [:div.resource-block {:data-resource-cost cost}
+      [:span cost]
       [:div [:span.resource.uranium]]])])
 
 (defn resource-name [r]
@@ -82,11 +83,12 @@
    [:div.future
     (map (comp power-plant-tpl pp/plant) (:future power-plants))]])
 
-(deftemplate game-tpl [{:keys [phase step power-plants] :as game}]
+(deftemplate game-tpl [{:keys [power-plants] :as game}]
   [:div#game
    [:div
-    [:div (str "Step: " step)]
-    [:div (str "Phase: " phase)]]
+    [:div (str "Step: " (g/current-step game))]
+    [:div (str "Phase: " (g/current-phase game))]
+    [:div (str "Round: " (g/current-round game))] ]
    [:div#players
     [:h3 "Players"]
     (g/players game)]
@@ -112,7 +114,6 @@
 (defn render-game [game]
   (dom/replace! (sel1 :#game) (game-tpl game))
   (update-resources (:resources game))
-  (log (g/action-player-id game))
   (if-let [p (sel1 (str "#player-" (g/action-player-id game)))]
     (dom/add-class! p "has-action")))
 
@@ -122,7 +123,6 @@
   (remote-callback :game-state
                    [(@current-game :id)]
                    (fn [{:keys [game error] :as resp}]
-                     (log "update-game response" resp)
                      (if game
                        (do
                          (.debug js/console (pr-str game))
@@ -145,7 +145,7 @@
                    "{:topic :phase2 :type :bid :player-id %player-id% :powered-plants {}}"]
         panel (node [:div#debug
                      [:button.update-game "Update Game"]
-                     [:button.log-game "Log Game"]
+                     [:button.log-game "Print Game"]
                      [:div (map #(node [:button.msg-tmpl %]) msg-tmpls)]
                      [:form.send-message
                       [:textarea.message ""]
@@ -159,8 +159,7 @@
                    (dom/set-text! (sel1 "#debug .send-message textarea")
                                   (clojure.string/replace (dom/text (.-target e))
                                                           #"%player-id%"
-                                                          (str (g/current-turn @current-game))
-                                                          ))
+                                                          (str (g/action-player-id @current-game))))
                    ))
     (dom/listen! (sel1 "#debug form.send-message") :submit
                  (fn [e]

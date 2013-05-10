@@ -24,6 +24,11 @@ div {
   background-color: red;
 }
 
+
+.resource-block {
+  float: left;
+}
+
 .resource {
   height: 20px;
   width: 20px;
@@ -63,4 +68,8 @@ div {
 }
 .player.has-action {
   border: 1px solid red;
+}
+
+#power-plants {
+  clear: both;
 }
