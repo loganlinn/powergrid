@@ -1,7 +1,11 @@
 (ns powergrid.auction
-  (:require [powergrid.util :refer [queue]]))
+  (:require [powergrid.common.auction :as common]
+            [powergrid.util :refer [queue]]))
 
-(defrecord Auction [item player-id bidders price min-increment])
+(def ->Auction common/->Auction)
+(def map->Auction common/map->Auction)
+(def current-bidder common/current-bidder)
+(def min-bid common/min-bid)
 
 (def ^:private defaults
   {:min-increment 1})
@@ -16,18 +20,6 @@
   ([m initial-min-bid]
    (let [auction (new-auction m)]
      (assoc auction :price (- initial-min-bid (:min-increment auction))))))
-
-(defn current-bidder
-  "Returns the current bidder"
-  [auction]
-  (peek (:bidders auction)))
-
-(defn min-bid
-  "Returns the minimum bid for item currently at auction"
-  [{:keys [price min-increment]}]
-  (if price
-    (+ price min-increment)
-    0))
 
 (defn completed?
   "Returns true if the auction is in a completed state, otherwise false"

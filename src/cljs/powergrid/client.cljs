@@ -1,32 +1,40 @@
 (ns powergrid.client
   (:use-macros [dommy.macros :only [sel sel1 node deftemplate]])
-  (:require [dommy.core :as dommy]
-            [powergrid.common.power-plants :as pp]
-            [powergrid.common.resource :as r]
-            [powergrid.common.player :as p]
+  (:require [dommy.core :as dom]
+            [dommy.template]
             [powergrid.common.game :as g]
+            [powergrid.common.player :as p]
+            [powergrid.common.cities :as c]
+            [powergrid.common.auction :as a]
+            [powergrid.common.resource :as r]
+            [powergrid.common.power-plants :as pp]
             [clojure.browser.repl :as repl]
             [shoreleave.remotes.http-rpc :refer [remote-callback]]
             [cljs.reader :refer  [read-string register-tag-parser!]]))
 
-(repl/connect "http://localhost:9000/repl")
+;(repl/connect "http://localhost:9000/repl")
 
 ;; Register types for read-string
-(register-tag-parser! "powergrid.common.power_plants.PowerPlant" pp/map->PowerPlant)
-(register-tag-parser! "powergrid.common.resource.Resource" r/map->Resource)
+(register-tag-parser! "powergrid.common.game.Game" g/map->Game)
 (register-tag-parser! "powergrid.common.player.Player" p/map->Player)
+(register-tag-parser! "powergrid.common.cities.Cities" c/map->Cities)
+(register-tag-parser! "powergrid.common.auction.Auction" a/map->Auction)
+(register-tag-parser! "powergrid.common.resource.Resource" r/map->Resource)
+(register-tag-parser! "powergrid.common.power_plants.PowerPlant" pp/map->PowerPlant)
 
-(defn log
-  [& args]
-  (.log js/console (pr-str args)))
+(defn log [& args] (doseq [x args] (.log js/console (pr-str x))))
+(defn logg [& args] (doseq [x args] (.log js/console x)))
 
-(deftemplate player-tpl [{:keys [id handle color money]}]
-  [:div.player
-   {:class (str "player-" (name color))
-    :id (str "player-" id)}
-   [:span.handle handle]
-   [:div.money money]
-   [:div.power-plants ""]])
+(extend-type powergrid.common.player.Player
+  dommy.template/PElement
+  (-elem [{:keys [id handle color money]}]
+    (node [:div.player
+           {:class (str "player-" (name color))
+            :id (str "player-" id)}
+           [:span.handle handle]
+           [:div.player-icon]
+           [:div.money money]
+           [:div.power-plants]])))
 
 (deftemplate resources-tpl []
   [:div#resources
@@ -74,16 +82,14 @@
    [:div.future
     (map (comp power-plant-tpl pp/plant) (:future power-plants))]])
 
-(defn current-turn [game]
-  (if-let [auction (:auction game)]
-    
-    (-> (:turns game) first )))
-(deftemplate game-tpl [{:keys [phase step players power-plants] :as game}]
+(deftemplate game-tpl [{:keys [phase step power-plants] :as game}]
   [:div#game
    [:div
     [:div (str "Step: " step)]
     [:div (str "Phase: " phase)]]
-   [:div#players [:h3 "Players"] (map player-tpl (vals players))]
+   [:div#players
+    [:h3 "Players"]
+    (g/players game)]
    (resources-tpl)
    (power-plants-tpl power-plants)])
 
@@ -93,7 +99,7 @@
     (doall
       (map-indexed
         (fn [ind node]
-          (dommy/toggle-class! node "unavailable" (< ind rfill)))
+          (dom/toggle-class! node "unavailable" (< ind rfill)))
         nodes))))
 
 (defn update-resources
@@ -103,36 +109,66 @@
       (get resources r)
       (sel (str "#resources ." (name r))))))
 
-(let [std-pricing (for [p (range 1 9) _ (range 3)] p)
-      uranium-pricing '(1 2 3 4 5 6 7 8 12 14 15 16)]
-  (def mock-game {:players {1 {:id 1 :username "Logan" :color :red :money 50 :power-plants {}}
-                            2 {:id 2 :username "Maeby" :color :black :money 50 :power-plants {}}}
-                  :resources {:coal {:market 24 :supply 0 :pricing std-pricing}
-                              :oil {:market 18 :supply 6 :pricing std-pricing}
-                              :garbage {:market 6 :supply 18 :pricing std-pricing}
-                              :uranium {:market 2 :supply 10 :pricing uranium-pricing}}
-                  :power-plants {:market (pp/initial-market)
-                                 :future (pp/initial-future)
-                                 :deck (pp/initial-deck)}
-                  :turn-order [1 2]
-                  :turns '()}))
-
 (defn render-game [game]
-  (dommy/replace! (sel1 :#game) (game-tpl game))
-  (update-resources (:resources game)))
+  (dom/replace! (sel1 :#game) (game-tpl game))
+  (update-resources (:resources game))
+  (log (g/action-player-id game))
+  (if-let [p (sel1 (str "#player-" (g/action-player-id game)))]
+    (dom/add-class! p "has-action")))
 
 (def current-game (atom {:id 1}))
 
-(defn update-game [& args]
+(defn update-game []
   (remote-callback :game-state
                    [(@current-game :id)]
-                   (fn [game]
-                     (.log js/console (pr-str game))
-                     (render-game game))))
+                   (fn [{:keys [game error] :as resp}]
+                     (log "update-game response" resp)
+                     (if game
+                       (do
+                         (.debug js/console (pr-str game))
+                         (reset! current-game game)
+                         (render-game game))
+                       (.error js/console (or error resp "Failed game update"))))))
 
 (defn- send-message [msg & [f]]
+  (log "Sending message" msg)
   (remote-callback :send-message
                    [(@current-game :id) msg]
                    (or f update-game)))
 
-(dommy/listen! (sel1 :#update-game) :click update-game)
+(dom/listen! (sel1 :#update-game) :click update-game)
+
+(defn render-debug-panel []
+  (let [msg-tmpls ["{:topic :phase2 :type :bid :player-id %player-id% :plant-id 3 :bid 3}"
+                   "{:topic :phase3 :type :bid :player-id %player-id% :resources {:oil 0 :coal 0 :garbage 0 :uranium 0}}"
+                   "{:topic :phase2 :type :bid :player-id %player-id% :new-cities []}"
+                   "{:topic :phase2 :type :bid :player-id %player-id% :powered-plants {}}"]
+        panel (node [:div#debug
+                     [:button.update-game "Update Game"]
+                     [:button.log-game "Log Game"]
+                     [:div (map #(node [:button.msg-tmpl %]) msg-tmpls)]
+                     [:form.send-message
+                      [:textarea.message ""]
+                      [:input {:type "submit" :value "Send Message"}]]])]
+    (if-let [prev (sel1 :#debug)] (dom/remove! prev))
+    (dom/prepend! (sel1 :body) panel)
+    (dom/listen! (sel1 "#debug .update-game") :click update-game)
+    (dom/listen! (sel1 "#debug .log-game") :click #(log @current-game))
+    (dom/listen! [(sel1 :#debug) :.msg-tmpl] :click
+                 (fn [e]
+                   (dom/set-text! (sel1 "#debug .send-message textarea")
+                                  (clojure.string/replace (dom/text (.-target e))
+                                                          #"%player-id%"
+                                                          (str (g/current-turn @current-game))
+                                                          ))
+                   ))
+    (dom/listen! (sel1 "#debug form.send-message") :submit
+                 (fn [e]
+                   (.preventDefault e)
+                   (let [msg (read-string (dom/value (sel1 "#debug .send-message .message")))]
+                     (if (and (map? msg) (every? msg [:topic :type]))
+                       (send-message msg)
+                       (.debug js/console "Invalid message")))))))
+
+(render-debug-panel)
+(update-game)

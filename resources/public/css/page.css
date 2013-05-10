@@ -36,3 +36,31 @@ div {
 .resource.unavailable {
   background-color: transparent;
 }
+
+.player-icon {
+  float: right;
+  height: 10px;
+  width: 10px;
+  display: block;
+}
+.player-yellow .player-icon {
+  background-color: yellow;
+}
+.player-purple .player-icon {
+  background-color: purple;
+}
+.player-green .player-icon {
+  background-color: green;
+}
+.player-black .player-icon {
+  background-color: black;
+}
+.player-red .player-icon {
+  background-color: red;
+}
+.player-blue .player-icon {
+  background-color: blue;
+}
+.player.has-action {
+  border: 1px solid red;
+}

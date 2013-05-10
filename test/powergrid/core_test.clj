@@ -9,15 +9,15 @@
             [powergrid.messages.factory :as msgs]))
 
 (defn msg
-  [topic title player-id m]
+  [topic type player-id m]
   (if (= m :pass)
     {msg/topic topic
-     msg/title title
+     msg/type type
      msg/pass true
      :player-id player-id}
     (assoc m
            msg/topic topic
-           msg/title title
+           msg/type type
            :player-id player-id)))
 
 (use 'clojure.pprint)

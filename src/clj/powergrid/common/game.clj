@@ -1,6 +1,7 @@
 (ns ^:shared powergrid.common.game
   (:require [powergrid.common.power-plants :as pp]
             [powergrid.common.player :as p]
+            [powergrid.common.auction :as a]
             [powergrid.common.cities :as c]))
 
 (defrecord Game [id phase step round turns turn-order resources power-plants cities players auction bank])
@@ -99,3 +100,11 @@
   [game]
   (current-step game))
 
+;; MISC
+
+(defn action-player-id
+  "Returns player id who has current game action"
+  [game]
+  (if-let [auct (auction game)]
+    (a/current-bidder auction)
+    (current-turn game)))

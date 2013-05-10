@@ -1,9 +1,10 @@
 (ns powergrid.message
+  (:refer-clojure :exclude [type])
   (:require [powergrid.game :as g]
             [slingshot.slingshot :refer [throw+]]))
 
 (def topic :topic)
-(def title :title)
+(def type :type)
 (def pass ::pass)
 
 (defprotocol Message

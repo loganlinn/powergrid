@@ -15,7 +15,7 @@
 
 (defn create-message
   "Returns a message instance for a given message if one is registered for the
-  message's topic and title. Otherwise returns nil"
-  [{:keys [topic title] :as msg}]
-  (when-let [ctor (get-in messages [(kw topic) (kw title)])]
+  message's topic and type Otherwise returns nil"
+  [{:keys [topic type] :as msg}]
+  (when-let [ctor (get-in messages [(kw topic) (kw type)])]
     (ctor msg)))
