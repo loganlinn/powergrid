@@ -61,7 +61,6 @@
              [:ul.player-power-plants (pps-tpl player (p/power-plants player))]]))))
 
 (deftemplate player-cities-tpl [game player]
-  (log (c/owned-cities (g/cities game) (p/id player)))
   [:ul.player-cities
    (map #(vector :li (name %)) (c/owned-cities (g/cities game) (p/id player)))])
 
@@ -75,30 +74,23 @@
            [:span.yield yield]])))
 
 (deftemplate resources-tpl []
-  [:div#resources
+  (let [coal-el (resource-tpl :coal)
+        oil-el  (resource-tpl :oil)
+        garbage-el (resource-tpl :garbage)
+        uranium-el (resource-tpl :uranium)]
+   [:div#resources
    [:h3 "Resources"]
    (for [cost (range 1 9)]
      [:div.resource-block
       {:data-resource-cost cost}
       [:span.resource-block-cost cost]
-      [:div
-       [:span.resource.coal]
-       [:span.resource.coal]
-       [:span.resource.coal]]
-      [:div
-       [:span.resource.oil]
-       [:span.resource.oil]
-       [:span.resource.oil]]
-      [:div
-       [:span.resource.garbage]
-       [:span.resource.garbage]
-       [:span.resource.garbage]]
-      [:div
-       [:span.resource.uranium]]])
+      [:div (repeat 3 coal-el)]
+      [:div (repeat 3 oil-el)]
+      [:div (repeat 3 garbage-el)]
+      [:div uranium-el]])
    (for [cost (range 10 18 2)]
      [:div.resource-block {:data-resource-cost cost}
-      [:span cost]
-      [:div [:span.resource.uranium]]])])
+      [:span cost] [:div uranium-el]])]))
 
 (deftemplate power-plants-tpl [power-plants]
   (let [plant-node #(node [:li (pp/plant %)])]
