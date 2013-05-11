@@ -36,7 +36,8 @@
   (-> (select-keys game [:id :step :phase :round :players :resources :turns :auction])
       (assoc-in [:power-plants :market] (map pp/id (get-in game [:power-plants :market])))
       (assoc-in [:power-plants :future] (map pp/id (get-in game [:power-plants :future])))
-      fix-auction-bidders))
+      fix-auction-bidders
+      (assoc-in [:cities :owners] (get-in game [:cities :owners]))))
 
 (defremote game-state [game-id]
   (if-let [game (@games game-id)]

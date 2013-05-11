@@ -80,6 +80,15 @@
   [game resources]
   (every? #(contains-resource? game (key %) (val %)) resources))
 
+;; POWER PLANTS
+
+(defn power-plants
+  "Returns the current or future power plant market"
+  ([game]
+   (power-plants game :market))
+  ([game market]
+   (get-in game [:power-plants market])))
+
 ;; CITIES
 
 (defn network-size

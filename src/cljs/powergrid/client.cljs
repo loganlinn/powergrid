@@ -58,7 +58,12 @@
              [:span.handle handle]
              [:div.player-icon]
              [:div.money (str "$" money)]
-             [:ul.power-plants (pps-tpl player (p/power-plants player))]]))))
+             [:ul.player-power-plants (pps-tpl player (p/power-plants player))]]))))
+
+(deftemplate player-cities-tpl [game player]
+  (log (c/owned-cities (g/cities game) (p/id player)))
+  [:ul.player-cities
+   (map #(vector :li (name %)) (c/owned-cities (g/cities game) (p/id player)))])
 
 (extend-type powergrid.common.power-plants.PowerPlant
   dommy.template/PElement
@@ -121,7 +126,7 @@
     [:div (str "Round: " round)]]
    [:div#players
     [:h3 "Players"]
-    (g/players game)]
+    (mapcat (juxt identity (partial player-cities-tpl game)) (g/players game))]
    (resources-tpl)
    (when-let [auction (g/auction game)] (auction-tpl game auction))
    (power-plants-tpl power-plants)])
@@ -151,26 +156,25 @@
     (dom/add-class! p "has-action")))
 
 
+(defn- handle-game-response
+  [{:keys [game error] :as resp}]
+  (if game
+    (do
+      (.debug js/console (pr-str game))
+      (reset! current-game game)
+      (render-game game))
+    (.error js/console (or error resp "Failed game update"))))
+
 (defn update-game
   "Updates game state from backend"
   []
-  (remote-callback :game-state
-                   [(@current-game :id)]
-                   (fn [{:keys [game error] :as resp}]
-                     (if game
-                       (do
-                         (.debug js/console (pr-str game))
-                         (reset! current-game game)
-                         (render-game game))
-                       (.error js/console (or error resp "Failed game update"))))))
+  (remote-callback :game-state [(@current-game :id)] handle-game-response))
 
 (defn- send-message
   "Sends message to back-end"
   [msg & [f]]
   (log "Sending message" msg)
-  (remote-callback :send-message
-                   [(@current-game :id) msg]
-                   (or f update-game)))
+  (remote-callback :send-message [(@current-game :id) msg] handle-game-response))
 
 (dom/listen! (sel1 :#update-game) :click update-game)
 
@@ -179,10 +183,10 @@
                          3 :buy
                          4 :buy
                          5 :sell}
-        msg-tmpls {"Bid Power-Plant" "{:topic :phase2 :type :bid :player-id %player-id% :plant-id 3 :bid 3}"
+        msg-tmpls {"Bid Power-Plant" "{:topic :phase2 :type :bid :player-id %player-id% :plant-id %plant-id% :bid %plant-id%}"
                    "Buy Resources" "{:topic :phase3 :type :buy :player-id %player-id% :resources {:oil 0 :coal 0 :garbage 0 :uranium 0}}"
-                   "Buy Cities" "{:topic :phase2 :type :buy :player-id %player-id% :new-cities []}"
-                   "Power Cities" "{:topic :phase2 :type :sell :player-id %player-id% :powered-plants {}}"
+                   "Buy Cities" "{:topic :phase4 :type :buy :player-id %player-id% :new-cities []}"
+                   "Power Cities" "{:topic :phase5 :type :sell :player-id %player-id% :powered-plants {}}"
                    "Pass" "{:topic :phase%current-phase% :type %phase-msg-type% :player-id %player-id% :powergrid.message/pass true}"}
         panel (node [:div#debug
                      [:button.update-game "Update Game"]
@@ -197,13 +201,14 @@
     (dom/listen! (sel1 "#debug .update-game") :click update-game)
     (dom/listen! (sel1 "#debug .log-game") :click #(log @current-game))
     (dom/listen! (sel1 "#debug .reset-game") :click #(remote-callback :reset-game [] (update-game)))
-    (dom/listen! [(sel1 :#debug) :.msg-tmpl] :click
+    (dom/listen! [(sel1 :body) :#debug :.msg-tmpl] :click
                  (fn [e]
                    (dom/set-text! (sel1 "#debug .send-message textarea")
                                   (-> (dom/value (.-target e))
                                       (clojure.string/replace #"%player-id%" (str (g/action-player-id @current-game)))
                                       (clojure.string/replace #"%current-phase%" (str (g/current-phase @current-game)))
                                       (clojure.string/replace #"%phase-msg-type%" (str (phase-msg-types (g/current-phase @current-game))))
+                                      (clojure.string/replace #"%plant-id%" (str (first (g/power-plants @current-game))))
                                       ))))
     (dom/listen! (sel1 "#debug form.send-message") :submit
                  (fn [e]

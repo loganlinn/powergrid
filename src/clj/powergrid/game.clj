@@ -27,6 +27,7 @@
 (def resource common/resource)
 (def map-resources common/map-resources)
 (def contains-resource? common/contains-resource?)
+(def power-plants common/power-plants)
 (def contains-resources? common/contains-resources?)
 (def player common/player)
 (def players common/players)
@@ -120,7 +121,7 @@
               :players (into {} (map (juxt p/id identity) players))
               :turns  '()
               :turn-order (shuffle (map p/id players))
-              :cities (c/map->Cities {:owners (zipmap usa/cities (repeat []))
+              :cities (c/map->Cities {:owners {}
                                       :connections (c/as-graph usa/connections)})
               :bank 0}))
 
@@ -228,14 +229,6 @@
 (defn valid-power-plant-market?
   [market]
   (or (= :market market) (= :future market)))
-
-(defn power-plants
-  "Returns the current or future power plant market"
-  ([game]
-   (power-plants game :market))
-  ([game market]
-   {:pre [(valid-power-plant-market? market)]}
-   (get-in game [:power-plants market])))
 
 (defn update-power-plants
   "Returns game after updating power-plant markets via (apply f power-plants args)"

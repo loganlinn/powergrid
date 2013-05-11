@@ -24,12 +24,22 @@
 
 (defn pass? [msg] (pass msg))
 
+(defn- expected-topic
+  [game]
+  (case (g/current-phase game)
+    2 :phase2
+    3 :phase3
+    4 :phase4
+    5 :phase5))
+
 (defn base-validate
   "Default set of validation rules. Returns error message if fails validation,
   otherwise nil"
   [{:keys [player-id] :as msg} game]
   (cond
     (not (g/player game player-id)) "Invalid player"
+    (or (nil? (expected-topic game))
+        (not= (topic msg) (expected-topic game))) "Unexpected message (phase)"
     (and (turn? msg) (not= player-id (g/current-turn game))) (str "Not your turn" player-id)))
 
 (defrecord ValidationError [message])

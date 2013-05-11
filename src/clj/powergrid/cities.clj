@@ -7,6 +7,7 @@
 (def owners common/owners)
 (def connections common/connections)
 (def valid-city? common/valid-city?)
+(def owned-cities common/owned-cities)
 (def network-size common/network-size)
 (def network-sizes common/network-sizes)
 
@@ -28,11 +29,6 @@
   "Returns true if player owns a connection in city, otherwise false"
   [cities player-id city]
   (some #{player-id} (city-owners cities city)))
-
-(defn owned-cities
-  "Returns collection of cities the player owns"
-  [cities player-id]
-  (keep #(when (some #{player-id} (val %)) (key %)) (owners cities)))
 
 (defn build-cost
   "Returns price to build in city (excludes connection cost)"
