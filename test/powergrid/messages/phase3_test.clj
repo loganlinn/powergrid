@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [type])
   (:require [midje.sweet :refer :all]
             [powergrid.messages.phase3 :refer :all]
-            [powergrid.message :refer :all]
+            [powergrid.message :refer [passable? update-pass]]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
             [powergrid.common.resource :as r]
