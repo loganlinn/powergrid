@@ -6,11 +6,11 @@
   "Returns a vector: [ (filter f s) (filter (complement f) s) ]"
   [(filter f s) (filter (complement f) s)])
 
-(defmethod print-method PersistentQueue
-  [q w]
-  (print-method '<- w)
-  (print-method (seq q) w)
-  (print-method '-< w))
+;(defmethod print-method PersistentQueue
+  ;[q w]
+  ;(print-method '<- w)
+  ;(print-method (seq q) w)
+  ;(print-method '-< w))
 
 (defprotocol Coersions
   (to-queue [q])

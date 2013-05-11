@@ -16,17 +16,31 @@
 
 (def games (atom {}))
 
-(swap! games assoc 1 (-> (g/new-game [(p/new-player 1 "Logan" :red)
-                                      (p/new-player 2 "Maeby" :blue)])
-                         (assoc :id 1)
-                         c/tick))
+(defn reset-game []
+  (swap! games assoc 1 (-> (g/new-game [(p/new-player 1 "Logan" :red)
+                                        (p/new-player 2 "Maeby" :blue)])
+                           (assoc :id 1)
+                           c/tick)))
+(reset-game)
+
+(defn- fix-auction-bidders
+  "Replace bidders queue with seq for js portability"
+  [game]
+  (if-let [a (:auction game)]
+    (update-in game [:auction :bidders] seq)
+    game))
+
+(defn client-game
+  "Returns representation of game state that's sent to clients"
+  [game]
+  (-> (select-keys game [:id :step :phase :round :players :resources :turns :auction])
+      (assoc-in [:power-plants :market] (map pp/id (get-in game [:power-plants :market])))
+      (assoc-in [:power-plants :future] (map pp/id (get-in game [:power-plants :future])))
+      fix-auction-bidders))
 
 (defremote game-state [game-id]
   (if-let [game (@games game-id)]
-    {:game
-     (-> (select-keys game [:id :step :phase :round :players :resources :turns :auction])
-         (assoc-in [:power-plants :market] (map pp/id (get-in game [:power-plants :market])))
-         (assoc-in [:power-plants :future] (map pp/id (get-in game [:power-plants :future]))))}
+    {:game (client-game game)}
     {:error "Unknown game"}))
 
 (defremote ^{:remote-name :send-message} recieve-message
@@ -37,11 +51,15 @@
     (try+
       (prn msg)
       (swap! games update-in [game-id] c/update-game msg)
-      {:game (@games game-id)}
+      {:game (client-game (@games game-id))}
       (catch ValidationError e
         {:error (:message e)}))
      {:error "Invalid game"})
     {:error "Invalid message"}))
+
+(defremote ^{:remote-name :reset-game} remote-reset-game []
+  (reset-game)
+  {:game (client-game (@games 1))})
 
 (defroutes handler
   (GET "/" [] (redirect "/powergrid.html")))

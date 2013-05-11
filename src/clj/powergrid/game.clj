@@ -271,11 +271,12 @@
   "Returns power-plants after re-ordering"
   [{:keys [market future] :as power-plants} step]
   (let [[step-3-card combined] (separate (complement step-3-card?) (concat market future))
-        ordered (sort-by :number combined)
+        ordered (sort-by pp/plant-number combined)
         [market future] (split-at (if (= step 3) 6 4) ordered)]
-    (assoc power-plants
+    (-> (assoc power-plants
            :market market
-           :future (concat future step-3-card))))
+           :future (concat future step-3-card))
+        (#(do (prn %) %)))))
 
 (defn update-power-plant-order
   "Returns game after ordering the power-plants"

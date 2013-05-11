@@ -26,16 +26,19 @@
 (defn log-r [& args] (doseq [x args] (.log js/console x)))
 (defn log-g [f game] (.log js/console (name f) (f game)))
 
+(set! *print-fn* log)
+
 (extend-type powergrid.common.player.Player
   dommy.template/PElement
-  (-elem [{:keys [id handle color money]}]
+  (-elem [{:keys [id handle color money] :as player}]
     (node [:div.player
            {:class (str "player-" (name color))
             :id (str "player-" id)}
            [:span.handle handle]
            [:div.player-icon]
-           [:div.money money]
-           [:div.power-plants]])))
+           [:div.money (str "$" money)]
+           [:ul.power-plants
+            (map #(node [:li %]) (p/power-plants player))]])))
 
 (deftemplate resources-tpl []
   [:div#resources
@@ -68,20 +71,31 @@
     (clojure.string/join "-" (sort (map name r)))
     (name r)))
 
-(deftemplate power-plant-tpl [{:keys [number resource capacity yield]}]
-  [:div.power-plant
-   {:class (format "%s power-plant-%d" (resource-name resource) number)}
-   [:span.number number]
-   [:span.capacity capacity]
-   [:span.yield yield]])
+(extend-type powergrid.common.power-plants.PowerPlant
+  dommy.template/PElement
+  (-elem [{:keys [number resource capacity yield]}]
+    (node [:div.power-plant
+           {:class (format "%s power-plant-%d" (resource-name resource) number)}
+           [:span.number number]
+           [:span.capacity capacity]
+           [:span.yield yield]])))
 
 (deftemplate power-plants-tpl [power-plants]
   [:div#power-plants
    [:h3 "Power Plants"]
    [:div.market
-    (map (comp power-plant-tpl pp/plant) (:market power-plants))]
+    (map pp/plant (:market power-plants))]
    [:div.future
-    (map (comp power-plant-tpl pp/plant) (:future power-plants))]])
+    (map pp/plant (:future power-plants))]])
+
+(deftemplate auction-tpl [game {:keys [item price bidders] :as auction}]
+  [:div.auction
+   [:h3 "Auction"]
+   [:div.auction-price (str "Current Bid: $" price)]
+   [:ul.auction-bidders
+    (map #(node [:li (p/handle (g/player game %))]) bidders)]
+   [:div.auction-item item]
+   [:div {:style {:clear "both"}}]])
 
 (deftemplate game-tpl [{:keys [power-plants] :as game}]
   [:div#game
@@ -93,6 +107,7 @@
     [:h3 "Players"]
     (g/players game)]
    (resources-tpl)
+   (when-let [auction (g/auction game)] (auction-tpl game auction))
    (power-plants-tpl power-plants)])
 
 (defn update-resource
@@ -139,34 +154,44 @@
 (dom/listen! (sel1 :#update-game) :click update-game)
 
 (defn render-debug-panel []
-  (let [msg-tmpls ["{:topic :phase2 :type :bid :player-id %player-id% :plant-id 3 :bid 3}"
-                   "{:topic :phase3 :type :bid :player-id %player-id% :resources {:oil 0 :coal 0 :garbage 0 :uranium 0}}"
-                   "{:topic :phase2 :type :bid :player-id %player-id% :new-cities []}"
-                   "{:topic :phase2 :type :bid :player-id %player-id% :powered-plants {}}"]
+  (let [phase-msg-types {2 :bid
+                         3 :buy
+                         4 :buy
+                         5 :sell}
+        msg-tmpls {"Bid Power-Plant" "{:topic :phase2 :type :bid :player-id %player-id% :plant-id 3 :bid 3}"
+                   "Buy Resources" "{:topic :phase3 :type :buy :player-id %player-id% :resources {:oil 0 :coal 0 :garbage 0 :uranium 0}}"
+                   "Buy Cities" "{:topic :phase2 :type :buy :player-id %player-id% :new-cities []}"
+                   "Power Cities" "{:topic :phase2 :type :sell :player-id %player-id% :powered-plants {}}"
+                   "Pass" "{:topic :phase%current-phase% :type %phase-msg-type% :player-id %player-id% :powergrid.message/pass true}"}
         panel (node [:div#debug
                      [:button.update-game "Update Game"]
                      [:button.log-game "Print Game"]
-                     [:div (map #(node [:button.msg-tmpl %]) msg-tmpls)]
+                     [:button.reset-game "Reset Game"]
+                     [:div "Messages" (map #(node [:button.msg-tmpl {:value (val %)} (key %)]) msg-tmpls)]
                      [:form.send-message
-                      [:textarea.message ""]
+                      [:textarea.message {:style {:width "100%"}}]
                       [:input {:type "submit" :value "Send Message"}]]])]
     (if-let [prev (sel1 :#debug)] (dom/remove! prev))
     (dom/prepend! (sel1 :body) panel)
     (dom/listen! (sel1 "#debug .update-game") :click update-game)
     (dom/listen! (sel1 "#debug .log-game") :click #(log @current-game))
+    (dom/listen! (sel1 "#debug .reset-game") :click #(remote-callback :reset-game [] (update-game)))
     (dom/listen! [(sel1 :#debug) :.msg-tmpl] :click
                  (fn [e]
                    (dom/set-text! (sel1 "#debug .send-message textarea")
-                                  (clojure.string/replace (dom/text (.-target e))
-                                                          #"%player-id%"
-                                                          (str (g/action-player-id @current-game))))
-                   ))
+                                  (-> (dom/value (.-target e))
+                                      (clojure.string/replace #"%player-id%" (str (g/action-player-id @current-game)))
+                                      (clojure.string/replace #"%current-phase%" (str (g/current-phase @current-game)))
+                                      (clojure.string/replace #"%phase-msg-type%" (str (phase-msg-types (g/current-phase @current-game))))
+                                      ))))
     (dom/listen! (sel1 "#debug form.send-message") :submit
                  (fn [e]
                    (.preventDefault e)
                    (let [msg (read-string (dom/value (sel1 "#debug .send-message .message")))]
                      (if (and (map? msg) (every? msg [:topic :type]))
-                       (send-message msg)
+                       (do
+                         (send-message msg)
+                         (dom/set-text! (sel1 "#debug .send-message textarea") ""))
                        (.debug js/console "Invalid message")))))))
 
 (render-debug-panel)

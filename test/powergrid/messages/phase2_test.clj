@@ -1,7 +1,7 @@
 (ns powergrid.messages.phase2-test
   (:require [midje.sweet :refer :all]
+            [powergrid.message :refer [passable?]]
             [powergrid.messages.phase2 :refer :all]
-            [powergrid.message :refer :all]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
             [powergrid.auction :as a]

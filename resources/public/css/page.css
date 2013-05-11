@@ -1,21 +1,16 @@
 body {
-  width: 900px;
   margin: 0 auto;
-  background-color: #8eba8e;
 }
 
 div {
-  background: green;
-  margin: 1em;
   padding: 1em;
-  background-color: #baf0ba;
 }
 
 .oil {
-  background-color: #222;
+  background-color: #333;
 }
 .coal {
-  background-color: #888;
+  background-color: #987654;
 }
 .garbage {
   background-color: yellow;
@@ -27,6 +22,9 @@ div {
 
 .resource-block {
   float: left;
+}
+#resources + * {
+  clear: both;
 }
 
 .resource {
@@ -40,6 +38,34 @@ div {
 
 .resource.unavailable {
   background-color: transparent;
+}
+
+.power-plant {
+  height: 50px;
+  width: 50px;
+  margin-right: 10px;
+  float:left;
+  position: relative
+}
+.power-plant .number {
+  font-size: 2em;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+.power-plant .capacity {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+}
+.power-plant .yield {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+}
+
+#power-plants .market, #power-plants .future {
+  clear:both;
 }
 
 .player-icon {
@@ -68,8 +94,4 @@ div {
 }
 .player.has-action {
   border: 1px solid red;
-}
-
-#power-plants {
-  clear: both;
 }

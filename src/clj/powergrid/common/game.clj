@@ -105,6 +105,6 @@
 (defn action-player-id
   "Returns player id who has current game action"
   [game]
-  (if-let [auct (auction game)]
-    (a/current-bidder auction)
+  (if-let [a (auction game)]
+    (a/current-bidder a)
     (current-turn game)))
