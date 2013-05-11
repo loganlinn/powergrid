@@ -108,3 +108,12 @@
   (if-let [a (auction game)]
     (a/current-bidder a)
     (current-turn game)))
+
+(defn phase-title
+  [phase]
+  (case phase
+    1 "Determine Player Order"
+    2 "Auction Power Plants"
+    3 "Buying Resources"
+    4 "Building"
+    5 "Bureaucracy"))

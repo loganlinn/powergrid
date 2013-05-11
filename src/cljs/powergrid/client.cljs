@@ -1,15 +1,17 @@
 (ns powergrid.client
   (:use-macros [dommy.macros :only [sel sel1 node deftemplate]])
-  (:require [dommy.core :as dom]
-            [dommy.template]
-            [powergrid.common.game :as g]
+  (:require [powergrid.common.game :as g]
             [powergrid.common.player :as p]
             [powergrid.common.cities :as c]
             [powergrid.common.auction :as a]
             [powergrid.common.resource :as r]
             [powergrid.common.power-plants :as pp]
+            [dommy.template]
+            [dommy.core :as dom]
             [clojure.browser.repl :as repl]
             [shoreleave.remotes.http-rpc :refer [remote-callback]]
+            [shoreleave.pubsubs.simple :as pbus]
+            [shoreleave.pubsubs.protocols :as pubsub]
             [cljs.reader :refer  [read-string register-tag-parser!]]))
 
 ;(repl/connect "http://localhost:9000/repl")
@@ -28,17 +30,44 @@
 
 (set! *print-fn* log)
 
+(def current-game (atom {:id 1})) ;; TODO
+
+(defn- resource-name [r]
+  (if (set? r)
+    (clojure.string/join "-" (sort (map name r)))
+    (name r)))
+
+(defn resource-tpl [r] ;; TODO use cond
+  [:span {:class (str "resource " (resource-name r))}])
+
 (extend-type powergrid.common.player.Player
   dommy.template/PElement
   (-elem [{:keys [id handle color money] :as player}]
-    (node [:div.player
-           {:class (str "player-" (name color))
-            :id (str "player-" id)}
-           [:span.handle handle]
-           [:div.player-icon]
-           [:div.money (str "$" money)]
-           [:ul.power-plants
-            (map #(node [:li %]) (p/power-plants player))]])))
+    (letfn [(pp-rsrcs-tpl [pp-rsrcs]
+              (node [:div.power-plant-resources
+                     (mapcat
+                       #(repeat (val %) (resource-tpl (key %)))
+                       pp-rsrcs)]))
+            (pps-tpl [player pps]
+              (map #(vector :li (pp/plant %)
+                            (pp-rsrcs-tpl (p/power-plant-resources player %)))
+                   pps))]
+      (node [:div.player
+             {:class (str "player-" (name color))
+              :id (str "player-" id)}
+             [:span.handle handle]
+             [:div.player-icon]
+             [:div.money (str "$" money)]
+             [:ul.power-plants (pps-tpl player (p/power-plants player))]]))))
+
+(extend-type powergrid.common.power-plants.PowerPlant
+  dommy.template/PElement
+  (-elem [{:keys [number resource capacity yield]}]
+    (node [:div.power-plant
+           {:class (format "%s power-plant-%d" (resource-name resource) number)}
+           [:span.number number]
+           [:span.capacity capacity]
+           [:span.yield yield]])))
 
 (deftemplate resources-tpl []
   [:div#resources
@@ -66,27 +95,14 @@
       [:span cost]
       [:div [:span.resource.uranium]]])])
 
-(defn resource-name [r]
-  (if (set? r)
-    (clojure.string/join "-" (sort (map name r)))
-    (name r)))
-
-(extend-type powergrid.common.power-plants.PowerPlant
-  dommy.template/PElement
-  (-elem [{:keys [number resource capacity yield]}]
-    (node [:div.power-plant
-           {:class (format "%s power-plant-%d" (resource-name resource) number)}
-           [:span.number number]
-           [:span.capacity capacity]
-           [:span.yield yield]])))
-
 (deftemplate power-plants-tpl [power-plants]
-  [:div#power-plants
-   [:h3 "Power Plants"]
-   [:div.market
-    (map pp/plant (:market power-plants))]
-   [:div.future
-    (map pp/plant (:future power-plants))]])
+  (let [plant-node #(node [:li (pp/plant %)])]
+    [:div#power-plants
+     [:h3 "Power Plants"]
+     [:ul.market
+      (map plant-node (:market power-plants))]
+     [:ul.future
+      (map plant-node (:future power-plants))]]))
 
 (deftemplate auction-tpl [game {:keys [item price bidders] :as auction}]
   [:div.auction
@@ -97,12 +113,12 @@
    [:div.auction-item item]
    [:div {:style {:clear "both"}}]])
 
-(deftemplate game-tpl [{:keys [power-plants] :as game}]
+(deftemplate game-tpl [{:keys [step phase round power-plants] :as game}]
   [:div#game
    [:div
-    [:div (str "Step: " (g/current-step game))]
-    [:div (str "Phase: " (g/current-phase game))]
-    [:div (str "Round: " (g/current-round game))] ]
+    [:div (str "Step: " step)]
+    [:div (format "Phase: %d (%s)" phase (g/phase-title phase))]
+    [:div (str "Round: " round)]]
    [:div#players
     [:h3 "Players"]
     (g/players game)]
@@ -110,7 +126,8 @@
    (when-let [auction (g/auction game)] (auction-tpl game auction))
    (power-plants-tpl power-plants)])
 
-(defn update-resource
+(defn update-resource-availability
+  "Applies 'unavailable' class to resources not available in market"
   [{:keys [market pricing]} nodes]
   (let [rfill (- (count pricing) market)]
     (doall
@@ -120,9 +137,10 @@
         nodes))))
 
 (defn update-resources
+  "Updates all resource nodes in market based on their availability"
   [resources]
   (doseq [r [:coal :oil :garbage :uranium]]
-    (update-resource
+    (update-resource-availability
       (get resources r)
       (sel (str "#resources ." (name r))))))
 
@@ -132,9 +150,10 @@
   (if-let [p (sel1 (str "#player-" (g/action-player-id game)))]
     (dom/add-class! p "has-action")))
 
-(def current-game (atom {:id 1}))
 
-(defn update-game []
+(defn update-game
+  "Updates game state from backend"
+  []
   (remote-callback :game-state
                    [(@current-game :id)]
                    (fn [{:keys [game error] :as resp}]
@@ -145,7 +164,9 @@
                          (render-game game))
                        (.error js/console (or error resp "Failed game update"))))))
 
-(defn- send-message [msg & [f]]
+(defn- send-message
+  "Sends message to back-end"
+  [msg & [f]]
   (log "Sending message" msg)
   (remote-callback :send-message
                    [(@current-game :id) msg]

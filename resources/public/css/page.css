@@ -8,6 +8,7 @@ div {
 
 .oil {
   background-color: #333;
+  color: #ccc;
 }
 .coal {
   background-color: #987654;
@@ -40,13 +41,17 @@ div {
   background-color: transparent;
 }
 
+#power-plants > ul > li {
+  float:left;
+}
+
 .power-plant {
   height: 50px;
   width: 50px;
   margin-right: 10px;
-  float:left;
   position: relative
 }
+
 .power-plant .number {
   font-size: 2em;
   position: absolute;
@@ -56,12 +61,12 @@ div {
 .power-plant .capacity {
   position: absolute;
   bottom: 5px;
-  right: 5px;
+  left: 5px;
 }
 .power-plant .yield {
   position: absolute;
   bottom: 5px;
-  left: 5px;
+  right: 5px;
 }
 
 #power-plants .market, #power-plants .future {
