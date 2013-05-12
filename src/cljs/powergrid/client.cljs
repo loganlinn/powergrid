@@ -12,6 +12,7 @@
             [shoreleave.remotes.http-rpc :refer [remote-callback]]
             [shoreleave.pubsubs.simple :as pbus]
             [shoreleave.pubsubs.protocols :as pubsub]
+            [shoreleave.pubsubs.publishable]
             [cljs.reader :refer  [read-string register-tag-parser!]]))
 
 ;(repl/connect "http://localhost:9000/repl")
@@ -30,7 +31,9 @@
 
 (set! *print-fn* log)
 
-(def current-game (atom {:id 1})) ;; TODO
+(def game-bus (pbus/bus))
+(def current-game (-> (atom {:id 1})
+                      (pubsub/publishize game-bus)))
 
 (defn- resource-name [r]
   (if (set? r)
@@ -150,14 +153,10 @@
   (if-let [p (sel1 (str "#player-" (g/action-player-id game)))]
     (dom/add-class! p "has-action")))
 
-
 (defn- handle-game-response
   [{:keys [game error] :as resp}]
   (if game
-    (do
-      (.debug js/console (pr-str game))
-      (reset! current-game game)
-      (render-game game))
+    (reset! current-game game)
     (.error js/console (or error resp "Failed game update"))))
 
 (defn update-game
@@ -214,6 +213,11 @@
                          (send-message msg)
                          (dom/set-text! (sel1 "#debug .send-message textarea") ""))
                        (.debug js/console "Invalid message")))))))
+
+;;;;;;;
+
+(pubsub/subscribe game-bus current-game #(render-game (:new %)))
+(pubsub/subscribe game-bus current-game #(log (:new %)))
 
 (render-debug-panel)
 (update-game)
