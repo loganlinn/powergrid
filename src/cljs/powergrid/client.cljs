@@ -33,8 +33,8 @@
 (set! *remote-uri* "/funkenschlag")
 
 (def game-bus (pbus/bus))
-(def current-game (-> (atom {:id 1})
-                      (pubsub/publishize game-bus)))
+(def current-game (atom {:id 1}))
+(pubsub/publishize current-game game-bus)
 
 (defn- resource-name [r]
   (if (set? r)
@@ -163,13 +163,13 @@
 (defn update-game
   "Updates game state from backend"
   []
-  (remote-callback :game-state [(@current-game :id)] handle-game-response))
+  (remote-callback :game-state [(:id @current-game)] handle-game-response))
 
 (defn send-message
   "Sends message to back-end"
-  [msg & [f]]
+  [msg]
   (log "Sending message" msg)
-  (remote-callback :send-message [(@current-game :id) msg] handle-game-response))
+  (remote-callback :send-message [(:id @current-game) msg] handle-game-response))
 
 (defn render-debug-panel []
   (let [phase-msg-types {2 :bid
