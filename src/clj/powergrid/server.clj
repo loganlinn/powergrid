@@ -1,9 +1,12 @@
 (ns powergrid.server
-  (:require [ring.adapter.jetty :refer :all]
+  (:require [org.httpkit.server :refer [run-server]]
+            [ring.middleware.reload :refer [wrap-reload]]
+            [compojure.handler :refer [site]]
             [powergrid.service])
   (:gen-class))
+
 
 (defn -main
   [& args]
   (println "Starting powergrid service...")
-  (run-jetty #'powergrid.service/app {:port 8484}))
+  (run-server (wrap-reload (site #'powergrid.service/app)) {:port 8484}))

@@ -11,7 +11,7 @@
             [clojure.browser.repl :as repl]
             [shoreleave.remotes.http-rpc :refer [remote-callback *remote-uri*]]
             [shoreleave.pubsubs.simple :as pbus]
-            [shoreleave.pubsubs.protocols :as pubsub]
+            [shoreleave.pubsubs.protocols :refer [publish subscribe publishize]]
             [shoreleave.pubsubs.publishable]
             [cljs.reader :refer  [read-string register-tag-parser!]]))
 
@@ -32,9 +32,10 @@
 (set! *print-fn* log)
 (set! *remote-uri* "/funkenschlag")
 
+(def socket-bus (atom nil))
 (def game-bus (pbus/bus))
 (def current-game (atom {:id 1}))
-(pubsub/publishize current-game game-bus)
+
 
 (defn- resource-name [r]
   (if (set? r)
@@ -169,7 +170,8 @@
   "Sends message to back-end"
   [msg]
   (log "Sending message" msg)
-  (remote-callback :send-message [(:id @current-game) msg] handle-game-response))
+  ;(remote-callback :send-message [(:id @current-game) msg] handle-game-response)
+  )
 
 (defn render-debug-panel []
   (let [phase-msg-types {2 :bid
@@ -215,8 +217,38 @@
 
 ;;;;;;;
 
-(pubsub/subscribe game-bus current-game #(render-game (:new %)))
-(pubsub/subscribe game-bus current-game #(log (:new %)))
+(defn websocket-bus
+  "Creates websocket to URI, returns bus to subscribe to"
+  [uri]
+  (let [ws (js/WebSocket. uri)
+        b (pbus/bus)]
+    (.addEventListener js/window "unload" (fn [_] (.close ws)))
+    (aset ws "onopen" (fn [] (publish b :open nil)))
+    (aset ws "onclose" (fn [] (publish b :close nil)))
+    (aset ws "onerror" (fn [e] (publish b :error e)))
+    (aset ws "onmessage" (fn [m] (publish b :message (read-string (.-data m)))))
+    (subscribe b :send (fn [data] (.send ws (pr-str data))))
+    b))
 
-(render-debug-panel)
-(update-game)
+(defn- init []
+  (let [wsb (websocket-bus "ws://localhost:8484/funkenschlag")]
+    (reset! socket-bus wsb)
+    (subscribe wsb :close (fn [] (reset! socket-bus nil)))
+
+    (subscribe wsb :open (fn [] (.debug js/console "Socket OPEN")))
+    (subscribe wsb :close (fn [] (.debug js/console "Socket CLOSE")))
+    (subscribe wsb :error (fn [e] (.error js/console "Socket ERROR" e)))
+    (subscribe wsb :message (fn [m] (.debug js/console "Socket MESSAGE" (pr-str m))))
+    )
+
+  (publishize current-game game-bus)
+  (subscribe game-bus current-game #(render-game (:new %)))
+  (subscribe game-bus current-game #(log (:new %)))
+
+  (subscribe @socket-bus :open #(publish @socket-bus :send {:hey "there"}))
+  )
+
+(init)
+(log-r @socket-bus)
+;(render-debug-panel)
+;(update-game)
