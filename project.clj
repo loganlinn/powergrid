@@ -9,6 +9,7 @@
                  [shoreleave/shoreleave-remote-ring "0.3.0"]
                  [shoreleave/shoreleave-remote "0.3.0"]
                  [shoreleave/shoreleave-pubsub "0.3.0"]
+                 [shoreleave/shoreleave-browser "0.3.0"]
                  [compojure "1.1.5"]
                  [prismatic/dommy "0.1.1"]
                  [slingshot "0.10.3"]
