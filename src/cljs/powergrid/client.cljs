@@ -37,8 +37,11 @@
     (clojure.string/join "-" (sort (map name r)))
     (name r)))
 
-(defn resource-tpl [r] ;; TODO use cond
-  [:span {:class (str "resource " (resource-name r))}])
+(def resource-el
+  {:coal [:span.resource.coal]
+   :oil  [:span.resource.oil]
+   :garbage [:span.resource.garbage]
+   :uranium [:span.resource.uranium]})
 
 (extend-type powergrid.common.player.Player
   dommy.template/PElement
@@ -46,7 +49,7 @@
     (letfn [(pp-rsrcs-tpl [pp-rsrcs]
               (node [:div.power-plant-resources
                      (mapcat
-                       #(repeat (val %) (resource-tpl (key %)))
+                       #(repeat (val %) (resource-el (key %)))
                        pp-rsrcs)]))
             (pps-tpl [player pps]
               (map #(vector :li (pp/plant %)
@@ -74,10 +77,10 @@
            [:span.yield yield]])))
 
 (deftemplate resources-tpl []
-  (let [coal-el (resource-tpl :coal)
-        oil-el  (resource-tpl :oil)
-        garbage-el (resource-tpl :garbage)
-        uranium-el (resource-tpl :uranium)]
+  (let [coal-el (resource-el :coal)
+        oil-el  (resource-el :oil)
+        garbage-el (resource-el :garbage)
+        uranium-el (resource-el :uranium)]
    [:div#resources
    [:h3 "Resources"]
    (for [cost (range 1 9)]
