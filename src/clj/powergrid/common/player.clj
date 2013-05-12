@@ -2,7 +2,7 @@
   (:require [powergrid.common.power-plants :as pp]
             [powergrid.common.resource :refer [ResourceTrader]]))
 
-(defrecord Player [id handle color money cities power-plants])
+(defrecord Player [id handle color money power-plants])
 
 (def colors #{:red :green :blue :yellow :purple :black})
 
@@ -13,7 +13,6 @@
                 :handle handle
                 :color color
                 :money 50
-                :cities #{}
                 :power-plants {}}))
 
 (defn id [player] (:id player))
@@ -26,12 +25,6 @@
   [player color]
   {:pre [(valid-color? color)]}
   (assoc player :color color))
-
-(defn network-size
-  "Returns the number of cities in the player's network"
-  [player]
-  ;; TODO REMOVE, need to ask cities for this
-  (count (:cities player)))
 
 (defn power-plants
   "Returns the power-plants owned by player"
