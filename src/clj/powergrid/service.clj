@@ -67,5 +67,5 @@
 
 (def app (-> handler
              (wrap-resource "public")
-             (wrap-rpc)
+             (wrap-rpc "/funkenschlag")
              (site)))
