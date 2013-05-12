@@ -120,7 +120,7 @@
 
 (defn phase-title
   [phase]
-  (case phase
+  (case (int phase)
     1 "Determine Player Order"
     2 "Auction Power Plants"
     3 "Buying Resources"
