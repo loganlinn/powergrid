@@ -9,7 +9,7 @@
             [dommy.template]
             [dommy.core :as dom]
             [clojure.browser.repl :as repl]
-            [shoreleave.remotes.http-rpc :refer [remote-callback]]
+            [shoreleave.remotes.http-rpc :refer [remote-callback *remote-uri*]]
             [shoreleave.pubsubs.simple :as pbus]
             [shoreleave.pubsubs.protocols :as pubsub]
             [shoreleave.pubsubs.publishable]
@@ -30,6 +30,7 @@
 (defn log-g [f game] (.log js/console (name f) (f game)))
 
 (set! *print-fn* log)
+(set! *remote-uri* "/_pg")
 
 (def game-bus (pbus/bus))
 (def current-game (-> (atom {:id 1})
