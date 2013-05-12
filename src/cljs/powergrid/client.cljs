@@ -165,13 +165,11 @@
   []
   (remote-callback :game-state [(@current-game :id)] handle-game-response))
 
-(defn- send-message
+(defn send-message
   "Sends message to back-end"
   [msg & [f]]
   (log "Sending message" msg)
   (remote-callback :send-message [(@current-game :id) msg] handle-game-response))
-
-(dom/listen! (sel1 :#update-game) :click update-game)
 
 (defn render-debug-panel []
   (let [phase-msg-types {2 :bid
