@@ -12,6 +12,7 @@
                  [shoreleave/shoreleave-pubsub "0.3.0"]
                  [shoreleave/shoreleave-browser "0.3.0"]
                  [compojure "1.1.5"]
+                 [hiccup "1.0.3"]
                  [prismatic/dommy "0.1.1"]
                  [slingshot "0.10.3"]
                  [robert/hooke "1.3.0"]

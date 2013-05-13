@@ -161,17 +161,11 @@
     (reset! current-game game)
     (.error js/console (or error resp "Failed game update"))))
 
-(defn update-game
-  "Updates game state from backend"
-  []
-  (remote-callback :game-state [(:id @current-game)] handle-game-response))
-
 (defn send-message
   "Sends message to back-end"
   [msg]
   (log "Sending message" msg)
-  ;(remote-callback :send-message [(:id @current-game) msg] handle-game-response)
-  )
+  (publish @socket-bus :send {:update-game msg}))
 
 (defn render-debug-panel []
   (let [phase-msg-types {2 :bid
@@ -193,9 +187,8 @@
                       [:input {:type "submit" :value "Send Message"}]]])]
     (if-let [prev (sel1 :#debug)] (dom/remove! prev))
     (dom/prepend! (sel1 :body) panel)
-    (dom/listen! (sel1 "#debug .update-game") :click update-game)
+    (dom/listen! (sel1 "#debug .update-game") :click #(send-message {}))
     (dom/listen! (sel1 "#debug .log-game") :click #(log @current-game))
-    (dom/listen! (sel1 "#debug .reset-game") :click #(remote-callback :reset-game [] (update-game)))
     (dom/listen! [(sel1 :body) :#debug :.msg-tmpl] :click
                  (fn [e]
                    (dom/set-text! (sel1 "#debug .send-message textarea")
@@ -228,27 +221,30 @@
     (aset ws "onerror" (fn [e] (publish b :error e)))
     (aset ws "onmessage" (fn [m] (publish b :message (read-string (.-data m)))))
     (subscribe b :send (fn [data] (.send ws (pr-str data))))
+    (aset b "_webSocket" ws)
     b))
 
 (defn- init []
-  (let [wsb (websocket-bus "ws://localhost:8484/funkenschlag")]
+  (let [game-id (dom/attr (sel1 :body) :data-game-id)
+        wsb (websocket-bus (str "ws://localhost:8484/game/" game-id "/ws"))]
     (reset! socket-bus wsb)
     (subscribe wsb :close (fn [] (reset! socket-bus nil)))
 
+    (subscribe wsb :message handle-game-response)
     (subscribe wsb :open (fn [] (.debug js/console "Socket OPEN")))
     (subscribe wsb :close (fn [] (.debug js/console "Socket CLOSE")))
     (subscribe wsb :error (fn [e] (.error js/console "Socket ERROR" e)))
     (subscribe wsb :message (fn [m] (.debug js/console "Socket MESSAGE" (pr-str m))))
     )
 
+
   (publishize current-game game-bus)
   (subscribe game-bus current-game #(render-game (:new %)))
   (subscribe game-bus current-game #(log (:new %)))
 
-  (subscribe @socket-bus :open #(publish @socket-bus :send {:hey "there"}))
+  (.setTimeout js/window #(publish @socket-bus :send {:update-game {}}) 1000)
   )
 
 (init)
 (log-r @socket-bus)
-;(render-debug-panel)
-;(update-game)
+(render-debug-panel)
