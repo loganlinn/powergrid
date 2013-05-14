@@ -54,30 +54,53 @@
       fix-auction-bidders
       g/map->Game))
 
-(defn- send-game
+;;
+
+(defn- send-msg! [channel msg] (chan/send! channel msg))
+(defn- send-error! [channel err-msg] (send-msg! channel {:error err-msg}))
+
+(defn game-msg [game-id] {:game (client-game (@games game-id))})
+
+(defn- broadcast-msg!
+  "Sends message to all channels associated with game"
+  [game-id msg]
+  (doseq [channel (chan/game-channels game-id)]
+    (send-msg! channel msg)))
+
+(defn- send-game-state!
+  "Sends game-state over individual channel"
   [channel game-id]
-  (chan/send! channel {:game (client-game (@games game-id))}))
+  (send-msg! channel (game-msg game-id)))
+
+(defn- broadcast-game-state!
+  "Sends current game state to all associated channels"
+  [game-id]
+  (broadcast-msg! game-id (game-msg game-id)))
+
+;;
 
 (defmulti handle-message (fn [msg-type msg channel game-id player-id] msg-type))
 
 (defmethod handle-message :default
   [msg-type _ channel _ player-id]
   (println "Unknown message" msg-type player-id)
-  (chan/send! channel {:error "Unknown message"}))
+  (send-error! channel "Unknown message"))
 
 (defmethod handle-message :update-game
   [_ msg channel game-id player-id]
   (try+
     (if-let [game-msg (msgs/create-message msg)]
       (swap! games update-in [game-id] c/update-game game-msg)
-      (if (not= msg {}) (chan/send! channel {:error "Invalid message"}))) ;; TODO don't use empty map to get current state
-    (send-game channel game-id)
+      (if (not= msg {}) (send-error! channel "Invalid message"))) ;; TODO don't use empty map to get current state
+    (broadcast-game-state! game-id)
     (catch ValidationError e
-      (chan/send! channel {:error (:message e)}))))
+      (send-error! channel (:message e)))))
 
 (defmethod handle-message :game-state
   [_ _ channel game-id player-id]
-  (send-game channel game-id))
+  (send-game-state! channel game-id))
+
+;;
 
 (defn ws-handler [game-id player-id req]
   (with-channel req channel
@@ -93,7 +116,7 @@
                       (doseq [[msg-type msg] data]
                         (handle-message msg-type msg channel game-id player-id))))))
 
-    (chan/broadcast game-id {:joined player-id})
+    (broadcast-msg! game-id {:joined player-id})
     (chan/setup channel game-id player-id)
 
     (if (websocket? channel)
