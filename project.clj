@@ -7,8 +7,6 @@
                  [ring "1.1.8"]
                  [http-kit "2.1.1"]
                  [ring-anti-forgery "0.2.1"]
-                 [shoreleave/shoreleave-remote-ring "0.3.0"]
-                 [shoreleave/shoreleave-remote "0.3.0"]
                  [shoreleave/shoreleave-pubsub "0.3.0"]
                  [shoreleave/shoreleave-browser "0.3.0"]
                  [compojure "1.1.5"]

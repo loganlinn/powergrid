@@ -11,8 +11,7 @@
             [hiccup.page :as page]
             [ring.util.response :refer [response redirect redirect-after-post]]
             [ring.middleware.resource :refer [wrap-resource]]
-            [slingshot.slingshot :refer [try+]]
-            [shoreleave.middleware.rpc :refer [wrap-rpc defremote]])
+            [slingshot.slingshot :refer [try+]])
   (:import [powergrid.message ValidationError]))
 
 (defn uuid [] (str (java.util.UUID/randomUUID)))
@@ -54,29 +53,6 @@
       (assoc-in [:cities :owners] (get-in game [:cities :owners]))
       fix-auction-bidders
       g/map->Game))
-
-;(defremote game-state [game-id]
-  ;(if-let [game (@games game-id)]
-    ;{:game (client-game game)}
-    ;{:error "Unknown game"}))
-
-;(defremote ^{:remote-name :send-message} recieve-message
-  ;[game-id data]
-  ;(prn game-id data)
-  ;(if-let [msg (msgs/create-message data)]
-   ;(if (contains? @games game-id)
-    ;(try+
-      ;(prn msg)
-      ;(swap! games update-in [game-id] c/update-game msg)
-      ;{:game (client-game (@games game-id))}
-      ;(catch ValidationError e
-        ;{:error (:message e)}))
-     ;{:error "Invalid game"})
-    ;{:error "Invalid message"}))
-
-;(defremote ^{:remote-name :reset-game} remote-reset-game []
-  ;(reset-game)
-  ;{:game (client-game (@games 1))})
 
 (defn- send-game
   [channel game-id]
