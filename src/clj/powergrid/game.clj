@@ -111,8 +111,9 @@
 
 (defn new-game
   "Returns new Game for vector of players"
-  [players]
+  [country players]
   (map->Game {:id (str (java.util.UUID/randomUUID))
+              :country country
               :phase 1
               :step 1
               :round 1

@@ -4,7 +4,17 @@
             [powergrid.common.auction :as a]
             [powergrid.common.cities :as c]))
 
-(defrecord Game [id phase step round turns turn-order resources power-plants cities players auction bank])
+(defrecord Game
+  [id
+   country
+   phase step round
+   turns turn-order
+   resources
+   power-plants
+   cities
+   players
+   auction
+   bank])
 
 (defn id [game] (:id game))
 (defn current-step  [game] (:step game))

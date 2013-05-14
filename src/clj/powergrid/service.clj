@@ -31,10 +31,11 @@
 (def games (atom {}))
 
 (defn reset-game []
-  (swap! games assoc "1" (-> (g/new-game [(p/new-player 1 "Logan" :red)
-                                        (p/new-player 2 "Maeby" :blue)])
-                           (assoc :id 1)
-                           c/tick)))
+  (swap! games assoc "1" (-> (g/new-game :usa
+                                         [(p/new-player 1 "Logan" :red)
+                                          (p/new-player 2 "Maeby" :blue)])
+                             (assoc :id 1)
+                             c/tick)))
 (reset-game)
 
 (defn- fix-auction-bidders
