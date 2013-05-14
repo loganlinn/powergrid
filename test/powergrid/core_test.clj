@@ -30,7 +30,8 @@
        diff)))
 
 (fact "simple round"
-  (let [game (tick (g/new-game [(p/new-player 1 "Player1" :blue)
+  (let [game (tick (g/new-game :usa
+                               [(p/new-player 1 "Player1" :blue)
                                 (p/new-player 2 "Player2" :black)
                                 (p/new-player 3 "Player3" :red)]))
         [a b c] (g/turns game)]
@@ -55,9 +56,9 @@
           (every? #{[b c]} (map :turns (take 3 (drop 3 states)))) => truthy
           (:turns (last (butlast states))) => [b])
         (fact "money deducted for power-plants"
-                  (get states 3) => (money-diff (get states 0) a 3)
-                  (get states 6) => (money-diff (get states 5) c 5)
-                  (get states 7) => (money-diff (get states 6) b 5))
+          (get states 3) => (money-diff (get states 0) a 3)
+          (get states 6) => (money-diff (get states 5) c 5)
+          (get states 7) => (money-diff (get states 6) b 5))
         (fact "received power-plants"
           (map #(p/owns-power-plant? (g/player (last states) %1) %2)
                [a b c] [3 5 4]) => [true true true])
@@ -100,9 +101,9 @@
                                (msg :phase4 :buy b :pass)])
                     states (vec (reductions update-game game msgs))]
                 ;(pprint (map #(-> (select-keys % [:turns :turn-order :phase])
-                                  ;(assoc :cities (g/map-players % (fn [p]  (c/owned-cities (g/cities %) (p/id p)))  ))
-                                  ;(assoc :players (g/map-players % (fn [p] (select-keys p [:money :power-plants])))))
-                             ;states))
+                ;(assoc :cities (g/map-players % (fn [p]  (c/owned-cities (g/cities %) (p/id p)))  ))
+                ;(assoc :players (g/map-players % (fn [p] (select-keys p [:money :power-plants])))))
+                ;states))
                 (fact "received cities"
                   (c/owner? (g/cities (get states 1)) a :philadelphia) => truthy
                   (c/owner? (g/cities (get states 1)) a :new-york) => truthy
@@ -124,13 +125,13 @@
                                    (msg :phase5 :sell a {:powered-plants {3 {:oil 2}}})])
                         states (vec (reductions update-game game msgs))]
                     ;(pprint (map #(-> (select-keys % [:turns :phase])
-                                      ;(assoc :cities (g/map-players % (fn [p]  (c/owned-cities (g/cities %) (p/id p)))  ))
-                                      ;(assoc :players (g/map-players % (fn [p] (select-keys p [:money :power-plants])))))
-                                 ;states))
+                    ;(assoc :cities (g/map-players % (fn [p]  (c/owned-cities (g/cities %) (p/id p)))  ))
+                    ;(assoc :players (g/map-players % (fn [p] (select-keys p [:money :power-plants])))))
+                    ;states))
                     ;; money
                     (fact "recieved money for powering"
                       (get states 1) => (money-diff (get states 0) b (- 10)))
-                      (get states 2) => (money-diff (get states 1) c (- 22))
-                      (get states 3) => (money-diff (get states 2) a (- 22))))
+                    (get states 2) => (money-diff (get states 1) c (- 22))
+                    (get states 3) => (money-diff (get states 2) a (- 22))))
                 ))))
         ))))
