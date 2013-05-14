@@ -84,6 +84,11 @@
 
 (defmulti handle-message (fn [msg-type msg channel game-id player-id] msg-type))
 
+(defmethod handle-message :default
+  [msg-type _ channel _ player-id]
+  (println "Unknown message" msg-type player-id)
+  (chan/send! channel {:error "Unknown message"}))
+
 (defmethod handle-message :update-game
   [_ msg channel game-id player-id]
   (try+
