@@ -12,6 +12,9 @@
 (defn send! [channel data]
   (s/send! channel (pr-str data)))
 
+(defn get-channel [game-id player-id]
+  (get-in @channels [game-id player-id]))
+
 (defn cleanup [game-id player-id]
   (when (and game-id player-id)
     (swap! channels dissoc-in [game-id player-id])))

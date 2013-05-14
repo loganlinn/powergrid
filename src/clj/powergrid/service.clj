@@ -78,6 +78,26 @@
   ;(reset-game)
   ;{:game (client-game (@games 1))})
 
+(defn- send-game
+  [channel game-id]
+  (chan/send! channel {:game (client-game (@games game-id))}))
+
+(defmulti handle-message (fn [msg-type msg channel game-id player-id] msg-type))
+
+(defmethod handle-message :update-game
+  [_ msg channel game-id player-id]
+  (try+
+    (if-let [game-msg (msgs/create-message msg)]
+      (swap! games update-in [game-id] c/update-game game-msg)
+      (if (not= msg {}) (chan/send! channel {:error "Invalid message"}))) ;; TODO don't use empty map to get current state
+    (send-game channel game-id)
+    (catch ValidationError e
+      (chan/send! channel {:error (:message e)}))))
+
+(defmethod handle-message :game-state
+  [_ _ channel game-id player-id]
+  (send-game channel game-id))
+
 (defn ws-handler [game-id player-id req]
   (with-channel req channel
     (on-close channel
@@ -88,14 +108,9 @@
     (on-receive channel
                 (fn [data]
                   (let [data (read-string data)]
-                    (when-let [update-msg (:update-game data)]
-                      (try+
-                        (if-let [game-msg (msgs/create-message update-msg)]
-                          (swap! games update-in [game-id] c/update-game game-msg)
-                          (if (not= update-msg {}) (chan/send! channel {:error "Invalid message"}))) ;; TODO don't use empty map to get current state
-                        (chan/send! channel {:game (client-game (@games game-id))})
-                        (catch ValidationError e
-                          (chan/send! channel {:error (:message e)})))))))
+                    (if (map? data)
+                      (doseq [[msg-type msg] data]
+                        (handle-message msg-type msg channel game-id player-id))))))
 
     (chan/broadcast game-id {:joined player-id})
     (chan/setup channel game-id player-id)

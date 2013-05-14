@@ -11,7 +11,7 @@
             [clojure.browser.repl :as repl]
             [shoreleave.remotes.http-rpc :refer [remote-callback *remote-uri*]]
             [shoreleave.pubsubs.simple :as pbus]
-            [shoreleave.pubsubs.protocols :refer [publish subscribe publishize]]
+            [shoreleave.pubsubs.protocols :as ps]
             [shoreleave.pubsubs.publishable]
             [cljs.reader :refer  [read-string register-tag-parser!]]))
 
@@ -163,9 +163,11 @@
 
 (defn send-message
   "Sends message to back-end"
-  [msg]
-  (log "Sending message" msg)
-  (publish @socket-bus :send {:update-game msg}))
+  ([msg-type msg]
+   (log "Sending message" msg)
+   (ps/publish @socket-bus :send {msg-type msg}))
+  ([msg-type]
+   (send-message msg-type nil)))
 
 (defn render-debug-panel []
   (let [phase-msg-types {2 :bid
@@ -187,7 +189,7 @@
                       [:input {:type "submit" :value "Send Message"}]]])]
     (if-let [prev (sel1 :#debug)] (dom/remove! prev))
     (dom/prepend! (sel1 :body) panel)
-    (dom/listen! (sel1 "#debug .update-game") :click #(send-message {}))
+    (dom/listen! (sel1 "#debug .update-game") :click #(send-message :game-state))
     (dom/listen! (sel1 "#debug .log-game") :click #(log @current-game))
     (dom/listen! [(sel1 :body) :#debug :.msg-tmpl] :click
                  (fn [e]
@@ -204,7 +206,7 @@
                    (let [msg (read-string (dom/value (sel1 "#debug .send-message .message")))]
                      (if (and (map? msg) (every? msg [:topic :type]))
                        (do
-                         (send-message msg)
+                         (send-message :update-game msg)
                          (dom/set-text! (sel1 "#debug .send-message textarea") ""))
                        (.debug js/console "Invalid message")))))))
 
@@ -216,11 +218,11 @@
   (let [ws (js/WebSocket. uri)
         b (pbus/bus)]
     (.addEventListener js/window "unload" (fn [_] (.close ws)))
-    (aset ws "onopen" (fn [] (publish b :open nil)))
-    (aset ws "onclose" (fn [] (publish b :close nil)))
-    (aset ws "onerror" (fn [e] (publish b :error e)))
-    (aset ws "onmessage" (fn [m] (publish b :message (read-string (.-data m)))))
-    (subscribe b :send (fn [data] (.send ws (pr-str data))))
+    (aset ws "onopen" (fn [] (ps/publish b :open nil)))
+    (aset ws "onclose" (fn [] (ps/publish b :close nil)))
+    (aset ws "onerror" (fn [e] (ps/publish b :error e)))
+    (aset ws "onmessage" (fn [m] (ps/publish b :message (read-string (.-data m)))))
+    (ps/subscribe b :send (fn [data] (.send ws (pr-str data))))
     (aset b "_webSocket" ws)
     b))
 
@@ -228,21 +230,20 @@
   (let [game-id (dom/attr (sel1 :body) :data-game-id)
         wsb (websocket-bus (str "ws://localhost:8484/game/" game-id "/ws"))]
     (reset! socket-bus wsb)
-    (subscribe wsb :close (fn [] (reset! socket-bus nil)))
+    (ps/subscribe wsb :close (fn [] (reset! socket-bus nil)))
 
-    (subscribe wsb :message handle-game-response)
-    (subscribe wsb :open (fn [] (.debug js/console "Socket OPEN")))
-    (subscribe wsb :close (fn [] (.debug js/console "Socket CLOSE")))
-    (subscribe wsb :error (fn [e] (.error js/console "Socket ERROR" e)))
-    (subscribe wsb :message (fn [m] (.debug js/console "Socket MESSAGE" (pr-str m))))
+    (ps/subscribe wsb :message handle-game-response)
+    (ps/subscribe wsb :open #(ps/publish wsb :send {:game-state nil}))
+
+    (ps/subscribe wsb :open (fn [] (.debug js/console "Socket OPEN")))
+    (ps/subscribe wsb :close (fn [] (.debug js/console "Socket CLOSE")))
+    (ps/subscribe wsb :error (fn [e] (.error js/console "Socket ERROR" e)))
+    (ps/subscribe wsb :message (fn [m] (.debug js/console "Socket MESSAGE" (pr-str m))))
     )
 
-
-  (publishize current-game game-bus)
-  (subscribe game-bus current-game #(render-game (:new %)))
-  (subscribe game-bus current-game #(log (:new %)))
-
-  (.setTimeout js/window #(publish @socket-bus :send {:update-game {}}) 1000)
+  (ps/publishize current-game game-bus)
+  (ps/subscribe game-bus current-game #(render-game (:new %)))
+  (ps/subscribe game-bus current-game #(log (:new %)))
   )
 
 (init)
