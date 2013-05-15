@@ -141,6 +141,10 @@
 
 ;; PLAYERS
 
+(defn available-colors
+  [game]
+  (clojure.set/difference p/colors (set (map p/color (players game)))))
+
 (defn color-taken?
   "Returns true if a player in game is using color"
   [game ^clojure.lang.Keyword color]

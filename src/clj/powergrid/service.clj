@@ -142,14 +142,16 @@
      [:div#game]
      (page/include-js "/js/cljs.js")]))
 
-(defn render-join [request]
+(defn render-join [request game]
   (page/html5
     [:head]
     [:body
      [:h1 "Join Game"]
      [:form {:method "POST" :action (:uri request)}
       [:input {:type "text" :name "handle" :placeholder "Handle"}]
-      [:select {:name "color"} (for [c p/colors :let [cn (name c)]] [:option {:value cn} cn])]
+      [:select {:name "color"} (for [c p/colors ;; TODO use g/available-colors
+                                     :let [cn (name c)]]
+                                 [:option {:value cn} cn])]
       [:input {:type "submit" :value "Join"}]]]))
 
 (defn game-url
@@ -180,15 +182,16 @@
                       (assoc :status 403))))
 
            (GET "/join" {:keys [session] :as req}
-                (response (render-join req)))
+                (if-let [game (@games game-id)]
+                  (response (render-join req game))))
            (POST "/join" {:keys [session params] :as req}
                  (if-let [handle (:handle params)] ;; TODO check if handle in use
                    (if-let [color (:color params)]
-                    (-> (redirect (game-url game-id))
-                       (assoc :session {:id (uuid)
-                                        :game-id game-id
-                                        :handle handle
-                                        :color color})))
+                     (-> (redirect (game-url game-id))
+                         (assoc :session {:id (uuid)
+                                          :game-id game-id
+                                          :handle handle
+                                          :color color})))
                    (redirect (:uri req)))))
 
   (ANY "/logout" [] (-> (redirect "/")

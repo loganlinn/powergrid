@@ -15,6 +15,9 @@
 (defn player-channel [game-id player-id]
   (get-in @channels [game-id player-id]))
 
+(defn player-ids-online [game-id]
+  (keys (get @channels game-id)))
+
 (defn game-channels [game-id]
   (vals (get @channels game-id)))
 
