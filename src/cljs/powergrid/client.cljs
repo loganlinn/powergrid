@@ -13,7 +13,7 @@
             [shoreleave.pubsubs.simple :as pbus]
             [shoreleave.pubsubs.protocols :as ps]
             [shoreleave.pubsubs.publishable]
-            [cljs.reader :refer  [read-string register-tag-parser!]]))
+            [cljs.reader :refer [read-string register-tag-parser!]]))
 
 ;(repl/connect "http://localhost:9000/repl")
 
