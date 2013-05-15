@@ -140,7 +140,8 @@
     [:body {:data-game-id game-id}
      [:h1 "Funkenschlag"]
      [:div#game]
-     (page/include-js "/js/cljs.js")]))
+     (page/include-js "/js/raphael-min.js"
+                      "/js/cljs.js") ]))
 
 (defn render-join [request game]
   (page/html5
