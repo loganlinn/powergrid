@@ -2,20 +2,19 @@
   (:require [powergrid.common.power-plants :as pp]
             [powergrid.common.resource :refer [ResourceTrader]]))
 
-(defrecord Player [id handle color money power-plants])
+(defrecord Player [handle color money power-plants])
 
 (def colors #{:red :green :blue :yellow :purple :black})
 
 (defn new-player
   "Returns new player"
-  [id handle color]
-  (map->Player {:id id
-                :handle handle
+  [handle color]
+  (map->Player {:handle handle
                 :color color
                 :money 50
                 :power-plants {}}))
 
-(defn id [player] (:id player))
+(defn id [player] (:color player))
 (defn handle [player] (:handle player))
 (defn color [player] (:color player))
 

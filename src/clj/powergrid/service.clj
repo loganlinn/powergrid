@@ -31,8 +31,8 @@
 
 (defn reset-game []
   (swap! games assoc "1" (-> (g/new-game :usa
-                                         [(p/new-player 1 "Logan" :red)
-                                          (p/new-player 2 "Maeby" :blue)])
+                                         [(p/new-player "Logan" :red)
+                                          (p/new-player "Maeby" :blue)])
                              (assoc :id 1)
                              c/tick)))
 (reset-game)
@@ -100,6 +100,10 @@
   [_ _ channel game-id player-id]
   (send-game-state! channel game-id))
 
+(defmethod handle-message :whos-online
+  [_ _ channel game-id player-id]
+  )
+
 ;;
 
 (defn ws-handler [game-id player-id req]
@@ -117,7 +121,8 @@
                         (handle-message msg-type msg channel game-id player-id))))))
 
     (broadcast-msg! game-id {:join player-id})
-    (chan/setup channel game-id player-id)))
+    (chan/setup channel game-id player-id)
+    ))
 
 (defn render-game [game-id request]
   (page/html5

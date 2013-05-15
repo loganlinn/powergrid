@@ -56,7 +56,7 @@
 (defn render-game [game]
   (dom/replace! (sel1 :#game) (templates/game-tpl game))
   (update-resources (:resources game))
-  (if-let [p (sel1 (str "#player-" (g/action-player-id game)))]
+  (if-let [p (sel1 (str ".player-" (name (g/action-player-id game))))]
     (dom/add-class! p "has-action")))
 
 (defn- handle-game-response

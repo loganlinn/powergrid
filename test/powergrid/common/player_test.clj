@@ -6,7 +6,7 @@
 
 (defn mock-player
   [& args]
-  (let [p (new-player 1 "Player1" :red)]
+  (let [p (new-player "Player1" :red)]
     (if (seq args)
       (apply assoc p args)
       p)))

@@ -35,8 +35,7 @@
                             (pp-rsrcs-tpl (p/power-plant-resources player %)))
                    pps))]
       (node [:div.player
-             {:class (str "player-" (name color))
-              :id (str "player-" id)}
+             {:class (str "player-" (name color))}
              [:span.handle handle]
              [:div.player-icon]
              [:div.money (str "$" money)]
