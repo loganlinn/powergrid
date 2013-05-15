@@ -34,6 +34,10 @@
 (def socket-bus (atom nil))
 (def game-bus (pbus/bus))
 (def current-game (atom {:id 1}))
+(def current-player-id (atom nil))
+
+(defn current-player []
+  (g/player @current-game @current-player-id))
 
 (defn update-resource-availability
   "Applies 'unavailable' class to resources not available in market"
@@ -56,14 +60,28 @@
 (defn render-game [game]
   (dom/replace! (sel1 :#game) (templates/game-tpl game))
   (update-resources (:resources game))
-  (if-let [p (sel1 (str ".player-" (name (g/action-player-id game))))]
-    (dom/add-class! p "has-action")))
+  (if-let [n (sel1 (str ".player-" (name (g/action-player-id game))))]
+    (dom/add-class! n "has-action"))
+  (if-let [n (sel1 (str ".player-" (name (p/id (current-player)))))]
+   (dom/add-class! n "current-player")))
 
-(defn- handle-game-response
-  [{:keys [game error] :as resp}]
-  (if game
-    (reset! current-game game)
-    (.error js/console (or error resp "Failed game update"))))
+(defmulti handle-message (fn [msg-type msg] msg-type))
+
+(defmethod handle-message :default
+  [msg-type msg]
+  (.error js/console "Unknown msg: " (pr-str {msg-type msg})))
+
+(defmethod handle-message :game
+  [_ msg]
+  (reset! current-game msg))
+
+(defmethod handle-message :player-id
+  [_ msg]
+  (reset! current-player-id msg))
+
+(defn handle-messages
+  [msgs]
+  (doseq [[msg-type msg] msgs] (handle-message msg-type msg)))
 
 (defn send-message
   "Sends message to back-end"
@@ -136,7 +154,7 @@
     (reset! socket-bus wsb)
     (ps/subscribe wsb :close (fn [] (reset! socket-bus nil)))
 
-    (ps/subscribe wsb :message handle-game-response)
+    (ps/subscribe wsb :message handle-messages)
     (ps/subscribe wsb :open #(ps/publish wsb :send {:game-state nil}))
 
     (ps/subscribe wsb :open (fn [] (.debug js/console "Socket OPEN")))

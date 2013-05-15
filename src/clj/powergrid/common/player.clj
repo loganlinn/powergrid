@@ -14,7 +14,7 @@
                 :money 50
                 :power-plants {}}))
 
-(defn id [player] (:color player))
+(defn id [player] (keyword (:color player)))
 (defn handle [player] (:handle player))
 (defn color [player] (:color player))
 

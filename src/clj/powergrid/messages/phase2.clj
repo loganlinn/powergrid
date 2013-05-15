@@ -52,6 +52,7 @@
         (not bid) "Invalid bid"
         (not plant) "Unknown plant"
         (not (g/power-plant-buyable? game plant)) "Cannot purchase that power-plant"
+
         (not= player-id
               (if auction (a/current-bidder auction) (g/current-turn game))) "Not your bid"
         (not (p/can-afford? (g/player game player-id) bid)) "Insufficient funds"

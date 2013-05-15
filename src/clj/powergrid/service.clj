@@ -106,7 +106,12 @@
 
 ;;
 
-(defn ws-handler [game-id player-id req]
+(defn player-msg
+  "Returns msg after associating player-id from session"
+  [msg session]
+  (assoc msg :player-id (p/id session)))
+
+(defn ws-handler [game-id player-id {:keys [session] :as req}]
   (with-channel req channel
     (on-close channel
               (fn [status]
@@ -118,8 +123,11 @@
                   (let [data (read-string data)]
                     (if (map? data)
                       (doseq [[msg-type msg] data]
-                        (handle-message msg-type msg channel game-id player-id))))))
+                        (handle-message msg-type
+                                        (player-msg msg session)
+                                        channel game-id player-id))))))
 
+    (send-msg! channel {:player-id player-id})
     (broadcast-msg! game-id {:join player-id})
     (chan/setup channel game-id player-id)
     ))
@@ -141,6 +149,7 @@
      [:h1 "Join Game"]
      [:form {:method "POST" :action (:uri request)}
       [:input {:type "text" :name "handle" :placeholder "Handle"}]
+      [:select {:name "color"} (for [c p/colors :let [cn (name c)]] [:option {:value cn} cn])]
       [:input {:type "submit" :value "Join"}]]]))
 
 (defn game-url
@@ -166,7 +175,7 @@
 
            (GET "/ws" {:keys [session] :as req}
                 (if (and (= game-id (:game-id session)) (:id session))
-                  (ws-handler game-id (:id session) req)
+                  (ws-handler game-id (p/id session) req)
                   (-> (response "")
                       (assoc :status 403))))
 
@@ -174,10 +183,12 @@
                 (response (render-join req)))
            (POST "/join" {:keys [session params] :as req}
                  (if-let [handle (:handle params)] ;; TODO check if handle in use
-                   (-> (redirect (game-url game-id))
+                   (if-let [color (:color params)]
+                    (-> (redirect (game-url game-id))
                        (assoc :session {:id (uuid)
                                         :game-id game-id
-                                        :handle handle}))
+                                        :handle handle
+                                        :color color})))
                    (redirect (:uri req)))))
 
   (ANY "/logout" [] (-> (redirect "/")
