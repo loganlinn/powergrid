@@ -106,8 +106,8 @@
   (with-channel req channel
     (on-close channel
               (fn [status]
-                (prn "Closing channel" status)
-                (chan/cleanup game-id player-id)))
+                (chan/cleanup game-id player-id)
+                (broadcast-msg! game-id {:leave player-id})))
 
     (on-receive channel
                 (fn [data]
@@ -116,13 +116,8 @@
                       (doseq [[msg-type msg] data]
                         (handle-message msg-type msg channel game-id player-id))))))
 
-    (broadcast-msg! game-id {:joined player-id})
-    (chan/setup channel game-id player-id)
-
-    (if (websocket? channel)
-      (prn "WebSocket channel" channel)
-      (prn "HTTP channel"))
-    ))
+    (broadcast-msg! game-id {:join player-id})
+    (chan/setup channel game-id player-id)))
 
 (defn render-game [game-id request]
   (page/html5
