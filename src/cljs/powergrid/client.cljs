@@ -6,7 +6,7 @@
             [powergrid.common.auction :as a]
             [powergrid.common.resource :as r]
             [powergrid.common.power-plants :as pp]
-            [powergrid.client.templates :as templates]
+            [powergrid.templates :as templates]
             [dommy.template]
             [dommy.core :as dom]
             [clojure.browser.repl :as repl]

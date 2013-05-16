@@ -1,4 +1,4 @@
-(ns powergrid.client.templates
+(ns powergrid.templates
   (:use-macros [dommy.macros :only [sel sel1 node deftemplate]])
   (:require [powergrid.common.game :as g]
             [powergrid.common.player :as p]
