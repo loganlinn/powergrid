@@ -102,7 +102,7 @@
 
 (defmethod handle-message :whos-online
   [_ _ channel game-id player-id]
-  )
+  (send-msg! channel {:online (chan/player-ids-online game-id)}))
 
 ;;
 
