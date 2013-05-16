@@ -164,7 +164,6 @@
 
   (ps/publishize current-game game-bus)
   (ps/subscribe game-bus current-game #(render-game (:new %)))
-  (ps/subscribe game-bus current-game #(log (:new %)))
   )
 
 (init)
