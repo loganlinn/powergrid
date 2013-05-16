@@ -97,6 +97,9 @@ div {
 .player-blue .player-icon {
   background-color: blue;
 }
+.player.current-player {
+  border: 1px solid grey;
+}
 .player.has-action {
   border: 1px solid red;
 }
