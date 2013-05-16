@@ -5,7 +5,7 @@
             [powergrid.auction :as a]
             [powergrid.common.resource :as r]
             [powergrid.cities :as c]
-            [powergrid.cities.usa :as usa]
+            [powergrid.common.country.usa :as usa]
             [powergrid.util :refer [separate queue]]
             [robert.hooke :as hook]))
 

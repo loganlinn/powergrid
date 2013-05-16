@@ -1,4 +1,4 @@
-(ns powergrid.cities.usa)
+(ns powergrid.common.country.usa)
 
 (def cities
   #{:atlanta
