@@ -86,7 +86,6 @@
 (defn send-message
   "Sends message to back-end"
   ([msg-type msg]
-   (log "Sending message" msg)
    (ps/publish @socket-bus :send {msg-type msg}))
   ([msg-type]
    (send-message msg-type nil)))
@@ -151,17 +150,17 @@
 (defn- init []
   (let [game-id (dom/attr (sel1 :body) :data-game-id)
         wsb (websocket-bus (str "ws://localhost:8484/game/" game-id "/ws"))]
-    (reset! socket-bus wsb)
-    (ps/subscribe wsb :close (fn [] (reset! socket-bus nil)))
-
-    (ps/subscribe wsb :message handle-messages)
-    (ps/subscribe wsb :open #(ps/publish wsb :send {:game-state nil}))
-
     (ps/subscribe wsb :open (fn [] (.debug js/console "Socket OPEN")))
     (ps/subscribe wsb :close (fn [] (.debug js/console "Socket CLOSE")))
     (ps/subscribe wsb :error (fn [e] (.error js/console "Socket ERROR" e)))
     (ps/subscribe wsb :message (fn [m] (.debug js/console "Socket MESSAGE" (pr-str m))))
-    )
+    (ps/subscribe wsb :send (fn [m] (.debug js/console "Socket SEND" (pr-str m))))
+
+    (ps/subscribe wsb :close (fn [] (reset! socket-bus nil)))
+
+    (ps/subscribe wsb :message handle-messages)
+    (ps/subscribe wsb :open #(ps/publish wsb :send {:game-state nil}))
+    (reset! socket-bus wsb))
 
   (ps/publishize current-game game-bus)
   (ps/subscribe game-bus current-game #(render-game (:new %)))
