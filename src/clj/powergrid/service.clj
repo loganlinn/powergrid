@@ -47,7 +47,7 @@
 (defn client-game
   "Returns representation of game state that's sent to clients"
   [game]
-  (-> (select-keys game [:id :step :phase :round :players :resources :turns :auction])
+  (-> (select-keys game [:id :step :phase :round :players :resources :turns :turn-order :auction])
       (assoc-in [:power-plants :market] (map pp/id (get-in game [:power-plants :market])))
       (assoc-in [:power-plants :future] (map pp/id (get-in game [:power-plants :future])))
       (assoc-in [:cities :owners] (get-in game [:cities :owners]))
