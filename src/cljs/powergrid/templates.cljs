@@ -120,5 +120,6 @@
             (sort-by (comp (turn-order-map game) p/id) (g/players game)))]
    (resources-tpl)
    (when-let [auction (g/auction game)] (auction-tpl game auction))
-   (power-plants-tpl power-plants)])
+   (power-plants-tpl power-plants)
+   [:div#game-map]])
 

@@ -7,6 +7,8 @@
             [powergrid.common.resource :as r]
             [powergrid.common.power-plants :as pp]
             [powergrid.templates :as templates]
+            [powergrid.country :as country]
+            [powergrid.country.usa]
             [dommy.template]
             [dommy.core :as dom]
             [clojure.browser.repl :as repl]
@@ -59,11 +61,13 @@
 
 (defn render-game [game]
   (dom/replace! (sel1 :#game) (templates/game-tpl game))
+  ;; TODO Make the following react to render-game
   (update-resources (:resources game))
   (if-let [n (sel1 (str ".player-" (name (g/action-player-id game))))]
     (dom/add-class! n "has-action"))
   (if-let [n (sel1 (str ".player-" (name (p/id (current-player)))))]
-   (dom/add-class! n "current-player")))
+   (dom/add-class! n "current-player"))
+  (country/render-country "game-map"))
 
 (defmulti handle-message (fn [msg-type msg] msg-type))
 
