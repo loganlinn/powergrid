@@ -103,6 +103,11 @@
 
 ;; GAME / LAYOUT
 
+(defn- turn-order-map
+  "Returns maping from player-id to index in player order"
+  [game]
+  (into {} (map-indexed #(vector %2 %1) (:turn-order game))))
+
 (deftemplate game-tpl [{:keys [step phase round power-plants] :as game}]
   [:div#game
    [:div
@@ -111,7 +116,8 @@
     [:div (str "Round: " round)]]
    [:div#players
     [:h3 "Players"]
-    (mapcat (juxt identity (partial player-cities-tpl game)) (g/players game))]
+    (mapcat (juxt identity (partial player-cities-tpl game))
+            (sort-by (comp (turn-order-map game) p/id) (g/players game)))]
    (resources-tpl)
    (when-let [auction (g/auction game)] (auction-tpl game auction))
    (power-plants-tpl power-plants)])
