@@ -69,7 +69,7 @@
 
 (defmethod handle-message :default
   [msg-type msg]
-  (.error js/console "Unknown msg: " (pr-str {msg-type msg})))
+  (.debug js/console "Unknown msg: " (pr-str {msg-type msg})))
 
 (defmethod handle-message :game
   [_ msg]
