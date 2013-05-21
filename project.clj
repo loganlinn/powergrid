@@ -5,6 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.clojure/tools.nrepl "0.2.3"]
+                 [com.taoensso/timbre "1.6.0"]
                  [ring "1.1.8"]
                  [http-kit "2.1.1"]
                  [ring-anti-forgery "0.2.1"]
