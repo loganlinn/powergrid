@@ -5,6 +5,7 @@
             [powergrid.common.player :as p]
             [powergrid.common.power-plants :as pp]
             [powergrid.service.channel :as chan]
+            [powergrid.util.log :refer [debug]]
             [org.httpkit.server :refer :all]
             [compojure.core :refer [defroutes context GET POST ANY]]
             [hiccup.core :refer [html]]
@@ -28,7 +29,9 @@
 ;;
 
 (def games (atom {}))
+(def game-message-history (atom {}))
 
+(add-watch game-message-history :debug (fn [k r old-val new-val] (debug :hist new-val)))
 (defn reset-game []
   (swap! games assoc "1" (-> (g/new-game :usa
                                          [(p/new-player "Logan" :red)
@@ -82,8 +85,11 @@
   [_ msg channel game-id player-id]
   (try+
     (if-let [game-msg (msgs/create-message msg)]
-      (swap! games update-in [game-id] c/update-game game-msg)
-      (if (not= msg {}) (chan/send-error! channel "Invalid message"))) ;; TODO don't use empty map to get current state
+      (do
+        (swap! games update-in [game-id] c/update-game game-msg)
+        (swap! game-message-history update-in [game-id] (fnil conj []) game-msg))
+      (if (not= msg {})
+        (chan/send-error! channel "Invalid message"))) ;; TODO don't use empty map to get current state
     (broadcast-game-state! game-id)
     (catch ValidationError e
       (chan/send-error! channel (:message e)))))
