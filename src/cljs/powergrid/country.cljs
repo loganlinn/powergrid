@@ -1,14 +1,6 @@
 (ns powergrid.country
   (:require [powergrid.country.usa]))
 
-(defn clj->js
-  "makes a javascript map from a clojure one"
-  [cljmap]
-  (let [out (js-obj)]
-    (doseq [[k v] cljmap]
-      (aset out (name k) v) cljmap)
-    out))
-
 (defn render-country
   [container-id]
   (let [r (js/Raphael. container-id 1000 1000)
