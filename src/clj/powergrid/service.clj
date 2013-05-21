@@ -56,26 +56,18 @@
 
 ;;
 
-(defn- send-msg! [channel msg] (chan/send! channel msg))
-(defn- send-error! [channel err-msg] (send-msg! channel {:error err-msg}))
-
-(defn game-msg [game-id] {:game (client-game (@games game-id))})
-
-(defn- broadcast-msg!
-  "Sends message to all channels associated with game"
-  [game-id msg]
-  (doseq [channel (chan/game-channels game-id)]
-    (send-msg! channel msg)))
+(defn game-msg [game-id]
+  {:game (client-game (@games game-id))})
 
 (defn- send-game-state!
   "Sends game-state over individual channel"
   [channel game-id]
-  (send-msg! channel (game-msg game-id)))
+  (chan/send-msg! channel (game-msg game-id)))
 
 (defn- broadcast-game-state!
   "Sends current game state to all associated channels"
   [game-id]
-  (broadcast-msg! game-id (game-msg game-id)))
+  (chan/broadcast-msg! game-id (game-msg game-id)))
 
 ;;
 
@@ -84,17 +76,17 @@
 (defmethod handle-message :default
   [msg-type _ channel _ player-id]
   (println "Unknown message" msg-type player-id)
-  (send-error! channel "Unknown message"))
+  (chan/send-error! channel "Unknown message"))
 
 (defmethod handle-message :update-game
   [_ msg channel game-id player-id]
   (try+
     (if-let [game-msg (msgs/create-message msg)]
       (swap! games update-in [game-id] c/update-game game-msg)
-      (if (not= msg {}) (send-error! channel "Invalid message"))) ;; TODO don't use empty map to get current state
+      (if (not= msg {}) (chan/send-error! channel "Invalid message"))) ;; TODO don't use empty map to get current state
     (broadcast-game-state! game-id)
     (catch ValidationError e
-      (send-error! channel (:message e)))))
+      (chan/send-error! channel (:message e)))))
 
 (defmethod handle-message :game-state
   [_ _ channel game-id player-id]
@@ -102,7 +94,7 @@
 
 (defmethod handle-message :whos-online
   [_ _ channel game-id player-id]
-  (send-msg! channel {:online (chan/player-ids-online game-id)}))
+  (chan/send-msg! channel {:online (chan/player-ids-online game-id)}))
 
 ;;
 
@@ -116,7 +108,7 @@
     (on-close channel
               (fn [status]
                 (chan/cleanup game-id player-id)
-                (broadcast-msg! game-id {:leave player-id})))
+                (chan/broadcast-msg! game-id {:leave player-id})))
 
     (on-receive channel
                 (fn [data]
@@ -127,8 +119,8 @@
                                         (player-msg msg session)
                                         channel game-id player-id))))))
 
-    (send-msg! channel {:player-id player-id})
-    (broadcast-msg! game-id {:join player-id})
+    (chan/send-msg! channel {:player-id player-id})
+    (chan/broadcast-msg! game-id {:join player-id})
     (chan/setup channel game-id player-id)
     ))
 
