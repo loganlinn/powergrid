@@ -6,8 +6,9 @@
             [powergrid.common.auction :as a]
             [powergrid.common.resource :as r]
             [powergrid.common.power-plants :as pp]
+            [powergrid.app]
             [powergrid.templates :as templates]
-            [powergrid.util.log :refer [debug info]]
+            [powergrid.util.log :refer [debug info error spy]]
             [powergrid.country :as country]
             [powergrid.country.usa]
             [dommy.template]
@@ -32,11 +33,10 @@
 
 (def socket-bus (atom nil))
 (def game-bus (pbus/bus))
-(def current-game (atom {:id 1}))
-(def current-player-id (atom nil))
+(def app (atom (powergrid.app/create-app)))
 
-(defn current-player []
-  (g/player @current-game @current-player-id))
+(defn game-state [] (:game @app))
+(defn player-state [] (g/player (game-state) (:player-id @app)))
 
 (defn update-resource-availability
   "Applies 'unavailable' class to resources not available in market"
@@ -62,27 +62,9 @@
   (update-resources (:resources game))
   (if-let [n (sel1 (str ".player-" (name (g/action-player-id game))))]
     (dom/add-class! n "has-action"))
-  (if-let [n (sel1 (str ".player-" (name (p/id (current-player)))))]
+  (if-let [n (sel1 (str ".player-" (name (p/id (player-state)))))]
    (dom/add-class! n "current-player"))
   (country/render-country "game-map"))
-
-(defmulti handle-message (fn [msg-type msg] msg-type))
-
-(defmethod handle-message :default
-  [msg-type msg]
-  (.debug js/console "Unknown msg: " (pr-str {msg-type msg})))
-
-(defmethod handle-message :game
-  [_ msg]
-  (reset! current-game msg))
-
-(defmethod handle-message :player-id
-  [_ msg]
-  (reset! current-player-id msg))
-
-(defn handle-messages
-  [msgs]
-  (doseq [[msg-type msg] msgs] (handle-message msg-type msg)))
 
 (defn send-message
   "Sends message to back-end"
@@ -112,15 +94,15 @@
     (if-let [prev (sel1 :#debug)] (dom/remove! prev))
     (dom/prepend! (sel1 :body) panel)
     (dom/listen! (sel1 "#debug .update-game") :click #(send-message :game-state))
-    (dom/listen! (sel1 "#debug .log-game") :click #(debug @current-game))
+    (dom/listen! (sel1 "#debug .log-game") :click #(debug @app))
     (dom/listen! [(sel1 :body) :#debug :.msg-tmpl] :click
                  (fn [e]
                    (dom/set-text! (sel1 "#debug .send-message textarea")
                                   (-> (dom/value (.-target e))
-                                      (clojure.string/replace #"%player-id%" (str (g/action-player-id @current-game)))
-                                      (clojure.string/replace #"%current-phase%" (str (g/current-phase @current-game)))
-                                      (clojure.string/replace #"%phase-msg-type%" (str (phase-msg-types (g/current-phase @current-game))))
-                                      (clojure.string/replace #"%plant-id%" (str (first (g/power-plants @current-game))))
+                                      (clojure.string/replace #"%player-id%" (str (g/action-player-id (game-state))))
+                                      (clojure.string/replace #"%current-phase%" (str (g/current-phase (game-state))))
+                                      (clojure.string/replace #"%phase-msg-type%" (str (phase-msg-types (g/current-phase (game-state)))))
+                                      (clojure.string/replace #"%plant-id%" (str (first (g/power-plants (game-state)))))
                                       ))))
     (dom/listen! (sel1 "#debug form.send-message") :submit
                  (fn [e]
@@ -148,25 +130,35 @@
     (aset b "_webSocket" ws)
     b))
 
+(defn subscribe-events
+  [bus & events]
+  (doseq [[event f] (partition 2 events)]
+    (ps/subscribe bus event f)))
+
 (defn- init []
   (debug "Initializing client")
   (let [game-id (dom/attr (sel1 :body) :data-game-id)
         wsb (websocket-bus (str "ws://localhost:8484/game/" game-id "/ws"))]
-    (ps/subscribe wsb :open (fn [] (.debug js/console "Socket OPEN")))
-    (ps/subscribe wsb :close (fn [] (.debug js/console "Socket CLOSE")))
-    (ps/subscribe wsb :error (fn [e] (.error js/console "Socket ERROR" e)))
-    (ps/subscribe wsb :message (fn [m] (.debug js/console "Socket MESSAGE" (pr-str m))))
-    (ps/subscribe wsb :send (fn [m] (.debug js/console "Socket SEND" (pr-str m))))
+    ;; Bind loggers
+    (subscribe-events wsb
+                      :open (fn [] (debug "Socket OPEN"))
+                      :close (fn [] (debug "Socket CLOSE"))
+                      :error (fn [e] (error "Socket ERROR" e))
+                      :message (fn [m] (debug "Socket MESSAGE" (pr-str m)))
+                      :send (fn [m] (debug "Socket SEND" (pr-str m))))
 
-    (ps/subscribe wsb :close (fn [] (reset! socket-bus nil)))
-
-    (ps/subscribe wsb :message handle-messages)
+    ;; Bind services
     (ps/subscribe wsb :open #(ps/publish wsb :send {:game-state nil}))
+    (ps/subscribe wsb :close (fn [] (reset! socket-bus nil)))
+    (ps/subscribe wsb :message #(swap! app powergrid.app/handle-messages %))
+
     (reset! socket-bus wsb))
 
-  (ps/publishize current-game game-bus)
-  (ps/subscribe game-bus current-game #(render-game (:new %)))
-  )
+  ;; Render
+  (ps/publishize app game-bus)
+  (ps/subscribe game-bus app (fn [{{game :game} :new {game-prev :game} :old :as update}]
+                               (if (and game (not= game game-prev))
+                                 (render-game game)))))
 
 (init)
 (render-debug-panel)
