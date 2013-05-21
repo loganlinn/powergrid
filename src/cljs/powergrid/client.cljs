@@ -7,6 +7,7 @@
             [powergrid.common.resource :as r]
             [powergrid.common.power-plants :as pp]
             [powergrid.templates :as templates]
+            [powergrid.util.log :refer [debug info]]
             [powergrid.country :as country]
             [powergrid.country.usa]
             [dommy.template]
@@ -27,11 +28,7 @@
 (register-tag-parser! "powergrid.common.resource.Resource" r/map->Resource)
 (register-tag-parser! "powergrid.common.power_plants.PowerPlant" pp/map->PowerPlant)
 
-(defn log [& args] (doseq [x args] (.log js/console (pr-str x))))
-(defn log-r [& args] (doseq [x args] (.log js/console x)))
-(defn log-g [f game] (.log js/console (name f) (f game)))
-
-(set! *print-fn* log)
+(set! *print-fn* info)
 
 (def socket-bus (atom nil))
 (def game-bus (pbus/bus))
@@ -115,7 +112,7 @@
     (if-let [prev (sel1 :#debug)] (dom/remove! prev))
     (dom/prepend! (sel1 :body) panel)
     (dom/listen! (sel1 "#debug .update-game") :click #(send-message :game-state))
-    (dom/listen! (sel1 "#debug .log-game") :click #(log @current-game))
+    (dom/listen! (sel1 "#debug .log-game") :click #(debug @current-game))
     (dom/listen! [(sel1 :body) :#debug :.msg-tmpl] :click
                  (fn [e]
                    (dom/set-text! (sel1 "#debug .send-message textarea")
@@ -152,6 +149,7 @@
     b))
 
 (defn- init []
+  (debug "Initializing client")
   (let [game-id (dom/attr (sel1 :body) :data-game-id)
         wsb (websocket-bus (str "ws://localhost:8484/game/" game-id "/ws"))]
     (ps/subscribe wsb :open (fn [] (.debug js/console "Socket OPEN")))
@@ -171,5 +169,4 @@
   )
 
 (init)
-(log-r @socket-bus)
 (render-debug-panel)
