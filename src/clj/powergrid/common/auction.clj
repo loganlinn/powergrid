@@ -1,4 +1,4 @@
-(ns powergrid.common.auction)
+(ns ^:shared powergrid.common.auction)
 
 (defrecord Auction [item player-id bidders price min-increment])
 

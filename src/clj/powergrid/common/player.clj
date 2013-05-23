@@ -1,4 +1,4 @@
-(ns powergrid.common.player
+(ns ^:shared powergrid.common.player
   (:require [powergrid.common.power-plants :as pp]
             [powergrid.common.resource :refer [ResourceTrader]]))
 

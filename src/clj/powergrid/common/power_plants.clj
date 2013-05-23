@@ -1,4 +1,4 @@
-(ns powergrid.common.power-plants)
+(ns ^:shared powergrid.common.power-plants)
 
 (defrecord PowerPlant [number resource capacity yield])
 

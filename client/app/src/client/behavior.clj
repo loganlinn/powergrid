@@ -1,6 +1,11 @@
 (ns ^:shared client.behavior
-    (:require [clojure.string :as string]
-              [io.pedestal.app.messages :as msg]))
+  (:require [clojure.string :as string]
+            [powergrid.common.game :as g]
+            [powergrid.common.power-plants :as pp]
+            [powergrid.common.player :as p]
+            [powergrid.common.auction :as a]
+            [powergrid.common.cities :as c]
+            [io.pedestal.app.messages :as msg]))
 
 ;; While creating new behavior, write tests to confirm that it is
 ;; correct. For examples of various kinds of tests, see
@@ -10,10 +15,16 @@
 ;; app starts up. This message will include a :value key with the
 ;; value of the :init key from your dataflow.
 
-(defn example-transform [transform-state message]
-  (condp = (msg/type message)
-    msg/init (:value message)
-    transform-state))
+(defn game-transform [state message]
+  (:value message))
+
+(defn player-id-transform [state message]
+  (:value message))
+
+;(defn example-transform [transform-state message]
+  ;(condp = (msg/type message)
+    ;msg/init (:value message)
+    ;transform-state))
 
 (def example-app
   {:transform {:example-transform {:init "Hello World!" :fn example-transform}}})

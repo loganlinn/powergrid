@@ -1,4 +1,4 @@
-(ns powergrid.common.cities)
+(ns ^:shared powergrid.common.cities)
 
 (defrecord Cities [owners connections])
 
