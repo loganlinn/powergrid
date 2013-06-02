@@ -1,6 +1,6 @@
 (ns powergrid.core
-  (:require [powergrid.game :refer :all]
-            [powergrid.util :refer [separate]]
+  (:require [powergrid.util :refer [separate]]
+            [powergrid.game :as g]
             [powergrid.common.player :as p]
             [powergrid.common.resource :as r]
             [powergrid.message :as msg]
@@ -9,15 +9,15 @@
 (defn game-over?
   "Returns true if conditions have been to end the game, otherwise false"
   [game]
-  (>= (max-network-size game)
-      (num-cities-trigger-end (num-players game))))
+  (>= (g/max-network-size game)
+      (g/num-cities-trigger-end (g/num-players game))))
 
 (defn resupply-rate
   "Returns a map of resources to amounts to resupply for game"
   [game]
-  (r/resupply-rate (num-players game)
-                   (current-step game)
-                   (resource-supply game)))
+  (r/resupply-rate (g/num-players game)
+                   (g/current-step game)
+                   (g/resource-supply game)))
 
 (defn resupply-resources
   "Returns game after resupplying the resource market according to rules."
@@ -27,38 +27,40 @@
    (reduce
      (fn [game [resource amt]]
        (-> game
-           (update-resource resource r/send-resource :supply amt)
-           (update-resource resource r/accept-resource :market amt)))
+           (g/update-resource resource r/send-resource :supply amt)
+           (g/update-resource resource r/accept-resource :market amt)))
      game
      rate)))
 
-(defmulti prep-phase current-phase)
-(defmulti post-phase current-phase)
-(defmulti prep-step current-step)
-(defmulti post-step current-step)
-(defmulti phase-complete? current-phase)
-(defmulti step-complete? current-step)
+(defmulti prep-phase g/current-phase)
+(defmulti post-phase g/current-phase)
+(defmulti prep-step g/current-step)
+(defmulti post-step g/current-step)
+(defmulti phase-complete? g/current-phase)
+(defmulti step-complete? g/current-step)
 
 (defmethod prep-phase :default [game] game)
 (defmethod post-phase :default [game] game)
 (defmethod prep-step :default [game] game)
 (defmethod post-step :default [game] game)
-(defmethod phase-complete? :default [game] (not (turns-remain? game)))
+
+(defmethod phase-complete? :default [game] (not (g/turns-remain? game)))
+
 (defmethod step-complete? :default [game] false)
 
 (defmethod prep-phase 1 [{:keys [round] :as game}]
   (cond-> game
-    (not= round 1) update-turn-order
-    true clear-turns))
+    (not= round 1) g/update-turn-order
+    true g/clear-turns))
 
 (defmethod prep-phase 2 [game]
-  (-> game (reset-turns)))
+  (g/reset-turns game))
 
 (defn post-phase-2-step-3-card
   [game]
   (-> game
-      (remove-power-plant (step-3-card) :future)
-      (drop-lowest-power-plant)))
+      (g/remove-power-plant (g/step-3-card) :future)
+      (g/drop-lowest-power-plant)))
 
 (defmethod post-phase 2 [{:keys [step-3-card?] :as game}]
   (cond-> game
@@ -66,37 +68,37 @@
 
 (defmethod prep-phase 3 [{:keys [round] :as game}]
   (cond-> game
-    (= round 1) (update-turn-order)
-    true (reset-turns)))
+    (= round 1) (g/update-turn-order)
+    true (g/reset-turns)))
 
 (defmethod prep-phase 4 [game]
-  (-> game (reset-turns)))
+  (-> game (g/reset-turns)))
 
 (defmethod prep-phase 5 [game]
-  (-> game (reset-turns)))
+  (-> game (g/reset-turns)))
 
 (defmethod post-phase 5 [game]
   (-> game
-      (drop-lowest-power-plant)
-      (draw-power-plant)
+      (g/drop-lowest-power-plant)
+      (g/draw-power-plant)
       (resupply-resources)
-      (inc-round)))
+      (g/inc-round)))
 
 (defmethod prep-step 2 [game]
   (-> game
-      (drop-lowest-power-plant)
-      (draw-power-plant)))
+      (g/drop-lowest-power-plant)
+      (g/draw-power-plant)))
 
 (defmethod prep-step 3 [game]
   (-> game
       (dissoc :step-3-card?)
-      (update-power-plant-order)))
+      (g/update-power-plant-order)))
 
 (defmethod step-complete? 1 [game]
   (and (= (:phase game) 4)
-       (not (turns-remain? game))
-       (>= (max-network-size game)
-           (num-cities-trigger-step-2 (num-players game)))))
+       (not (g/turns-remain? game))
+       (>= (g/max-network-size game)
+           (g/num-cities-trigger-step-2 (g/num-players game)))))
 
 (defmethod step-complete? 2 [game]
   (:step-3-card? game false))
@@ -105,11 +107,11 @@
 
 (defn next-phase
   [game]
-  (-> game post-phase inc-phase prep-phase))
+  (-> game post-phase g/inc-phase prep-phase))
 
 (defn next-step
   [game]
-  (-> game post-step inc-step prep-step))
+  (-> game post-step g/inc-step prep-step))
 
 (defn tick-phase
   [game]
