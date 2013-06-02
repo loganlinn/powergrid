@@ -22,7 +22,7 @@
   (validate [_ _] nil)
   (update-game [_ game] game))
 
-(defn pass? [msg] (pass msg))
+(defn is-pass? [msg] (pass msg))
 
 (defn- expected-topic
   [game]
@@ -55,7 +55,7 @@
   "Returns game after applying message. Throws exception if message fails validation"
   [game msg]
   {:pre [(satisfies? Message msg)]}
-  (if (and (passable? msg game) (pass? msg))
+  (if (and (passable? msg game) (is-pass? msg))
     (handle-turns (update-pass msg game) msg)
     (if-let [err (or (base-validate msg game) (validate msg game))]
       (do (println "ValidationError:" err)
