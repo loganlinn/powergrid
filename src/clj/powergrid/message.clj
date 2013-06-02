@@ -32,33 +32,31 @@
     4 :phase4
     5 :phase5))
 
-(defn base-validate
+(defn validate-msg
   "Default set of validation rules. Returns error message if fails validation,
   otherwise nil"
   [{:keys [player-id] :as msg} game]
-  (cond
-    (not (g/player game player-id)) "Invalid player"
-    (or (nil? (expected-topic game))
-        (not= (topic msg) (expected-topic game))) "Unexpected message (phase)"
-    (and (turn? msg) (not= player-id (g/current-turn game))) (str "Not your turn" player-id)))
-
-(defrecord ValidationError [message])
-
-(defn- handle-turns
-  "Returns game after updating turns as needed"
-  [game msg]
-  (if (turn? msg)
-    (g/advance-turns game)
-    game))
+  (if (is-pass? msg)
+    (when-not (passable? msg game)
+      "Cannot pass")
+    (cond
+      ;; general msg validation
+      (not (g/player game player-id)) "Invalid player"
+      (or (nil? (expected-topic game))
+          (not= (topic msg) (expected-topic game))) "Unexpected message (phase)"
+      (and (turn? msg) (not= player-id (g/current-turn game))) (str "Not your turn" player-id)
+      ;; msg specific validation
+      :else (validate msg game))))
 
 (defn apply-message
-  "Returns game after applying message. Throws exception if message fails validation"
+  "Attempts to advance game state with msg. Returns [game err] tuple."
   [game msg]
   {:pre [(satisfies? Message msg)]}
-  (if (and (passable? msg game) (is-pass? msg))
-    (handle-turns (update-pass msg game) msg)
-    (if-let [err (or (base-validate msg game) (validate msg game))]
-      (do (println "ValidationError:" err)
-          (throw+ (->ValidationError err)))
-      (handle-turns (update-game msg game) msg))))
+  (if-let [err (validate-msg msg game)]
+    [game err]
+    [(cond->> game
+       (is-pass? msg) (update-pass msg)
+       (not (is-pass? msg)) (update-game msg)
+       (turn? msg) g/advance-turns)
+     nil]))
 

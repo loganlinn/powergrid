@@ -11,9 +11,7 @@
             [hiccup.core :refer [html]]
             [hiccup.page :as page]
             [ring.util.response :refer [response redirect redirect-after-post]]
-            [ring.middleware.resource :refer [wrap-resource]]
-            [slingshot.slingshot :refer [try+]])
-  (:import [powergrid.message ValidationError]))
+            [ring.middleware.resource :refer [wrap-resource]]))
 
 (defn uuid [] (str (java.util.UUID/randomUUID)))
 
@@ -81,18 +79,22 @@
   (println "Unknown message" msg-type player-id)
   (chan/send-error! channel "Unknown message"))
 
+(defn record-msg
+  [game msg]
+  (if-let [id (:id game)]
+    (swap! game-message-history update-in [id] (fnil conj []) msg)))
+
 (defmethod handle-message :update-game
   [_ msg channel game-id player-id]
-  (try+
-    (if-let [game-msg (msgs/create-message msg)]
-      (do
-        (swap! games update-in [game-id] c/update-game game-msg)
-        (swap! game-message-history update-in [game-id] (fnil conj []) game-msg))
-      (if (not= msg {})
-        (chan/send-error! channel "Invalid message"))) ;; TODO don't use empty map to get current state
-    (broadcast-game-state! game-id)
-    (catch ValidationError e
-      (chan/send-error! channel (:message e)))))
+  (if-let [game-msg (msgs/create-message msg)]
+    (swap! games update-in [game-id]
+           c/update-game
+           game-msg
+           :error #(chan/send-error! channel %3)
+           :success #(record-msg %2 %3))
+    (if (not= msg {})
+      (chan/send-error! channel "Invalid message"))) ;; TODO don't use empty map to get current state
+  (broadcast-game-state! game-id))
 
 (defmethod handle-message :game-state
   [_ _ channel game-id player-id]

@@ -4,9 +4,7 @@
             [powergrid.common.player :as p]
             [powergrid.common.resource :as r]
             [powergrid.message :as msg]
-            [powergrid.messages.factory :as msgs]
-            [slingshot.slingshot :refer [try+ throw+]])
-  (:import [powergrid.message ValidationError]))
+            [powergrid.messages.factory :as msgs]))
 
 (defn game-over?
   "Returns true if conditions have been to end the game, otherwise false"
@@ -126,8 +124,12 @@
   (-> game tick-step tick-phase))
 
 (defn update-game
-  [game msg]
-  (try+
-    (tick (msg/apply-message game msg))
-    (catch ValidationError e
-      (throw+ e))))
+  [game msg & {success-fn :success error-fn :error}]
+  (let [[game* err] (msg/apply-message game msg)]
+    (if err
+      (do
+        (if error-fn (error-fn game msg err))
+        game)
+      (let [game** (tick game*)]
+        (if success-fn (success-fn game game** msg))
+        game**))))
