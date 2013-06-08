@@ -46,6 +46,12 @@
 
 (defmethod phase-complete? :default [game] (not (g/turns-remain? game)))
 
+(defmethod phase-complete? :phase2 [game]
+  (let [max-plants (g/max-power-plants game)]
+    (and (not (g/turns-remain? game))
+         (not-any? #(> (count (p/power-plants %)) max-plants)
+                   (g/players game)))))
+
 (defmethod step-complete? :default [game] false)
 
 (defmethod prep-phase 1 [{:keys [round] :as game}]
