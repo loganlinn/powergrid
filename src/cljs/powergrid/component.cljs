@@ -17,13 +17,13 @@
 
 (defn listen!
   [node event handler]
-  (dommy/listen! node (name event) handler))
+  (dommy/listen! node (str event) handler))
 
 (defn trigger!
   ([node event]
    (trigger! node event nil))
   ([node event data]
-   (powergrid.dom-events/trigger node (name event) data)))
+   (powergrid.dom-events/trigger node (str event) data)))
 
 (defn- bind-component-events [component]
   (let [mount (:mount component)
@@ -34,7 +34,6 @@
                    :else (flatten [mount selector])))]
     (doseq [[selector event-map] (event-subscriptions component)
             [event handler] event-map]
-      (debug :listen selector (target selector) (name event) handler)
       (listen! (target selector) event handler)
       )))
 
