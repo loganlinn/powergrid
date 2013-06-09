@@ -11,6 +11,7 @@
             [powergrid.util.log :refer [debug info error spy]]
             [powergrid.country :as country]
             [powergrid.country.usa]
+            [powergrid.components.player-bar]
             [dommy.template]
             [dommy.core :as dom]
             [clojure.browser.repl :as repl]
@@ -163,3 +164,5 @@
 
 (init)
 (render-debug-panel)
+(debug (powergrid.components.player-bar/->PlayerBar nil))
+(dom/append! (sel1 :body) (powergrid.components.player-bar/->PlayerBar nil))
