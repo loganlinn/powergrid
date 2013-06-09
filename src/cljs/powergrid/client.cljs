@@ -138,7 +138,8 @@
 (defn- init []
   (debug "Initializing client")
   (let [game-id (dom/attr (sel1 :body) :data-game-id)
-        wsb (websocket-bus (str "ws://localhost:8484/game/" game-id "/ws"))]
+        base-url (.-host (.-location js/window))
+        wsb (websocket-bus (str "ws://" base-url "/game/" game-id "/ws"))]
     ;; Bind loggers
     (subscribe-events wsb
                       :open (fn [] (debug "Socket OPEN"))
