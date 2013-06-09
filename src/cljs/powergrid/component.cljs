@@ -1,27 +1,42 @@
 (ns powergrid.component
   (:use-macros [dommy.macros :only [node sel sel1]])
   (:require [powergrid.protocols :as p]
-            [powergrid.dom]
+            [powergrid.dom-events]
+            [powergrid.util.log :refer [debug info error spy]]
+            [dommy.core :as dommy]
             [dommy.template]))
+
+(defrecord Mixin [protocol methods])
 
 (defprotocol PComponent
   (event-subscriptions [this])
   (render [this data]))
 
-(defn base-event-subscriptions [componenet mount]
-  {:self {:render (fn [] (render component))}})
+(defn select [component selector]
+  (dommy/sel [(:mount component) selector]))
 
-(defn bind-component-events [component]
+(defn listen!
+  [node event handler]
+  (dommy/listen! node (name event) handler))
+
+(defn trigger!
+  ([node event]
+   (trigger! node event nil))
+  ([node event data]
+   (powergrid.dom-events/trigger node (name event) data)))
+
+(defn- bind-component-events [component]
   (let [mount (:mount component)
         target (fn [selector]
                  (condp = selector
-                   :anywhere document
+                   :anywhere js/document
                    :self mount
                    :else (flatten [mount selector])))]
-    (doseq [[selector event-map] (merge base-event-subscriptions
-                                        (event-subscriptions component))
+    (doseq [[selector event-map] (event-subscriptions component)
             [event handler] event-map]
-      (dommy/listen! (target selector) event handler))))
+      (debug :listen selector (target selector) (name event) handler)
+      (listen! (target selector) event handler)
+      )))
 
 (defn mount-component
   ([component-ctor mount data]
@@ -29,11 +44,8 @@
      (render component data)
      (bind-component-events component)
      nil))
-  ([parent-mount component-ctor mount]
+  ([component-ctor mount]
    (mount-component component-ctor mount {})))
-
-(defn select [component selector]
-  (dommy/sel [(:mount component) selector]))
 
 (comment
   (mount-component map->PlayerBar (sel1 :#player-bar)))

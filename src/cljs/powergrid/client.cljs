@@ -11,7 +11,9 @@
             [powergrid.util.log :refer [debug info error spy]]
             [powergrid.country :as country]
             [powergrid.country.usa]
+            [powergrid.component]
             [powergrid.components.player-bar]
+            [powergrid.dom-events]
             [dommy.template]
             [dommy.core :as dom]
             [clojure.browser.repl :as repl]
@@ -164,5 +166,12 @@
 
 (init)
 (render-debug-panel)
-(debug (powergrid.components.player-bar/->PlayerBar nil))
-(dom/append! (sel1 :body) (powergrid.components.player-bar/->PlayerBar nil))
+(let [mount (node [:div#player-bar])
+      player-bar (powergrid.component/mount-component
+                   powergrid.components.player-bar/->PlayerBar
+                   mount
+                   {:id 123})
+      ]
+  (dom/append! (sel1 :body) mount)
+  (.setTimeout js/window #(powergrid.component/trigger! js/document :action-to-player) 1000)
+  )
