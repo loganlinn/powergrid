@@ -7,9 +7,10 @@
                             :or {bubbles true cancelable true}}]
   (js/CustomEvent.
     (name event-name)
-    (clj->js {"bubbles" true
-              "cancelable" true
-              "detail" (js-obj)})))
+    (doto (js-obj)
+      (aset "bubbles" bubbles)
+      (aset "cancelable" cancelable)
+      (aset "detail" event-data))))
 
 (defn trigger
   ([node event-name]
