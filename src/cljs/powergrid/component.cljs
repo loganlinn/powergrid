@@ -51,7 +51,7 @@
    (let [component (component-ctor mount)]
      (render component data)
      (bind-events component)
-     nil))
+     mount))
   ([component-ctor mount]
    (mount-component! component-ctor mount {})))
 

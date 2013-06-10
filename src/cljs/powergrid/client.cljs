@@ -69,13 +69,12 @@
     (dom/add-class! n "current-player"))
   ;(country/render-country "game-map")
 
-  (let [player-bar-mount (node [:div#player-bar])]
-    (component/mount-component!
-      powergrid.components.player-bar/->PlayerBar
-      player-bar-mount
-      {:game game})
-    (dom/append! (sel1 :body) player-bar-mount))
-  )
+  (let [player-bar (component/mount-component!
+                     powergrid.components.player-bar/->PlayerBar
+                     (node [:div#player-bar])
+                     {:game game})]
+
+    (dom/append! (sel1 :body) player-bar)))
 
 (defn send-message
   "Sends message to back-end"
