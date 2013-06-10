@@ -11,7 +11,7 @@
             [powergrid.util.log :refer [debug info error spy]]
             [powergrid.country :as country]
             [powergrid.country.usa]
-            [powergrid.component]
+            [powergrid.component :as component]
             [powergrid.components.player-bar]
             [powergrid.dom-events]
             [dommy.template]
@@ -66,8 +66,16 @@
   (if-let [n (sel1 (str ".player-" (name (g/action-player-id game))))]
     (dom/add-class! n "has-action"))
   (if-let [n (sel1 (str ".player-" (name (p/id (player-state)))))]
-   (dom/add-class! n "current-player"))
-  (country/render-country "game-map"))
+    (dom/add-class! n "current-player"))
+  ;(country/render-country "game-map")
+
+  (let [player-bar-mount (node [:div#player-bar])]
+    (component/mount-component!
+      powergrid.components.player-bar/->PlayerBar
+      player-bar-mount
+      {:game game})
+    (dom/append! (sel1 :body) player-bar-mount))
+  )
 
 (defn send-message
   "Sends message to back-end"
@@ -167,12 +175,3 @@
 
 (init)
 (render-debug-panel)
-(let [mount (node [:div#player-bar])
-      player-bar (powergrid.component/mount-component!
-                   powergrid.components.player-bar/->PlayerBar
-                   mount
-                   {:id 123})]
-  (dom/append! (sel1 :body) mount)
-  (.setTimeout js/window #(powergrid.component/trigger! js/document :action-to-player {"LOL" 2}) 500)
-  (.setTimeout js/window #(powergrid.component/trigger! js/document :action-to-player {"LOL" 3}) 550)
-  )

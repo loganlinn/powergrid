@@ -1,8 +1,9 @@
 (ns powergrid.components.player-bar
-  (:use-macros [powergrid.macros :only [defcomponent]]
-               [dommy.macros :only [node]])
+  (:use-macros [dommy.macros :only [node deftemplate]])
   (:require [powergrid.component :as component]
             [powergrid.util.log :refer [debug info error spy]]
+            [powergrid.common.game :as g]
+            [powergrid.common.player :as p]
             [dommy.core :as dommy]
             [dommy.template]))
 
@@ -18,17 +19,23 @@
   (let [player-nodes (component/select player-bar :player-icon)]))
 
 (defn action-to-player [player-bar event event-data]
+  (debug [player-bar event event-data])
+  ;(debug (component/select player-bar :.row))
   (debug "action-to-player!!"))
+
+(defn- turn-order-map
+  "Returns maping from player-id to index in player order"
+  [game]
+  (into {} (map-indexed #(vector %2 %1) (:turn-order game))))
+
+(deftemplate player-bar-tpl [game]
+  (sort-by (comp (turn-order-map game) p/id)
+           (g/players game)))
 
 (defrecord PlayerBar [mount]
   component/PComponent
   (event-subscriptions [_]
     {:anywhere {:set-turn-order set-turn-order
-                :action-to-player action-to-player}
-     :self {:test #(do (.debug js/console %) (debug "got test event!" (.-detail %)))}
-     :.row {"click" #(.debug js/console %)}})
-  (render [this data]
-    (dommy/append! mount (node [:div {:id (:id data)} "Player Bar!"
-                                [:div.row "Row 1"]
-                                [:div.row "Row 2"]
-                                ]))))
+                :action-to-player action-to-player}})
+  (render [this {:keys [game]}]
+    (dommy/append! mount (player-bar-tpl game))))
