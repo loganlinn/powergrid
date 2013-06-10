@@ -25,11 +25,16 @@
   ([node event data]
    (powergrid.dom-events/trigger node (str event) data)))
 
-(defn event-handler [component handler]
+(defn event-handler
+  "Returns event handler with closure on component to invoke the
+  component's callbacks with"
+  [component handler]
   (fn [evt]
     (handler component evt (.-detail evt))))
 
-(defn- bind-component-events [component]
+(defn- bind-events
+  "Binds events component's subscribed events to specified handlers"
+  [component]
   (let [mount (:mount component)
         sel-target (fn [selector]
                      (condp = selector
@@ -45,7 +50,7 @@
   ([component-ctor mount data]
    (let [component (component-ctor mount)]
      (render component data)
-     (bind-component-events component)
+     (bind-events component)
      nil))
   ([component-ctor mount]
    (mount-component! component-ctor mount {})))
