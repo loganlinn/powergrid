@@ -170,8 +170,9 @@
       player-bar (powergrid.component/mount-component
                    powergrid.components.player-bar/->PlayerBar
                    mount
-                   {:id 123})
-      ]
+                   {:id 123})]
   (dom/append! (sel1 :body) mount)
   (.setTimeout js/window #(powergrid.component/trigger! js/document :action-to-player) 1000)
+  (.setTimeout js/window #(powergrid.component/trigger! (sel1 :#player-bar) :test {:blah 2}) 1000)
+  (.setTimeout js/window #(powergrid.component/trigger! (sel1 [:#player-bar :.row]) :click {:blah 3}) 1000)
   )

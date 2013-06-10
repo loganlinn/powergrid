@@ -27,14 +27,15 @@
 
 (defn- bind-component-events [component]
   (let [mount (:mount component)
-        target (fn [selector]
-                 (condp = selector
-                   :anywhere js/document
-                   :self mount
-                   :else (flatten [mount selector])))]
+        sel-target (fn [selector]
+                     (condp = selector
+                       :anywhere js/document
+                       :self mount
+                       (flatten [mount selector])))]
     (doseq [[selector event-map] (event-subscriptions component)
             [event handler] event-map]
-      (listen! (target selector) event handler)
+      (debug (sel-target selector))
+      (listen! (sel-target selector) event handler)
       )))
 
 (defn mount-component

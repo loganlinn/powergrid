@@ -24,6 +24,11 @@
   component/PComponent
   (event-subscriptions [_]
     {:anywhere {:set-turn-order set-turn-order
-                :action-to-player action-to-player}})
+                :action-to-player action-to-player}
+     :self {:test #(do (.debug js/console %) (debug "got test event!" (.-detail %)))}
+     :.row {"click" #(.debug js/console %)}})
   (render [this data]
-    (dommy/append! mount (node [:div {:id (:id data)} "FOOD!"]))))
+    (dommy/append! mount (node [:div {:id (:id data)} "Player Bar!"
+                                [:div.row "Row 1"]
+                                [:div.row "Row 2"]
+                                ]))))
