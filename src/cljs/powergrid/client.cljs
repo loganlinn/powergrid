@@ -125,10 +125,11 @@
   (let [ws (js/WebSocket. uri)
         b (pbus/bus)]
     (.addEventListener js/window "unload" (fn [_] (.close ws)))
-    (aset ws "onopen" (fn [] (ps/publish b :open nil)))
-    (aset ws "onclose" (fn [] (ps/publish b :close nil)))
-    (aset ws "onerror" (fn [e] (ps/publish b :error e)))
-    (aset ws "onmessage" (fn [m] (ps/publish b :message (read-string (.-data m)))))
+    (doto ws
+      (aset "onopen" (fn [] (ps/publish b :open nil)))
+      (aset "onclose" (fn [] (ps/publish b :close nil)))
+      (aset "onerror" (fn [e] (ps/publish b :error e)))
+      (aset "onmessage" (fn [m] (ps/publish b :message (read-string (.-data m))))))
     (ps/subscribe b :send (fn [data] (.send ws (pr-str data))))
     (aset b "_webSocket" ws)
     b))
