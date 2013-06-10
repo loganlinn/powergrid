@@ -41,14 +41,14 @@
       (listen! (sel-target selector) event (event-handler component handler))
       )))
 
-(defn mount-component
+(defn mount-component!
   ([component-ctor mount data]
    (let [component (component-ctor mount)]
      (render component data)
      (bind-component-events component)
      nil))
   ([component-ctor mount]
-   (mount-component component-ctor mount {})))
+   (mount-component! component-ctor mount {})))
 
 (comment
-  (mount-component ->PlayerBar (sel1 :#player-bar) {:id 123}))
+  (mount-component! ->PlayerBar (sel1 :#player-bar) {:id 123}))
