@@ -16,4 +16,4 @@
   ([node event-name]
    (trigger node event-name nil))
   ([node event-name event-data]
-   (.dispatchEvent (spy node) (spy (create-event event-name event-data)))))
+   (.dispatchEvent (spy node) (create-event event-name event-data))))

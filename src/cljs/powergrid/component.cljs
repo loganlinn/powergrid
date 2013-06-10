@@ -12,8 +12,8 @@
   (event-subscriptions [this])
   (render [this data]))
 
-(defn select [component selector]
-  (dommy/sel [(:mount component) selector]))
+(defn select [component & sel]
+  (dommy/sel (cons (:mount component) sel)))
 
 (defn listen!
   [node event handler]
@@ -25,6 +25,10 @@
   ([node event data]
    (powergrid.dom-events/trigger node (str event) data)))
 
+(defn event-handler [component handler]
+  (fn [evt]
+    (handler component evt (.-detail evt))))
+
 (defn- bind-component-events [component]
   (let [mount (:mount component)
         sel-target (fn [selector]
@@ -34,8 +38,7 @@
                        (flatten [mount selector])))]
     (doseq [[selector event-map] (event-subscriptions component)
             [event handler] event-map]
-      (debug (sel-target selector))
-      (listen! (sel-target selector) event handler)
+      (listen! (sel-target selector) event (event-handler component handler))
       )))
 
 (defn mount-component
@@ -48,4 +51,4 @@
    (mount-component component-ctor mount {})))
 
 (comment
-  (mount-component map->PlayerBar (sel1 :#player-bar)))
+  (mount-component ->PlayerBar (sel1 :#player-bar) {:id 123}))
