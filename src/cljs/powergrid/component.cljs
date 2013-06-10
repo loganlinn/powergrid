@@ -12,8 +12,8 @@
   (event-subscriptions [this])
   (render [this data]))
 
-(defn select [component & sel]
-  (dommy/sel (cons (:mount component) sel)))
+(defn select [component & selectors]
+  (sel (:mount component) selectors))
 
 (defn listen!
   [node event handler]
