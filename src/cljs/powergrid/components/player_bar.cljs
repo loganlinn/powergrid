@@ -1,5 +1,5 @@
 (ns powergrid.components.player-bar
-  (:use-macros [dommy.macros :only [node deftemplate]])
+  (:use-macros [dommy.macros :only [sel sel1 node deftemplate]])
   (:require [powergrid.component :as component]
             [powergrid.util.log :refer [debug info error spy]]
             [powergrid.common.game :as g]
@@ -18,10 +18,14 @@
 (defn set-turn-order [player-bar event {:keys [player-ids]}]
   (let [player-nodes (component/select player-bar :player-icon)]))
 
-(defn action-to-player [player-bar event event-data]
-  (debug [player-bar event event-data])
-  ;(debug (component/select player-bar :.row))
-  (debug "action-to-player!!"))
+(defn select-player
+  [player-bar id]
+  (component/select player-bar (str ".player-" (name id))))
+
+(defn action-to-player [player-bar event {:keys [player-id] :as event-data}]
+  (debug "action-to-player" [player-bar event event-data])
+  (if-let [n (first (select-player player-bar player-id))]
+    (dommy/add-class! n "has-action")))
 
 (defn- turn-order-map
   "Returns maping from player-id to index in player order"

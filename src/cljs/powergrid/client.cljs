@@ -73,8 +73,8 @@
                      powergrid.components.player-bar/->PlayerBar
                      (node [:div#player-bar])
                      {:game game})]
-
-    (dom/append! (sel1 :body) player-bar)))
+    (dom/append! (sel1 :body) player-bar)
+    (component/trigger! player-bar :action-to-player {:player-id (g/action-player-id game)})))
 
 (defn send-message
   "Sends message to back-end"
