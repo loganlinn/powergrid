@@ -47,6 +47,7 @@
       )))
 
 (defn mount-component!
+  "Creates and initializes component, returns mount"
   ([component-ctor mount data]
    (let [component (component-ctor mount)]
      (render component data)
