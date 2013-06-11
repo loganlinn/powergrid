@@ -5,8 +5,6 @@
             [powergrid.util.log :refer [debug info error spy]]
             [dommy.core :as dommy]))
 
-(def document-components (atom {}))
-
 (defn gen-id [] (str "id_" (.getTime (js/Date.))))
 
 (defn get-or-gen-id! [node]
@@ -50,12 +48,8 @@
 (defn unmount-component!
   "Unmounts component mounted at mount-node, if any.
   Returns mount-node"
-  [mount-node]
-  ; TODO unbind event-subscriptions that we can
-  (if-let [id (dommy/attr mount-node :id)]
-    (if-let [component (get @document-components id)]
-      (unmount! component mount-node)
-      (swap! document-components dissoc id)))
+  [component mount-node]
+  (unmount! component mount-node)
   mount-node)
 
 (defn mount-component!
@@ -64,9 +58,7 @@
   Returns mount-node."
   [component mount-node]
   (unmount-component! mount-node)
-  (let [mount-id (get-or-gen-id! mount-node)
-        component (assoc component ::mount mount-node)]
+  (let [component (assoc component ::mount mount-node)]
     (bind-events component)
-    (mount! component mount-node)
-    (swap! document-components assoc mount-id component))
+    (mount! component mount-node))
   mount-node)
