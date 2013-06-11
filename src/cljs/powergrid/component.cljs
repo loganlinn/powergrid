@@ -19,11 +19,16 @@
   (mount! [this mount-node])
   (unmount! [this mount-node]))
 
+(defn mount-node
+  "Returns node that the component was mounted to"
+  [component]
+  (:mount component))
+
 (defn sel [component & selectors]
-  (dommy.macros/sel (:mount component) selectors))
+  (dommy.macros/sel (mount-node component) selectors))
 
 (defn sel1 [component & selectors]
-  (dommy.macros/sel1 (:mount component) selectors))
+  (dommy.macros/sel1 (mount-node component) selectors))
 
 (defn listen!
   [node event handler]
@@ -62,5 +67,5 @@
   [component mount-node]
   (let [component (assoc component :mount mount-node)]
     (bind-events component)
-    (mount! component mount-node))
-  mount-node)
+    (mount! component mount-node)
+    mount-node))
