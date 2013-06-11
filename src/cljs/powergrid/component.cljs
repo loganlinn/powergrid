@@ -3,17 +3,26 @@
   (:require [powergrid.protocols :as p]
             [powergrid.dom-events]
             [powergrid.util.log :refer [debug info error spy]]
-            [dommy.core :as dommy]
-            [dommy.template]))
+            [dommy.core :as dommy]))
 
-(defrecord Mixin [protocol methods])
+(def document-components (atom {}))
+
+(defn gen-id [] (str "id_" (.getTime (js/Date.))))
+
+(defn get-or-gen-id! [node]
+  (if-let [id (dommy/attr node :id)]
+    id
+    (let [id (gen-id)]
+      (dommy/set-attr! node :id id)
+      id)))
 
 (defprotocol PComponent
   (event-subscriptions [this])
-  (render [this data]))
+  (mount! [this mount-node])
+  (unmount! [this mount-node]))
 
 (defn select [component & selectors]
-  (sel (:mount component) selectors))
+  (sel (::mount component) selectors))
 
 (defn listen!
   [node event handler]
@@ -28,26 +37,36 @@
 (defn- bind-events
   "Binds events component's subscribed events to specified handlers"
   [component]
-  (let [mount (:mount component)
+  (let [mount-node (::mount component)
         sel-target (fn [selector]
                      (condp = selector
                        :anywhere js/document
-                       :self mount
-                       (flatten [mount selector])))]
+                       :self mount-node
+                       (flatten [mount-node selector])))]
     (doseq [[selector event-map] (event-subscriptions component)
             [event handler] event-map]
-      (listen! (sel-target selector) event #(handler component % (.-detail %)))
-      )))
+      (listen! (sel-target selector) event #(handler component % (.-detail %))))))
+
+(defn unmount-component!
+  "Unmounts component mounted at mount-node, if any.
+  Returns mount-node"
+  [mount-node]
+  ; TODO unbind event-subscriptions that we can
+  (if-let [id (dommy/attr mount-node :id)]
+    (if-let [component (get @document-components id)]
+      (unmount! component mount-node)
+      (swap! document-components dissoc id)))
+  mount-node)
 
 (defn mount-component!
-  "Creates and initializes component, returns mount"
-  ([component-ctor mount data]
-   (let [component (component-ctor mount)]
-     (render component data)
-     (bind-events component)
-     mount))
-  ([component-ctor mount]
-   (mount-component! component-ctor mount {})))
-
-(comment
-  (mount-component! ->PlayerBar (sel1 :#player-bar) {:id 123}))
+  "Mounts component at mount-node.
+  Unmounts any existing component at mount-node before-hand.
+  Returns mount-node."
+  [component mount-node]
+  (unmount-component! mount-node)
+  (let [mount-id (get-or-gen-id! mount-node)
+        component (assoc component ::mount mount-node)]
+    (bind-events component)
+    (mount! component mount-node)
+    (swap! document-components assoc mount-id component))
+  mount-node)

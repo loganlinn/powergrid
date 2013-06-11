@@ -1,11 +1,10 @@
 (ns powergrid.components.player-bar
-  (:use-macros [dommy.macros :only [sel sel1 node deftemplate]])
+  (:use-macros [dommy.macros :only [node deftemplate]])
   (:require [powergrid.component :as component]
             [powergrid.util.log :refer [debug info error spy]]
             [powergrid.common.game :as g]
             [powergrid.common.player :as p]
-            [dommy.core :as dommy]
-            [dommy.template]))
+            [dommy.core :as dommy]))
 
 (def ^:private attributes
   {:player-icon :.player-icon
@@ -18,13 +17,13 @@
 (defn set-turn-order [player-bar event {:keys [player-ids]}]
   (let [player-nodes (component/select player-bar :player-icon)]))
 
-(defn select-player
-  [player-bar id]
-  (component/select player-bar (str ".player-" (name id))))
+(defn select-player-icon
+  [player-bar player-id]
+  (first (component/select player-bar (str ".player-" (name player-id)))))
 
 (defn action-to-player [player-bar event {:keys [player-id] :as event-data}]
   (debug "action-to-player" [player-bar event event-data])
-  (if-let [n (first (select-player player-bar player-id))]
+  (if-let [n (select-player-icon player-bar player-id)]
     (dommy/add-class! n "has-action")))
 
 (defn- turn-order-map
@@ -36,10 +35,12 @@
   (sort-by (comp (turn-order-map game) p/id)
            (g/players game)))
 
-(defrecord PlayerBar [mount]
+(defrecord PlayerBar [game]
   component/PComponent
   (event-subscriptions [_]
     {:anywhere {:set-turn-order set-turn-order
                 :action-to-player action-to-player}})
-  (render [this {:keys [game]}]
-    (dommy/append! mount (player-bar-tpl game))))
+  (mount! [this mount-node]
+    (dommy/append! mount-node (player-bar-tpl game)))
+  (unmount! [this mount-node]
+    (dommy/set-html! mount-node "")))

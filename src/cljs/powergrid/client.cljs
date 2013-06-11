@@ -70,9 +70,8 @@
   ;(country/render-country "game-map")
 
   (let [player-bar (component/mount-component!
-                     powergrid.components.player-bar/->PlayerBar
-                     (node [:div#player-bar])
-                     {:game game})]
+                     (powergrid.components.player-bar/->PlayerBar game)
+                     (node [:div#player-bar]))]
     (dom/append! (sel1 :body) player-bar)
     (component/trigger! player-bar :action-to-player {:player-id (g/action-player-id game)})))
 
