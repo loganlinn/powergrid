@@ -10,16 +10,9 @@
   {:player-icon :.player-icon
    :action-to-array :.action-to-arrow})
 
-;(defn- player-icons [player-bar]
-  ;(component/select player-bar :.player-icon)
-  ;)
-
-(defn set-turn-order [player-bar event {:keys [player-ids]}]
-  (let [player-nodes (component/select player-bar :player-icon)]))
-
 (defn select-player-icon
   [player-bar player-id]
-  (first (component/select player-bar (str ".player-" (name player-id)))))
+  (component/sel1 player-bar (str ".player-" (name player-id))))
 
 (defn action-to-player [player-bar event {:keys [player-id] :as event-data}]
   (debug "action-to-player" [player-bar event event-data])

@@ -1,5 +1,5 @@
 (ns powergrid.component
-  (:use-macros [dommy.macros :only [node sel sel1]])
+  (:require-macros [dommy.macros])
   (:require [powergrid.protocols :as p]
             [powergrid.dom-events]
             [powergrid.util.log :refer [debug info error spy]]
@@ -19,8 +19,11 @@
   (mount! [this mount-node])
   (unmount! [this mount-node]))
 
-(defn select [component & selectors]
-  (sel (::mount component) selectors))
+(defn sel [component & selectors]
+  (dommy.macros/sel (::mount component) selectors))
+
+(defn sel1 [component & selectors]
+  (dommy.macros/sel1 (::mount component) selectors))
 
 (defn listen!
   [node event handler]
