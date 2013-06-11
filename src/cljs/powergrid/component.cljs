@@ -25,13 +25,6 @@
   ([node event data]
    (powergrid.dom-events/trigger node (str event) data)))
 
-(defn event-handler
-  "Returns event handler with closure on component to invoke the
-  component's callbacks with"
-  [component handler]
-  (fn [evt]
-    (handler component evt (.-detail evt))))
-
 (defn- bind-events
   "Binds events component's subscribed events to specified handlers"
   [component]
@@ -43,7 +36,7 @@
                        (flatten [mount selector])))]
     (doseq [[selector event-map] (event-subscriptions component)
             [event handler] event-map]
-      (listen! (sel-target selector) event (event-handler component handler))
+      (listen! (sel-target selector) event #(handler component % (.-detail %)))
       )))
 
 (defn mount-component!
