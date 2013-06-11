@@ -9,10 +9,12 @@
 (def ^:private attributes
   {:player-icon :.player-icon
    :action-to-array :.action-to-arrow})
-
 (defn select-player-icon
   [player-bar player-id]
   (component/sel1 player-bar (str ".player-" (name player-id))))
+
+(defn set-turn-order [player-bar event event-data]
+  )
 
 (defn action-to-player [player-bar event {:keys [player-id] :as event-data}]
   (debug "action-to-player" [player-bar event event-data])

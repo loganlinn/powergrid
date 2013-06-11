@@ -20,10 +20,10 @@
   (unmount! [this mount-node]))
 
 (defn sel [component & selectors]
-  (dommy.macros/sel (::mount component) selectors))
+  (dommy.macros/sel (:mount component) selectors))
 
 (defn sel1 [component & selectors]
-  (dommy.macros/sel1 (::mount component) selectors))
+  (dommy.macros/sel1 (:mount component) selectors))
 
 (defn listen!
   [node event handler]
@@ -38,7 +38,7 @@
 (defn- bind-events
   "Binds events component's subscribed events to specified handlers"
   [component]
-  (let [mount-node (::mount component)
+  (let [mount-node (:mount component)
         sel-target (fn [selector]
                      (condp = selector
                        :anywhere js/document
@@ -60,8 +60,7 @@
   Unmounts any existing component at mount-node before-hand.
   Returns mount-node."
   [component mount-node]
-  (unmount-component! mount-node)
-  (let [component (assoc component ::mount mount-node)]
+  (let [component (assoc component :mount mount-node)]
     (bind-events component)
     (mount! component mount-node))
   mount-node)
