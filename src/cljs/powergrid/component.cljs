@@ -14,22 +14,6 @@
       (dommy/set-attr! node :id id)
       id)))
 
-(defprotocol PComponent
-  (event-subscriptions [this])
-  (mount! [this mount-node])
-  (unmount! [this mount-node]))
-
-(defn mount-node
-  "Returns node that the component was mounted to"
-  [component]
-  (:mount component))
-
-(defn sel [component & selectors]
-  (dommy.macros/sel (mount-node component) selectors))
-
-(defn sel1 [component & selectors]
-  (dommy.macros/sel1 (mount-node component) selectors))
-
 (defn listen!
   [node event handler]
   (dommy/listen! node (str event) handler))
@@ -40,18 +24,17 @@
   ([node event data]
    (powergrid.dom-events/trigger node (str event) data)))
 
-(defn- bind-events
+(defn- bind-events!
   "Binds events component's subscribed events to specified handlers"
-  [component]
-  (let [mount-node (:mount component)
-        sel-target (fn [selector]
+  [mount-node event-subscriptions]
+  (let [sel-target (fn [selector]
                      (condp = selector
                        :anywhere js/document
                        :self mount-node
                        (flatten [mount-node selector])))]
-    (doseq [[selector event-map] (event-subscriptions component)
-            [event handler] event-map]
-      (listen! (sel-target selector) event #(handler component % (.-detail %))))))
+    (doseq [[selector event-map] event-subscriptions
+            [event-name handler] event-map]
+      (listen! (sel-target selector) event-name #(handler mount-node % (.-detail %))))))
 
 (defn unmount-component!
   "Unmounts component mounted at mount-node, if any.
@@ -60,12 +43,12 @@
   (unmount! component mount-node)
   mount-node)
 
-(defn mount-component!
+(defn mount!
   "Mounts component at mount-node.
   Unmounts any existing component at mount-node before-hand.
   Returns mount-node."
-  [component mount-node]
-  (let [component (assoc component :mount mount-node)]
-    (bind-events component)
-    (mount! component mount-node)
-    mount-node))
+  [mount-node component & args]
+  (when-let [event-map (:event-map component)]
+    (bind-events mount-node event-map))
+  (when-let [after-mount! (:after-mount component)]
+    (after-mount! mount-node)))

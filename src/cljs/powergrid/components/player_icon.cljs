@@ -7,6 +7,7 @@
             [powergrid.common.power-plants :as pp]
             [dommy.core :as dommy]))
 
+
 (defn- pid
   "Returns player id associated with player-icon component"
   [player-icon]
@@ -54,13 +55,7 @@
    ;; TODO visual indicators for power-plant types
    ]])
 
-(defrecord PlayerIcon [player cities]
-  component/PComponent
-  (event-subscriptions [_]
-    {:anywhere {:player-join on-player-join
-                :player-leave on-player-leave}
-     :self {"hover" on-hover}})
-  (mount! [this mount-node]
-    (dommy/append! mount-node (player-icon-tpl player cities)))
-  (unmount! [this mount-node]
-    (dommy/remove! (icon-node this))))
+(def component
+  {:event-map {:anywhere {:ui-initialize init
+                          :set-turn-order set-turn-order
+                          :action-to-player action-to-player}}})
