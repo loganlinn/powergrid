@@ -36,19 +36,12 @@
             [event-name handler] event-map]
       (listen! (sel-target selector) event-name #(handler mount-node % (.-detail %))))))
 
-(defn unmount-component!
-  "Unmounts component mounted at mount-node, if any.
-  Returns mount-node"
-  [component mount-node]
-  (unmount! component mount-node)
-  mount-node)
-
 (defn mount!
   "Mounts component at mount-node.
   Unmounts any existing component at mount-node before-hand.
   Returns mount-node."
-  [mount-node component & args]
+  [mount-node component]
   (when-let [event-map (:event-map component)]
-    (bind-events mount-node event-map))
+    (bind-events! mount-node event-map))
   (when-let [after-mount! (:after-mount component)]
     (after-mount! mount-node)))

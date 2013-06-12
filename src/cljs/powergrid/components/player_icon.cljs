@@ -50,12 +50,10 @@
 (deftemplate player-icon-tpl [player cities]
   [:div.player-icon.offline
    {:class (str "player-" (p/id player))}
-  [[:span.online-indicator]
-   (player-details-tpl player cities)
+   [:span.online-indicator]
    ;; TODO visual indicators for power-plant types
-   ]])
+   ])
 
 (def component
-  {:event-map {:anywhere {:ui-initialize init
-                          :set-turn-order set-turn-order
-                          :action-to-player action-to-player}}})
+  {:event-map {:anywhere {:player-join on-player-join
+                          :player-leave on-player-leave}}})
