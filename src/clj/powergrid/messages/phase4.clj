@@ -1,5 +1,6 @@
 (ns powergrid.messages.phase4
   (:require [powergrid.message :refer [Message]]
+            [powergrid.util.error :refer [fail]]
             [powergrid.game :as g]
             [powergrid.cities :as c]
             [powergrid.common.player :as p]
@@ -40,9 +41,10 @@
 
   (validate [this game]
     (cond
-      (not (coll? new-cities)) "Invalid purchase"
-      (not (every? (partial valid-city? game player-id) new-cities)) "Invalid city"
-      (not (can-afford-cities? game player-id new-cities)) "Insufficient funds"))
+      (not (coll? new-cities)) (fail "Invalid purchase")
+      (not (every? (partial valid-city? game player-id) new-cities)) (fail "Invalid city")
+      (not (can-afford-cities? game player-id new-cities)) (fail "Insufficient funds")
+      :else game))
 
   (update-game [this game]
     (let [cost (purchase-cost game player-id new-cities)]

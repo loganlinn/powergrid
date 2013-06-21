@@ -6,7 +6,15 @@
             [powergrid.game :as g]
             [powergrid.cities :as c]
             [powergrid.message :as msg]
-            [powergrid.messages.factory :as msgs]))
+            [powergrid.messages.factory :as msgs]
+            [clojure.pprint :refer :all]))
+
+(alter-var-root
+  #'powergrid.core/*default-error-fn*
+  (constantly (fn [game msg error]
+                (println "ERROR:" error)
+                (prn msg)
+                (prn (select-keys game [:phase :turns :turn-order :auction])))))
 
 (defn msg
   [topic type player-id m]
@@ -19,8 +27,6 @@
            msg/topic topic
            msg/type type
            :player-id player-id)))
-
-(use 'clojure.pprint)
 
 (defn money-diff
   [game-before player-id diff]
@@ -35,7 +41,7 @@
                                 (p/new-player "Player2" :black)
                                 (p/new-player "Player3" :red)]))
         [a b c] (g/turns game)]
-    (fact "phase2"
+    (fact :phase2 "phase2"
       (let [msgs (map msgs/create-message
                       [(msg :phase2 :bid a {:plant-id 3 :bid 3})
                        (msg :phase2 :bid b :pass)
@@ -67,7 +73,7 @@
           (g/turns (last states)) => (just [a c b]))
 
 
-        (fact "phase 3"
+        (fact :phase3 "phase 3"
           (let [game (last states)
                 msgs (map msgs/create-message
                           [(msg :phase3 :buy a {:resources {:oil 2}})
@@ -93,7 +99,7 @@
               (g/current-phase (last states)) => 4
               (g/turns (last states)) => (just [a c b]))
 
-            (fact "phase 4"
+            (fact :phase4 "phase 4"
               (let [game (last states)
                     msgs (map msgs/create-message
                               [(msg :phase4 :buy a {:new-cities [:philadelphia :new-york]})
@@ -117,7 +123,7 @@
                   (g/current-phase (last states)) => 5
                   (g/turns (last states)) => (just [b c a]))
 
-                (fact "phase 5"
+                (fact :phase5 "phase 5"
                   (let [game (last states)
                         msgs (map msgs/create-message
                                   [(msg :phase5 :sell b :pass)

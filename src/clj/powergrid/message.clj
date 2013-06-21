@@ -1,6 +1,7 @@
 (ns powergrid.message
   (:refer-clojure :exclude [type])
   (:require [powergrid.game :as g]
+            [powergrid.util.error :refer [fail attempt-all]]
             [slingshot.slingshot :refer [throw+]]))
 
 (def topic :topic)
@@ -32,31 +33,37 @@
     4 :phase4
     5 :phase5))
 
-(defn validate-msg
-  "Default set of validation rules. Returns error message if fails validation,
-  otherwise nil"
+(defn base-validate
   [{:keys [player-id] :as msg} game]
+  (cond
+    (not (g/player game player-id)) (fail "Invalid player")
+    (or (nil? (expected-topic game))
+        (not= (topic msg) (expected-topic game))) (fail "Unexpected message (phase)")
+    (and (turn? msg) (not= player-id (g/current-turn game))) (fail "Not your turn")
+    :else game))
+
+(defn validate-msg
+  [msg game]
   (if (is-pass? msg)
-    (when-not (passable? msg game)
-      "Cannot pass")
-    (cond
-      ;; general msg validation
-      (not (g/player game player-id)) "Invalid player"
-      (or (nil? (expected-topic game))
-          (not= (topic msg) (expected-topic game))) "Unexpected message (phase)"
-      (and (turn? msg) (not= player-id (g/current-turn game))) (str "Not your turn" player-id)
-      ;; msg specific validation
-      :else (validate msg game))))
+    (if (passable? msg game)
+      game
+      (fail "Cannot pass"))
+    (base-validate msg game)))
+
+(defn advance-turns
+  [msg game]
+  (if (turn? msg)
+    (g/advance-turns game)
+    game))
 
 (defn apply-message
   "Attempts to advance game state with msg. Returns [game err] tuple."
   [game msg]
   {:pre [(satisfies? Message msg)]}
-  (if-let [err (validate-msg msg game)]
-    [game err]
-    [(cond->> game
-       (is-pass? msg) (update-pass msg)
-       (not (is-pass? msg)) (update-game msg)
-       (turn? msg) g/advance-turns)
-     nil]))
+  (let [update-fn (if (is-pass? msg) update-pass update-game)]
+   (attempt-all
+    [a (validate-msg msg game)
+     b (update-fn msg game)
+     c (advance-turns msg b)]
+    c)))
 

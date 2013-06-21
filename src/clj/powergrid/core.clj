@@ -1,5 +1,6 @@
 (ns powergrid.core
   (:require [powergrid.util :refer [separate]]
+            [powergrid.util.error :as error]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
             [powergrid.common.resource :as r]
@@ -131,13 +132,17 @@
   [game]
   (-> game tick-step tick-phase))
 
+(def ^:dynamic *default-error-fn* nil)
+(def ^:dynamic *default-success-fn* nil)
+
 (defn update-game
-  [game msg & {success-fn :success error-fn :error}]
-  (let [[game* err] (msg/apply-message game msg)]
-    (if err
+  [game msg & {success-fn :success error-fn :error
+               :or {error-fn *default-error-fn* success-fn *default-success-fn*}}]
+  (let [result (msg/apply-message game msg)]
+    (if (error/has-failed? result)
       (do
-        (if error-fn (error-fn game msg err))
+        (if error-fn (error-fn game msg (:message result)))
         game)
-      (let [game** (tick game*)]
-        (if success-fn (success-fn game game** msg))
-        game**))))
+      (let [game* (tick result)]
+        (if success-fn (success-fn game game* msg))
+        game*))))

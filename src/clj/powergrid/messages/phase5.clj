@@ -1,5 +1,6 @@
 (ns powergrid.messages.phase5
   (:require [powergrid.message :refer [Message]]
+            [powergrid.util.error :refer [fail]]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
             [powergrid.cities :as c]
@@ -18,17 +19,18 @@
   "Returns true of the plant-id and resource amt combo is valid.
   Does not validate the user owns the power-plants & resources"
   [[plant-id resources]]
-  {:pre [(map? resources)]}
-  (when-let [plant (pp/plant plant-id)]
-    (let [total (reduce (fnil + 0) 0 (vals resources))]
-      (if (pp/consumes-resources? plant)
-        (cond
-          (not= (pp/capacity plant) total) "Plant capacity mismatch"
-          (not (every? (partial pp/accepts-resource? plant)
-                       (keys resources))) "Invalid resources"
-          (some neg? (vals resources)) "Invalid resource amount")
-        (when-not (zero? total)
-          (str "Plant " plant-id " does not consume resources"))))))
+  (if-not (map? resources)
+    (fail "Invalid resources")
+    (when-let [plant (pp/plant plant-id)]
+      (let [total (reduce (fnil + 0) 0 (vals resources))]
+        (if (pp/consumes-resources? plant)
+          (cond
+            (not= (pp/capacity plant) total) (fail "Plant capacity mismatch")
+            (not (every? (partial pp/accepts-resource? plant)
+                         (keys resources))) (fail "Invalid resources")
+            (some neg? (vals resources)) (fail "Invalid resource amount"))
+          (when-not (zero? total)
+            (fail (str "Plant " plant-id " does not consume resources"))))))))
 
 (defn can-sell?
   "Returns true if the user owns the power plant and has the valid amount of
@@ -86,10 +88,11 @@
     (or
       (cond
         (not (and (map? powered-plants)
-                  (every? map? (vals powered-plants)))) "Invalid message"
+                  (every? map? (vals powered-plants)))) (fail "Invalid message")
         (not (every? (partial can-sell? (g/player game player-id))
-                     powered-plants)) "Invalid sale")
-      (some validate-sale powered-plants)))
+                     powered-plants)) (fail "Invalid sale"))
+      (some validate-sale powered-plants)
+      game))
 
   (update-game [this game]
     (-> game

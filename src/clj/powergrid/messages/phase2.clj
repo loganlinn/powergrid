@@ -1,5 +1,6 @@
 (ns powergrid.messages.phase2
   (:require [powergrid.message :refer [Message]]
+            [powergrid.util.error :refer [fail]]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
             [powergrid.auction :as a]
@@ -49,15 +50,26 @@
     (let [auction (g/auction game)
           plant (pp/plant plant-id)]
       (cond
-        (not bid) "Invalid bid"
-        (not plant) "Unknown plant"
-        (not (g/power-plant-buyable? game plant)) "Cannot purchase that power-plant"
+        (not bid) (fail "Invalid bid")
+        (not plant) (fail "Unknown plant")
 
-        (not= player-id
-              (if auction (a/current-bidder auction) (g/current-turn game))) "Not your bid"
-        (not (p/can-afford? (g/player game player-id) bid)) "Insufficient funds"
-        (if auction (< bid (a/min-bid auction))) (str "Minimum bid is " (a/min-bid auction))
-        (if (not auction) (< bid plant-id)) (str "Minimum bid is " plant-id))))
+        (not (g/power-plant-buyable? game plant))
+        (fail "Cannot purchase that power-plant")
+
+        (not= player-id (if auction (a/current-bidder auction)
+                          (g/current-turn game)))
+        (fail "Not your bid")
+
+        (not (p/can-afford? (g/player game player-id) bid))
+        (fail "Insufficient funds")
+
+        (if auction (< bid (a/min-bid auction)))
+        (fail (str "Minimum bid is " (a/min-bid auction)))
+
+        (if (not auction) (< bid plant-id))
+        (fail (str "Minimum bid is " plant-id))
+
+        :else game)))
 
   (update-game [_ game]
     (let [plant (pp/plant plant-id)
