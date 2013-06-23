@@ -1,6 +1,6 @@
 (ns powergrid.messages.phase2
   (:require [powergrid.message :refer [Message]]
-            [powergrid.util.error :refer [fail]]
+            [powergrid.util.error :refer [fail failf]]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
             [powergrid.auction :as a]
@@ -64,10 +64,10 @@
         (fail "Insufficient funds")
 
         (if auction (< bid (a/min-bid auction)))
-        (fail (str "Minimum bid is " (a/min-bid auction)))
+        (failf "Minimum bid is %d" (a/min-bid auction))
 
         (if (not auction) (< bid plant-id))
-        (fail (str "Minimum bid is " plant-id))
+        (failf "Minimum bid is %d" plant-id)
 
         :else game)))
 

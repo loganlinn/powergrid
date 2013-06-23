@@ -1,6 +1,6 @@
 (ns powergrid.messages.phase5
   (:require [powergrid.message :refer [Message]]
-            [powergrid.util.error :refer [fail]]
+            [powergrid.util.error :refer [fail failf]]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
             [powergrid.cities :as c]
@@ -26,11 +26,13 @@
         (if (pp/consumes-resources? plant)
           (cond
             (not= (pp/capacity plant) total) (fail "Plant capacity mismatch")
-            (not (every? (partial pp/accepts-resource? plant)
-                         (keys resources))) (fail "Invalid resources")
+
+            (not (every? (partial pp/accepts-resource? plant) (keys resources)))
+            (fail "Invalid resources")
+
             (some neg? (vals resources)) (fail "Invalid resource amount"))
           (when-not (zero? total)
-            (fail (str "Plant " plant-id " does not consume resources"))))))))
+            (failf "Plant %d does not consume resources" plant-id)))))))
 
 (defn can-sell?
   "Returns true if the user owns the power plant and has the valid amount of
@@ -87,10 +89,11 @@
   (validate [this game]
     (or
       (cond
-        (not (and (map? powered-plants)
-                  (every? map? (vals powered-plants)))) (fail "Invalid message")
-        (not (every? (partial can-sell? (g/player game player-id))
-                     powered-plants)) (fail "Invalid sale"))
+        (not (and (map? powered-plants) (every? map? (vals powered-plants))))
+        (fail "Invalid message")
+
+        (not (every? (partial can-sell? (g/player game player-id)) powered-plants))
+        (fail "Invalid sale"))
       (some validate-sale powered-plants)
       game))
 

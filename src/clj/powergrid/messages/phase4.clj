@@ -42,8 +42,13 @@
   (validate [this game]
     (cond
       (not (coll? new-cities)) (fail "Invalid purchase")
-      (not (every? (partial valid-city? game player-id) new-cities)) (fail "Invalid city")
-      (not (can-afford-cities? game player-id new-cities)) (fail "Insufficient funds")
+
+      (not (every? (partial valid-city? game player-id) new-cities))
+      (fail "Invalid city")
+
+      (not (can-afford-cities? game player-id new-cities))
+      (fail "Insufficient funds")
+
       :else game))
 
   (update-game [this game]
