@@ -134,11 +134,13 @@
 (defn update-game
   [game msg & {success-fn :success error-fn :error
                :or {error-fn *default-error-fn* success-fn *default-success-fn*}}]
-  (let [result (msg/apply-message game msg)]
+  (domonad error-m
+    [result (msg/apply-message game msg)
+     result (tick result)]
     (if (error/has-failed? result)
       (do
         (if error-fn (error-fn game msg (:message result)))
         game)
-      (let [game* (tick result)]
-        (if success-fn (success-fn game game* msg))
-        game*))))
+      (do
+        (if success-fn (success-fn game result msg))
+        result))))
