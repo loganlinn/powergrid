@@ -5,6 +5,8 @@
 
 (defn fail [message] (->Failure message))
 
+(defn failf [message-fmt & args] (fail (apply format message-fmt args)))
+
 (defprotocol StateChangeFailed
   "Determines if a state change has resulted in failure."
   (has-failed? [this]))

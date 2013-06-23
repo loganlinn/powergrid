@@ -62,7 +62,7 @@
     (3, 4, 5) 7
     6 6))
 
-(defn max-power-plants
+(defn num-max-power-plants
   "Returns the max number of player plants a player can have"
   [num-players]
   (case (int num-players)
@@ -230,6 +230,10 @@
   (apply update-in game [:resources resource] f args))
 
 ;; POWER PLANTS
+
+(defn max-power-plants
+  [game]
+  (num-max-power-plants (count (players game))))
 
 (defn valid-power-plant-market?
   [market]

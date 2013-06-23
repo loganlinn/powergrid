@@ -5,7 +5,9 @@
             [powergrid.common.player :as p]
             [powergrid.common.resource :as r]
             [powergrid.message :as msg]
-            [powergrid.messages.factory :as msgs]))
+            [powergrid.messages.factory :as msgs]
+            [clojure.algo.monads :refer [with-monad domonad m-chain]]
+            [powergrid.util.error :refer [error-m fail failf]]))
 
 (defn game-over?
   "Returns true if conditions have been to end the game, otherwise false"
@@ -46,13 +48,6 @@
 (defmethod post-step :default [game] game)
 
 (defmethod phase-complete? :default [game] (not (g/turns-remain? game)))
-
-(defmethod phase-complete? :phase2 [game]
-  (let [max-plants (g/max-power-plants game)]
-    (and (not (g/turns-remain? game))
-         (not-any? #(> (count (p/power-plants %)) max-plants)
-                   (g/players game)))))
-
 (defmethod step-complete? :default [game] false)
 
 (defmethod prep-phase 1 [{:keys [round] :as game}]
@@ -69,9 +64,17 @@
       (g/remove-power-plant (g/step-3-card) :future)
       (g/drop-lowest-power-plant)))
 
+(defn- too-many-plants?
+  [max-plants player]
+  (> (count (p/power-plants player)) max-plants))
+
 (defmethod post-phase 2 [{:keys [step-3-card?] :as game}]
-  (cond-> game
-    step-3-card? (post-phase-2-step-3-card)))
+  (if-let [plr (some (partial too-many-plants? (g/max-power-plants game))
+                     (g/players game))]
+    (failf "Player %s needs to discard a power-plant" (name (p/id plr)))
+    (if step-3-card?
+      (post-phase-2-step-3-card game)
+      game)))
 
 (defmethod prep-phase 3 [{:keys [round] :as game}]
   (cond-> game
@@ -112,29 +115,22 @@
 
 ;; =============================================================================
 
-(defn next-phase
-  [game]
-  (-> game post-phase g/inc-phase prep-phase))
+(with-monad error-m
+  (def next-phase (m-chain [post-phase g/inc-phase prep-phase]))
+  (def next-step (m-chain [post-step g/inc-step prep-step]))
 
-(defn next-step
-  [game]
-  (-> game post-step g/inc-step prep-step))
+  (defn tick-phase [game]
+    (if (phase-complete? game) (recur (next-phase game)) game))
 
-(defn tick-phase
-  [game]
-  (if (phase-complete? game) (recur (next-phase game)) game))
+  (defn tick-step [game]
+    (if (step-complete? game) (recur (next-step game)) game))
 
-(defn tick-step
-  [game]
-  (if (step-complete? game) (recur (next-step game)) game))
-
-(defn tick
-  [game]
-  (-> game tick-step tick-phase))
+  (def tick (m-chain [tick-step tick-phase])))
 
 (def ^:dynamic *default-error-fn* nil)
 (def ^:dynamic *default-success-fn* nil)
 
+;; TODO cleanup
 (defn update-game
   [game msg & {success-fn :success error-fn :error
                :or {error-fn *default-error-fn* success-fn *default-success-fn*}}]
