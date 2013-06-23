@@ -13,9 +13,9 @@
 (defprotocol Message
   (turn? [this] "Returns true if turns should be advanced after hanlding message")
   (passable? [this game] "Returns true if passing is allowed, otherwise false")
-  (update-pass [this game] "Returns (modified) game from passing msg")
-  (validate [this game] "Retruns failure if message is invalid, otherwise game")
-  (update-game [this game] "Returns game after applying valid message"))
+  (update-pass [this game] "Returns game from passing message. Invoked when passable? is truthy")
+  (validate [this game] "Validates non-pass messages. Retruns failure if message is invalid, otherwise game")
+  (update-game [this game] "Returns game after applying valid message. Invoked when passable? is falsey"))
 
 (defn- expected-topic [game]
   (case (g/current-phase game)
