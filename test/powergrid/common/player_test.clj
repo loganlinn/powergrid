@@ -60,6 +60,14 @@
       (add-power-plant 19)
       (owns-power-plant? 19)) => truthy)
 
+(fact remove-power-plant
+  (let [plr (-> (mock-player)
+                (add-power-plant 19)
+                (add-power-plant 20)
+                (remove-power-plant 19))]
+    (owns-power-plant? plr 19) => falsey
+    (owns-power-plant? plr 20) => truthy))
+
 (fact add-power-plant-resources
   (-> (mock-player)
       (add-power-plant ...ppid...)

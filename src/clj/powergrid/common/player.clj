@@ -65,8 +65,12 @@
 (defn add-power-plant
   "Returns updated player after adding power-plant"
   [player plant-id]
-  {:pre [(pp/plant plant-id)]}
   (assoc-in player [:power-plants plant-id] {}))
+
+(defn remove-power-plant
+  "Returns updated player after removing power-plant"
+  [player plant-id]
+  (assoc player :power-plants (dissoc (:power-plants player) plant-id)))
 
 (defn owns-power-plant?
   "Returns true if the player owns power-plant, otherwise false"
