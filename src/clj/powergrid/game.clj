@@ -231,9 +231,7 @@
 
 ;; POWER PLANTS
 
-(defn max-power-plants
-  [game]
-  (num-max-power-plants (count (players game))))
+(def max-power-plants (comp num-max-power-plants count players))
 
 (defn valid-power-plant-market?
   [market]
