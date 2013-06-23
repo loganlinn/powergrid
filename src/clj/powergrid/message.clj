@@ -1,7 +1,8 @@
 (ns powergrid.message
   (:refer-clojure :exclude [type])
   (:require [powergrid.game :as g]
-            [powergrid.util.error :refer [fail attempt-all]]
+            [powergrid.util.error :refer [fail error-m]]
+            [clojure.algo.monads :refer [with-monad m-chain]]
             [slingshot.slingshot :refer [throw+]]))
 
 (def topic :topic)
@@ -42,7 +43,7 @@
     (and (turn? msg) (not= player-id (g/current-turn game))) (fail "Not your turn")
     :else game))
 
-(defn validate-msg
+(defn- validate-msg
   [msg game]
   (if (is-pass? msg)
     (if (passable? msg game)
@@ -50,7 +51,7 @@
       (fail "Cannot pass"))
     (base-validate msg game)))
 
-(defn advance-turns
+(defn- advance-turns
   [msg game]
   (if (turn? msg)
     (g/advance-turns game)
@@ -60,10 +61,10 @@
   "Attempts to advance game state with msg. Returns [game err] tuple."
   [game msg]
   {:pre [(satisfies? Message msg)]}
-  (let [update-fn (if (is-pass? msg) update-pass update-game)]
-   (attempt-all
-    [a (validate-msg msg game)
-     b (update-fn msg game)
-     c (advance-turns msg b)]
-    c)))
+  (let [update-fn (if (is-pass? msg) update-pass update-game)
+        msg-apply (with-monad error-m
+                    (m-chain [(partial validate-msg msg)
+                              (partial update-fn msg)
+                              (partial advance-turns msg)]))]
+    (msg-apply game)))
 
