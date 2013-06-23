@@ -1,13 +1,12 @@
 (ns powergrid.core
   (:require [powergrid.util :refer [separate]]
-            [powergrid.util.error :as error]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
             [powergrid.common.resource :as r]
             [powergrid.message :as msg]
             [powergrid.messages.factory :as msgs]
             [clojure.algo.monads :refer [with-monad domonad m-chain]]
-            [powergrid.util.error :refer [error-m fail failf]]))
+            [powergrid.util.error :refer [has-failed? error-m fail failf]]))
 
 (defn game-over?
   "Returns true if conditions have been to end the game, otherwise false"
@@ -137,7 +136,7 @@
   (domonad error-m
     [result (msg/apply-message game msg)
      result (tick result)]
-    (if (error/has-failed? result)
+    (if (has-failed? result)
       (do
         (if error-fn (error-fn game msg (:message result)))
         game)
