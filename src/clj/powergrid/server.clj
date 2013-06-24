@@ -7,10 +7,11 @@
             [powergrid.service])
   (:gen-class))
 
+(def app (powergrid.service/init-handler (atom {})))
 
 (defn -main
   [& args]
   (log/info "Starting powergrid repl server...")
   (repl/start-server :port 7474)
   (log/info "Starting powergrid service...")
-  (run-server (wrap-reload (site #'powergrid.service/app)) {:port 8484}))
+  (run-server (wrap-reload (site #'app)) {:port 8484}))

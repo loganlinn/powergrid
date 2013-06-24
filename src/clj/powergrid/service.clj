@@ -7,7 +7,8 @@
             [powergrid.service.channel :as chan]
             [powergrid.util.log :refer [debug]]
             [org.httpkit.server :refer :all]
-            [compojure.core :refer [defroutes context GET POST ANY]]
+            [compojure.core :refer [routes context GET POST ANY]]
+            [compojure.handler :refer [site]]
             [hiccup.core :refer [html]]
             [hiccup.page :as page]
             [ring.util.response :refer [response redirect redirect-after-post]]
@@ -26,17 +27,12 @@
 
 ;;
 
-(def games (atom {}))
-(def game-message-history (atom {}))
-
-(add-watch game-message-history :debug (fn [k r old-val new-val] (debug :hist new-val)))
-(defn reset-game []
+(defn reset-game [games]
   (swap! games assoc "1" (-> (g/new-game :usa
                                          [(p/new-player "Logan" :red)
                                           (p/new-player "Maeby" :blue)])
                              (assoc :id 1)
                              c/tick)))
-(reset-game)
 
 (defn- fix-auction-bidders
   "Replace bidders queue with seq for js portability"
@@ -57,51 +53,45 @@
 
 ;;
 
-(defn game-msg [game-id]
+(defn game-msg [games game-id]
   {:game (client-game (@games game-id))})
 
 (defn- send-game-state!
   "Sends game-state over individual channel"
-  [channel game-id]
-  (chan/send-msg! channel (game-msg game-id)))
+  [games channel game-id]
+  (chan/send-msg! channel (game-msg games game-id)))
 
 (defn- broadcast-game-state!
   "Sends current game state to all associated channels"
-  [game-id]
-  (chan/broadcast-msg! game-id (game-msg game-id)))
+  [games game-id]
+  (chan/broadcast-msg! game-id (game-msg games game-id)))
 
 ;;
 
-(defmulti handle-message (fn [msg-type msg channel game-id player-id] msg-type))
+(defmulti handle-message (fn [games msg-type msg channel game-id player-id] msg-type))
 
 (defmethod handle-message :default
-  [msg-type _ channel _ player-id]
+  [games msg-type _ channel _ player-id]
   (println "Unknown message" msg-type player-id)
   (chan/send-error! channel "Unknown message"))
 
-(defn record-msg
-  [game msg]
-  (if-let [id (:id game)]
-    (swap! game-message-history update-in [id] (fnil conj []) msg)))
-
 (defmethod handle-message :update-game
-  [_ msg channel game-id player-id]
+  [games _ msg channel game-id player-id]
   (if-let [game-msg (msgs/create-message msg)]
     (swap! games update-in [game-id]
            c/update-game
            game-msg
-           :error #(chan/send-error! channel %3)
-           :success #(record-msg %2 %3))
+           :error #(chan/send-error! channel %3))
     (if (not= msg {})
       (chan/send-error! channel "Invalid message"))) ;; TODO don't use empty map to get current state
-  (broadcast-game-state! game-id))
+  (broadcast-game-state! games game-id))
 
 (defmethod handle-message :game-state
-  [_ _ channel game-id player-id]
-  (send-game-state! channel game-id))
+  [games _ _ channel game-id player-id]
+  (send-game-state! games channel game-id))
 
 (defmethod handle-message :whos-online
-  [_ _ channel game-id player-id]
+  [games _ _ channel game-id player-id]
   (chan/send-msg! channel {:online (chan/player-ids-online game-id)}))
 
 ;;
@@ -111,7 +101,7 @@
   [msg session]
   (assoc msg :player-id (p/id session)))
 
-(defn ws-handler [game-id player-id {:keys [session] :as req}]
+(defn ws-handler [games game-id player-id {:keys [session] :as req}]
   (with-channel req channel
     (on-close channel
               (fn [status]
@@ -123,7 +113,8 @@
                   (let [data (read-string data)]
                     (if (map? data)
                       (doseq [[msg-type msg] data]
-                        (handle-message msg-type
+                        (handle-message games
+                                        msg-type
                                         (player-msg msg session)
                                         channel game-id player-id))))))
 
@@ -159,44 +150,50 @@
   ([game-id] (str "/game/" game-id))
   ([game-id action] (str (game-url game-id) "/" (name action))))
 
-(defroutes handler
-  (GET "/" []
-       "Welcome to Funkenschlag")
-  (GET "/games" []
-       "TODO: Lobby")
+(defn init-routes
+  [games]
+  (routes
+    (GET "/" []
+         "Welcome to Funkenschlagg0")
+    (GET "/games" []
+         "TODO: Lobby")
 
-  (context "/game/:game-id" [game-id]
-           (GET "/" {:keys [session] :as req}
-                (cond
-                  (empty? session)
-                  (redirect (game-url game-id :join)) ;; TODO check if game is joinable
+    (context "/game/:game-id" [game-id]
+             (GET "/" {:keys [session] :as req}
+                  (cond
+                    (empty? session)
+                    (redirect (game-url game-id :join)) ;; TODO check if game is joinable
 
-                  (not= (:game-id session) game-id)
-                  (redirect (game-url game-id))
+                    (not= (:game-id session) game-id)
+                    (redirect (game-url game-id))
 
-                  :else (response (render-game game-id req))))
+                    :else (response (render-game game-id req))))
 
-           (GET "/ws" {:keys [session] :as req}
-                (if (and (= game-id (:game-id session)) (:id session))
-                  (ws-handler game-id (p/id session) req)
-                  (-> (response "")
-                      (assoc :status 403))))
+             (GET "/ws" {:keys [session] :as req}
+                  (if (and (= game-id (:game-id session)) (:id session))
+                    (ws-handler games game-id (p/id session) req)
+                    (-> (response "")
+                        (assoc :status 403))))
 
-           (GET "/join" {:keys [session] :as req}
-                (if-let [game (@games game-id)]
-                  (response (render-join req game))))
-           (POST "/join" {:keys [session params] :as req}
-                 (if-let [handle (:handle params)] ;; TODO check if handle in use
-                   (if-let [color (:color params)]
-                     (-> (redirect (game-url game-id))
-                         (assoc :session {:id (uuid)
-                                          :game-id game-id
-                                          :handle handle
-                                          :color color})))
-                   (redirect (:uri req)))))
+             (GET "/join" {:keys [session] :as req}
+                  (if-let [game (@games game-id)]
+                    (response (render-join req game))))
+             (POST "/join" {:keys [session params] :as req}
+                   (if-let [handle (:handle params)] ;; TODO check if handle in use
+                     (if-let [color (:color params)]
+                       (-> (redirect (game-url game-id))
+                           (assoc :session {:id (uuid)
+                                            :game-id game-id
+                                            :handle handle
+                                            :color color})))
+                     (redirect (:uri req)))))
 
-  (ANY "/logout" [] (-> (redirect "/")
-                        (assoc :session nil))))
+    (ANY "/logout" [] (-> (redirect "/")
+                          (assoc :session nil)))))
 
-(def app (-> handler
-             (wrap-resource "public")))
+(defn init-handler
+  [games]
+  (reset-game games) ;; todo remove
+  (-> (init-routes games)
+      (wrap-resource "public")
+      site))

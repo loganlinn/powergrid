@@ -22,7 +22,10 @@
   :source-paths ["src/clj"]
   :plugins  [[lein-cljsbuild "0.3.0"]
              [lein-ring "0.8.5"]]
-  :profiles {:dev {:plugins [[lein-midje "3.0.0"]]}}
+  :profiles {:dev {:source-paths  ["dev"]
+                   :dependencies [[org.clojure/tools.namespace "0.2.3"]
+                                  [org.clojure/java.classpath "0.2.0"]]
+                   :plugins [[lein-midje "3.0.0"]]}}
   :cljsbuild {:crossovers [powergrid.common]
               :builds [{:id "main"
                         :source-paths ["src/cljs"]
@@ -30,6 +33,4 @@
                         :compiler {:output-to "resources/public/js/cljs.js"
                                    :optimizations :simple
                                    :pretty-print true}
-                        :jar true}]}
-  :main powergrid.server
-  :ring {:handler powergrid.service/app})
+                        :jar true}]})
