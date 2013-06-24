@@ -1,7 +1,7 @@
 (ns powergrid.messages.phase5-test
   (:require [midje.sweet :refer :all]
             [powergrid.messages.phase5 :refer :all]
-            [powergrid.message :refer [passable? update-pass]]
+            [powergrid.message :as msg]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
             [powergrid.common.power-plants :as pp]))

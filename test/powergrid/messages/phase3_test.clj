@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [type])
   (:require [midje.sweet :refer :all]
             [powergrid.messages.phase3 :refer :all]
-            [powergrid.message :refer [passable? update-pass]]
+            [powergrid.message :as msg]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
             [powergrid.common.resource :as r]
@@ -18,5 +18,5 @@
 
 
 (fact "passable"
-  (passable? (map->BuyResourcesMessage {}) ...game...) => truthy
-  (update-pass (map->BuyResourcesMessage {}) ...game... nil) => ..game...)
+  (msg/passable? (map->BuyResourcesMessage {}) ...game...) => truthy
+  (msg/update-pass (map->BuyResourcesMessage {}) ...game... msg/nil-logger) => ..game...)

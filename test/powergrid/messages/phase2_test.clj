@@ -1,6 +1,6 @@
 (ns powergrid.messages.phase2-test
   (:require [midje.sweet :refer :all]
-            [powergrid.message :refer [passable?]]
+            [powergrid.message :as msg]
             [powergrid.messages.phase2 :refer :all]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
@@ -13,14 +13,14 @@
     (if (seq args) (apply assoc m args) m)))
 
 (fact BidPowerPlantMessage
-  (fact passable?
+  (fact msg/passable?
     (fact "1st round"
-      (passable? (mock-bid) ...game...) => falsey
+      (msg/passable? (mock-bid) ...game...) => falsey
       (provided
         (g/has-auction? ...game...) => false
         (g/current-round ...game...) => 1))
     (fact "not 1st round"
-      (passable? (mock-bid) ...game...) => truthy
+      (msg/passable? (mock-bid) ...game...) => truthy
       (provided
         (g/has-auction? ...game...) => false
         (g/current-round ...game...) => 2))))
@@ -45,3 +45,5 @@
     (get-or-create-auction ...game... ...plant-id...) => ...auction...
     (provided
       (g/auction ...game...) => ...auction...)))
+
+

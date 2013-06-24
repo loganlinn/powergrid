@@ -6,7 +6,6 @@
             [powergrid.common.resource :as r]
             [powergrid.message :as msg]
             [powergrid.messages.factory :as msgs]
-            [powergrid.util.log :refer [debugf]]
             [powergrid.util.error :refer [has-failed? error-m fail failf]]
             [clojure.algo.monads :refer [with-monad domonad m-chain]]))
 
@@ -128,20 +127,9 @@
 
   (def tick (m-chain [tick-step tick-phase])))
 
-
-(defn log-logger
-  "Game event logger that logs to application log"
-  [game msg]
-  (debugf "[%s@%d,%d] %s"
-          (:id game)
-          (g/current-phase game)
-          (g/current-step game)
-          msg)
-  game)
-
 (def ^:dynamic *default-error-fn* nil)
 (def ^:dynamic *default-success-fn* nil)
-(def ^:dynamic *default-logger* log-logger)
+(def ^:dynamic *default-logger* msg/log-logger)
 
 ;; TODO cleanup
 (defn update-game

@@ -3,6 +3,7 @@
   (:require [powergrid.game :as g]
             [powergrid.common.protocols :as pc]
             [powergrid.util.error :refer [fail failf error-m]]
+            [powergrid.util.log :refer [debugf]]
             [clojure.algo.monads :refer [with-monad m-chain]]
             [slingshot.slingshot :refer [throw+]]))
 
@@ -62,6 +63,17 @@
   (if (turn? msg) (g/advance-turns game) game))
 
 ;; TODO pass logger to update-* (logger game "message")
+(defn log-logger
+  "Game event logger that logs to application log"
+  [game msg]
+  (debugf "[%s@%d,%d] %s"
+          (:id game)
+          (g/current-phase game)
+          (g/current-step game)
+          msg)
+  game)
+
+(defn nil-logger [_ _])
 
 (defn apply-message
   "Attempts to advance game state with msg. Returns [game err] tuple."
