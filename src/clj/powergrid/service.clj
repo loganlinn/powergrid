@@ -154,7 +154,7 @@
   [games]
   (routes
     (GET "/" []
-         "Welcome to Funkenschlagg0")
+         "Welcome to Funkenschlag")
     (GET "/games" []
          "TODO: Lobby")
 

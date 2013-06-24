@@ -8,13 +8,11 @@
   "Returns new instance of whole application"
   ([] (system {}))
   ([{:keys [port] :or {port 8484}}]
-   (let [games (atom {})
-         handler (powergrid.service/init-handler games)]
-     (map->PowergridSystem
-       {:handler handler
-        :games games
-        :server nil
-        :port port}))))
+   (map->PowergridSystem
+     {:handler nil
+      :games nil
+      :server nil
+      :port port})))
 
 (defn- stop-server
   "Stops server if running, returns system"
@@ -32,10 +30,17 @@
   "Performs side effects to initialize the system, acquire resources,
   and start it running. Returns an updated instance of the system."
   [system]
-  (start-server system))
+  (let [games (atom {})]
+    (-> system
+        (assoc :games games)
+        (assoc :handler (powergrid.service/init-handler games))
+        (start-server))))
 
 (defn stop
   "Performs side effects to shut down the system and release its
   resources. Returns an updated instance of the system."
   [system]
-  (stop-server system))
+  (-> system
+      (stop-server)
+      (assoc :handler nil)
+      (assoc :games nil)))
