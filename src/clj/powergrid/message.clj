@@ -1,6 +1,7 @@
 (ns powergrid.message
   (:refer-clojure :exclude [type])
   (:require [powergrid.game :as g]
+            [powergrid.common.protocols :as pc]
             [powergrid.util.error :refer [fail failf error-m]]
             [clojure.algo.monads :refer [with-monad m-chain]]
             [slingshot.slingshot :refer [throw+]]))
@@ -13,12 +14,12 @@
 (defprotocol Message
   (turn? [this] "Returns true if turns should be advanced after hanlding message")
   (passable? [this game] "Returns true if passing is allowed, otherwise false")
-  (update-pass [this game] "Returns game from passing message. Invoked when passable? is truthy")
+  (update-pass [this game logger] "Returns game from passing message. Invoked when passable? is truthy")
   (validate [this game] "Validates non-pass messages. Retruns failure if message is invalid, otherwise game")
-  (update-game [this game] "Returns game after applying valid message. Invoked when passable? is falsey"))
+  (update-game [this game logger] "Returns game after applying valid message. Invoked when passable? is falsey"))
 
 (defn- expected-topic [game]
-  (case (g/current-phase game)
+  (case (int (g/current-phase game))
     2 :phase2
     3 :phase3
     4 :phase4
@@ -60,14 +61,19 @@
   [msg game]
   (if (turn? msg) (g/advance-turns game) game))
 
+;; TODO pass logger to update-* (logger game "message")
+
 (defn apply-message
   "Attempts to advance game state with msg. Returns [game err] tuple."
-  [game msg]
+  [game msg logger]
   {:pre [(satisfies? Message msg)]}
   (let [update-fn (if (is-pass? msg) update-pass update-game)
         msg-apply (with-monad error-m
                     (m-chain [(partial validate-msg msg)
-                              (partial update-fn msg)
+                              #(update-fn msg % logger)
                               (partial advance-turns msg)]))]
-    (msg-apply game)))
+    (let [msg-label (pc/label msg game)
+          result (msg-apply game)]
+      (logger game msg-label)
+      result)))
 

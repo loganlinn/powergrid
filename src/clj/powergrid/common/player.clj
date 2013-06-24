@@ -1,8 +1,12 @@
 (ns powergrid.common.player
   (:require [powergrid.common.power-plants :as pp]
-            [powergrid.common.resource :refer [ResourceTrader]]))
+            [powergrid.common.protocols :as pc]))
 
-(defrecord Player [handle color money power-plants])
+(defrecord Player [handle color money power-plants]
+  pc/Labeled
+  (label [_] (if handle
+               (str handle " (" (name color) ")")
+               (str "Player-" (name color)))))
 
 (def colors #{:red :green :blue :yellow :purple :black})
 
@@ -140,7 +144,7 @@
 
 (declare distribute-resource)
 (extend-type Player
-  ResourceTrader
+  pc/ResourceTrader
   (accept-resource [player resource amt]
     (update-in player [:power-plants] distribute-resource resource amt))
   (send-resource [player [plant-id resource] amt]

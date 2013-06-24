@@ -1,28 +1,45 @@
 (ns powergrid.messages.global
-  (:require [powergrid.message :refer [Message]]
+  (:require [powergrid.message :as msg]
             [powergrid.game :as g]
+            [powergrid.common.protocols :as pc]
             [powergrid.common.player :as p]
+            [powergrid.common.power-plants :as pp]
             [powergrid.common.resource :as r]
+            [powergrid.util.error :refer [fail]]
             [powergrid.util :refer [kw]]))
 
 (def ^:private player-color (comp p/color g/player))
 
 (defrecord SetColorMessage [player-id color]
-  Message
+  msg/Message
   (turn? [_] false)
   (passable? [_ _] false)
-  (update-pass [_ game] game)
-
-  (validate [this game]
+  (validate [_ game]
     (let [color (kw color)]
       (cond
-        (not (p/valid-color? color)) "Invalid color"
-        (= color (player-color player-id)) "Already using that color"
-        (g/color-taken? game color) "Color taken")))
-
-  (update-game [this game]
+        (not (p/valid-color? color)) (fail "Invalid color")
+        (= color (player-color player-id)) (fail "Already using that color")
+        (g/color-taken? game color) (fail "Color taken")
+        :else game)))
+  (update-game [_ game logger]
     (g/update-player game player-id p/set-color color)))
 
+(defrecord MoveResourcesMessage [player-id resource amt src-plant dst-plant]
+  pc/Labeled
+  (label [_ game]
+    (format "%s moved %d %s from %s to %s."
+            (pc/label (g/player player-id))
+            amt
+            (name resource)
+            (pc/label (pp/plant src-plant))
+            (pc/label (pp/plant dst-plant))))
+  msg/Message
+  (turn? [_] false)
+  (passable? [_ _] false)
+  (validate [_ game]
+    )
+  (update-game [_ game logger]
+    ))
 
 (def messages
   {:register nil

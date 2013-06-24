@@ -35,13 +35,13 @@
     (provided
       (g/turns ...game...) => '(1 2 3))))
 
-(fact auction
+(fact get-or-create-auction
   (fact "new auction"
-    (auction ...game... ...plant-id...) => ...new-auction...
+    (get-or-create-auction ...game... ...plant-id...) => ...new-auction...
     (provided
       (g/auction ...game...) => nil
       (new-auction ...game... ...plant-id...) => ...new-auction...))
   (fact "existing auction"
-    (auction ...game... ...plant-id...) => ...auction...
+    (get-or-create-auction ...game... ...plant-id...) => ...auction...
     (provided
       (g/auction ...game...) => ...auction...)))

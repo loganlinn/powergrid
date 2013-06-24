@@ -19,4 +19,4 @@
 
 (fact "passable"
   (passable? (map->BuyResourcesMessage {}) ...game...) => truthy
-  (update-pass (map->BuyResourcesMessage {}) ...game...) => ..game...)
+  (update-pass (map->BuyResourcesMessage {}) ...game... nil) => ..game...)

@@ -1,6 +1,9 @@
-(ns powergrid.common.power-plants)
+(ns powergrid.common.power-plants
+  (:require [powergrid.common.protocols :as pc]))
 
-(defrecord PowerPlant [number resource capacity yield])
+(defrecord PowerPlant [number resource capacity yield]
+  pc/Labeled
+  (label [_] (str "PowerPlant-" number)))
 
 (defn id [power-plant] (:number power-plant))
 (defn capacity [power-plant] (:capacity power-plant))

@@ -1,4 +1,5 @@
-(ns powergrid.common.resource)
+(ns powergrid.common.resource
+  (:require [powergrid.common.protocols :as pc]))
 
 (def types #{:coal :oil :garbage :uranium})
 
@@ -24,16 +25,10 @@
       :garbage {1 3, 2 5, 3 6}
       :uranium {1 2, 2 3, 3 3}}})
 
-(defprotocol ResourceTrader
-  (accept-resource [trader dest amt]
-                   "Returns trader after storing the resource in dest.
-                   Methods assert that amt is valid")
-  (send-resource [trader src amt]
-                 "Returns trader after removing resources from src.
-                 Methods assert that amt is valid"))
-
-(defrecord Resource [market supply pricing]
-  ResourceTrader
+(defrecord Resource [label market supply pricing]
+  pc/Labeled
+  (label [_] label)
+  pc/ResourceTrader
   (accept-resource [resource dest amt]
     (update-in resource [dest] (fnil + 0) amt))
   (send-resource [resource src amt]

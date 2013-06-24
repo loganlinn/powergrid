@@ -1,6 +1,12 @@
-(ns powergrid.common.auction)
+(ns powergrid.common.auction
+  (:require [powergrid.common.protocols :as pc]))
 
 (defrecord Auction [item player-id bidders price min-increment])
+
+(defn item [auction] (:item auction))
+(defn player-id [auction] (:player-id auction))
+(defn bidders [auction] (:bidders auction))
+(defn price [auction] (:price auction))
 
 (defn current-bidder
   "Returns the current bidder"

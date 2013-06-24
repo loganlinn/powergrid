@@ -1,8 +1,8 @@
 (ns powergrid.common.player-test
   (:require [midje.sweet :refer :all]
+            [powergrid.common.protocols :as pc]
             [powergrid.common.player :refer :all]
-            [powergrid.common.power-plants :as pp]
-            [powergrid.common.resource :refer [accept-resource send-resource]]))
+            [powergrid.common.power-plants :as pp]))
 
 (defn mock-player
   [& args]
@@ -79,7 +79,7 @@
     (pp/plant ...ppid...) => ...pp...
     (pp/accepts-resource? ...pp... ...r...) => true))
 
-(fact accept-resource
+(fact pc/accept-resource
   (let [p (-> (mock-player)
               (add-power-plant 3) ; oil
               (add-power-plant 4) ; coal
@@ -89,22 +89,22 @@
       (:oil (power-plant-resources p 4) 0) => 0
       (:oil (power-plant-resources p 5) 0) => 0)
     (fact "fills to capacity"
-      (let [p  (accept-resource p :oil 4)]
+      (let [p  (pc/accept-resource p :oil 4)]
         (:oil (power-plant-resources p 3) 0) => 4
         (:oil (power-plant-resources p 4) 0) => 0
         (:oil (power-plant-resources p 5) 0) => 0))
     (fact "adds to hybrid last"
-      (let [p  (accept-resource p :oil 5)]
+      (let [p  (pc/accept-resource p :oil 5)]
         (:oil (power-plant-resources p 3) 0) => 4
         (:oil (power-plant-resources p 4) 0) => 0
         (:oil (power-plant-resources p 5) 0) => 1))))
 
-(fact send-resource
+(fact pc/send-resource
   (let [plant-id 3
         p (-> (mock-player)
               (add-power-plant plant-id) ; oil
-              (accept-resource :oil 4)
-              (send-resource [plant-id :oil] 2))]
+              (pc/accept-resource :oil 4)
+              (pc/send-resource [plant-id :oil] 2))]
     (power-plant-resources p plant-id) => {:oil 2}))
 
 (fact can-power-plant?

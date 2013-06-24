@@ -1,5 +1,6 @@
 (ns powergrid.messages.phase5
-  (:require [powergrid.message :refer [Message]]
+  (:require [powergrid.message :as msg]
+            [powergrid.common.protocols :as pc]
             [powergrid.util.error :refer [fail failf]]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
@@ -49,9 +50,9 @@
   resource supply"
   [game player-id plant-id resource n]
   (-> game
-      (g/update-player player-id r/send-resource
+      (g/update-player player-id pc/send-resource
                        [plant-id resource] n)
-      (g/update-resource resource r/accept-resource
+      (g/update-resource resource pc/accept-resource
                          :supply n)))
 
 (defn flatten-sale
@@ -80,10 +81,21 @@
 
 ;; powered-plants {plant-id {resource amt}}
 (defrecord PowerCitiesMessage [player-id powered-plants]
-  Message
+  pc/Labeled
+  (label [this game]
+    (let [player-label (pc/label (g/player game player-id))]
+     (if (msg/is-pass? this)
+      (format "%s passes on powering cities." player-label)
+      (format "%s powers %d %s, earns $%d."
+              player-label
+              (count powered-plants)
+              (if (= 1 (count powered-plants)) "city" "cities")
+              (total-payout game player-id powered-plants)))))
+
+  msg/Message
   (turn? [_] true)
   (passable? [_ _] true)
-  (update-pass [_ game]
+  (update-pass [_ game logger]
     (-> game (g/transfer-money :to player-id (payout 0))))
 
   (validate [this game]
@@ -97,7 +109,7 @@
       (some validate-sale powered-plants)
       game))
 
-  (update-game [this game]
+  (update-game [this game logger]
     (-> game
         (consume-resources player-id powered-plants)
         (g/transfer-money :to player-id

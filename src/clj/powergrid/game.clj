@@ -89,10 +89,10 @@
 (defn init-resources []
   (let [std-pricing (for [p (range 1 9) _ (range 3)] p)
         uranium-pricing '(1 2 3 4 5 6 7 8 12 14 15 16)]
-    {:coal (r/map->Resource {:market 24 :supply 0 :pricing std-pricing})
-     :oil  (r/map->Resource {:market 18 :supply 6 :pricing std-pricing})
-     :garbage (r/map->Resource {:market 6 :supply 18 :pricing std-pricing})
-     :uranium (r/map->Resource {:market 2 :supply 10 :pricing uranium-pricing})}))
+    {:coal (r/map->Resource {:label "coal" :market 24 :supply 0 :pricing std-pricing})
+     :oil  (r/map->Resource {:label "oil" :market 18 :supply 6 :pricing std-pricing})
+     :garbage (r/map->Resource {:label "garbage" :market 6 :supply 18 :pricing std-pricing})
+     :uranium (r/map->Resource {:label "uranium" :market 2 :supply 10 :pricing uranium-pricing})}))
 
 (defn- init-power-plant-deck
   [power-plants num-players]

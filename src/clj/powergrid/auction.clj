@@ -6,6 +6,10 @@
 (def map->Auction common/map->Auction)
 (def current-bidder common/current-bidder)
 (def min-bid common/min-bid)
+(def item common/item)
+(def player-id common/player-id)
+(def bidders common/bidders)
+(def price common/price)
 
 (def ^:private defaults
   {:min-increment 1})

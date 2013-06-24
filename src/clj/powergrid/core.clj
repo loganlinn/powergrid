@@ -1,12 +1,14 @@
 (ns powergrid.core
   (:require [powergrid.util :refer [separate]]
             [powergrid.game :as g]
+            [powergrid.common.protocols :as pc]
             [powergrid.common.player :as p]
             [powergrid.common.resource :as r]
             [powergrid.message :as msg]
             [powergrid.messages.factory :as msgs]
-            [clojure.algo.monads :refer [with-monad domonad m-chain]]
-            [powergrid.util.error :refer [has-failed? error-m fail failf]]))
+            [powergrid.util.log :refer [debugf]]
+            [powergrid.util.error :refer [has-failed? error-m fail failf]]
+            [clojure.algo.monads :refer [with-monad domonad m-chain]]))
 
 (defn game-over?
   "Returns true if conditions have been to end the game, otherwise false"
@@ -29,8 +31,8 @@
    (reduce
      (fn [game [resource amt]]
        (-> game
-           (g/update-resource resource r/send-resource :supply amt)
-           (g/update-resource resource r/accept-resource :market amt)))
+           (g/update-resource resource pc/send-resource :supply amt)
+           (g/update-resource resource pc/accept-resource :market amt)))
      game
      rate)))
 
@@ -126,15 +128,29 @@
 
   (def tick (m-chain [tick-step tick-phase])))
 
+
+(defn log-logger
+  "Game event logger that logs to application log"
+  [game msg]
+  (debugf "[%s@%d,%d] %s"
+          (:id game)
+          (g/current-phase game)
+          (g/current-step game)
+          msg)
+  game)
+
 (def ^:dynamic *default-error-fn* nil)
 (def ^:dynamic *default-success-fn* nil)
+(def ^:dynamic *default-logger* log-logger)
 
 ;; TODO cleanup
 (defn update-game
-  [game msg & {success-fn :success error-fn :error
-               :or {error-fn *default-error-fn* success-fn *default-success-fn*}}]
+  [game msg & {success-fn :success error-fn :error logger :logger
+               :or {error-fn *default-error-fn*
+                    success-fn *default-success-fn*
+                    logger *default-logger*}}]
   (domonad error-m
-    [result (msg/apply-message game msg)
+    [result (msg/apply-message game msg logger)
      result (tick result)]
     (if (has-failed? result)
       (do

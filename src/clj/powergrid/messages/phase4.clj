@@ -1,5 +1,6 @@
 (ns powergrid.messages.phase4
-  (:require [powergrid.message :refer [Message]]
+  (:require [powergrid.message :as msg]
+            [powergrid.common.protocols :as pc]
             [powergrid.util.error :refer [fail]]
             [powergrid.game :as g]
             [powergrid.cities :as c]
@@ -34,10 +35,17 @@
   (reduce #(g/update-cities %1 c/add-owner player-id %2) game new-cities))
 
 (defrecord BuyCitiesMessage [player-id new-cities]
-  Message
+  pc/Labeled
+  (label [this game]
+    (let [player-label (pc/label (g/player game player-id))]
+     (if (msg/is-pass? this)
+      (format "%s passes on building cities." player-label)
+      (format "%s built in %s." player-label (clojure.string/join ", " (map name new-cities))))))
+
+  msg/Message
   (turn? [_] true)
   (passable? [_ _] true)
-  (update-pass [_ game] game)
+  (update-pass [_ game logger] game)
 
   (validate [this game]
     (cond
@@ -51,7 +59,7 @@
 
       :else game))
 
-  (update-game [this game]
+  (update-game [this game logger]
     (let [cost (purchase-cost game player-id new-cities)]
       (-> game
           (own-cities player-id new-cities)
