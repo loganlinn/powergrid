@@ -1,4 +1,4 @@
-(ns powergrid.common.protocols
+(ns ^:shared powergrid.common.protocols
   "Protocols used globally the application")
 
 ;; TODO Move other protocols here
@@ -14,8 +14,10 @@
 (extend-protocol Labeled
   nil
   (label [_] "")
-  clojure.lang.Keyword
-  (label [this] (name this)))
+  ;; Disabled for cljs compatibility
+  ;clojure.lang.Keyword
+  ;(label [this] (name this))
+  )
 
 (defprotocol ResourceTrader
   (accept-resource [trader dest amt]
