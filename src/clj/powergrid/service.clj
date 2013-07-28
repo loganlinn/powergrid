@@ -14,6 +14,9 @@
             [ring.util.response :refer [response redirect redirect-after-post]]
             [ring.middleware.resource :refer [wrap-resource]]))
 
+(def msg-type :powergrid/type)
+(def msg-topic :powergrid/topic)
+
 (defn uuid [] (str (java.util.UUID/randomUUID)))
 
 (defn edn-response
@@ -54,8 +57,8 @@
 ;;
 
 (defn game-msg [games game-id]
-  {:powergrid/type :swap
-   :powergrid/topic [:games game-id :state]
+  {msg-type :swap
+   msg-topic [:games game-id :state]
    :value (client-game (@games game-id))})
 
 (defn- send-game-state!
@@ -69,8 +72,8 @@
   (chan/broadcast-msg! channels game-id (game-msg games game-id)))
 
 (defn whos-online-msg [channels game-id]
-  {:powergrid/type :swap
-   :powergrid/topic [:games game-id :online]
+  {msg-type :swap
+   msg-topic [:games game-id :online]
    :online (keys (chan/game-channels channels game-id))})
 
 ;;
@@ -126,11 +129,11 @@
                                         (player-msg msg session)
                                         channel game-id player-id))))))
 
-    (chan/send-msg! channel {:powergrid/type :swap
-                             :powergrid/topic [:games game-id :player-id]
+    (chan/send-msg! channel {msg-type :swap
+                             msg-topic [:games game-id :player-id]
                              :value player-id})
-    (chan/broadcast-msg! channels game-id {:powergrid/type :conj
-                                           :powergrid/topic [:games game-id :online]
+    (chan/broadcast-msg! channels game-id {msg-type :conj
+                                           msg-topic [:games game-id :online]
                                            :value player-id})
     (chan/setup channels channel game-id player-id)
     ))
