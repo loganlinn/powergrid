@@ -1,5 +1,6 @@
 (ns powergrid.game
-  (:require [powergrid.common.game :as common]
+  (:require [potemkin :refer [import-vars]]
+            [powergrid.common.game]
             [powergrid.common.power-plants :as pp]
             [powergrid.common.player :as p]
             [powergrid.auction :as a]
@@ -9,33 +10,34 @@
             [powergrid.util :refer [separate queue]]
             [robert.hooke :as hook]))
 
-;; TODO Fix this mess
-(def ->Game common/->Game)
-(def map->Game common/map->Game)
-(def id common/id)
-(def current-step common/current-step)
-(def current-phase common/current-phase)
-(def current-round common/current-round)
-(def turns common/turns)
-(def turn-order common/turn-order)
-(def resources common/resources)
-(def cities common/cities)
-(def auction common/auction)
-(def current-turn common/current-turn)
-(def turns-remain? common/turns-remain?)
-(def has-auction? common/has-auction?)
-(def resource common/resource)
-(def map-resources common/map-resources)
-(def contains-resource? common/contains-resource?)
-(def power-plants common/power-plants)
-(def contains-resources? common/contains-resources?)
-(def player common/player)
-(def players common/players)
-(def map-players common/map-players)
-(def num-players common/num-players)
-(def network-size common/network-size)
-(def max-network-size common/max-network-size)
-(def max-city-connections common/max-city-connections)
+(import-vars
+  [powergrid.common.game
+   ->Game
+   map->Game
+   id
+   current-step
+   current-phase
+   current-round
+   turns
+   turn-order
+   resources
+   cities
+   auction
+   current-turn
+   turns-remain?
+   has-auction?
+   resource
+   map-resources
+   contains-resource?
+   power-plants
+   contains-resources?
+   player
+   players
+   map-players
+   num-players
+   network-size
+   max-network-size
+   max-city-connections])
 
 (defn num-regions-chosen
   "Returns the number of regions chosen on map"

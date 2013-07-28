@@ -60,14 +60,14 @@
   [game]
   (first (turns game)))
 
-(defn ^boolean turns-remain?
+(defn turns-remain?
   "Returns true if turns still exist in phase, otherwise false."
   [game]
   (boolean (seq (:turns game))))
 
 ;; AUCTIONING
 
-(defn ^boolean has-auction? [game] (boolean (auction game)))
+(defn has-auction? [game] (boolean (auction game)))
 
 ;; RESOURCES
 
@@ -78,13 +78,13 @@
   [game f]
   (into {} (for [[t r] (:resources game)] [t (f r)])))
 
-(defn ^boolean contains-resource?
+(defn contains-resource?
   "Returns true if there is at least amt of resource in the resource market"
   ([game rtype amt]
    {:pre [(not (neg? amt))]}
    (>= (:market (resource game rtype) 0) amt)))
 
-(defn ^boolean contains-resources?
+(defn contains-resources?
   "Returns true if game's resource market has every {resource amt} pair in
   resources, otherwise false"
   [game resources]

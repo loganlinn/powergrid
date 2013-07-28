@@ -1,15 +1,18 @@
 (ns powergrid.cities
-  (require [powergrid.common.cities :as common]
-           [powergrid.cities.dijkstra :as d]))
+  (:require [potemkin :refer [import-vars]]
+            [powergrid.common.cities]
+            [powergrid.cities.dijkstra :as d]))
 
-(def ->Cities common/->Cities)
-(def map->Cities common/map->Cities)
-(def owners common/owners)
-(def connections common/connections)
-(def valid-city? common/valid-city?)
-(def owned-cities common/owned-cities)
-(def network-size common/network-size)
-(def network-sizes common/network-sizes)
+(import-vars
+  [powergrid.common.cities
+   ->Cities
+   map->Cities
+   owners
+   connections
+   valid-city?
+   owned-cities
+   network-size
+   network-sizes])
 
 (defn as-graph
   "Converts a map of edges to cost to a 2d graph"

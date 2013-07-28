@@ -1,15 +1,18 @@
 (ns powergrid.auction
-  (:require [powergrid.common.auction :as common]
+  (:require [potemkin :refer [import-vars]]
+            [powergrid.common.auction]
             [powergrid.util :refer [queue]]))
 
-(def ->Auction common/->Auction)
-(def map->Auction common/map->Auction)
-(def current-bidder common/current-bidder)
-(def min-bid common/min-bid)
-(def item common/item)
-(def player-id common/player-id)
-(def bidders common/bidders)
-(def price common/price)
+(import-vars
+  [powergrid.common.auction
+   ->Auction
+   map->Auction
+   current-bidder
+   min-bid
+   item
+   player-id
+   bidders
+   price])
 
 (def ^:private defaults
   {:min-increment 1})

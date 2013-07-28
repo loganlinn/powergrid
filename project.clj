@@ -9,6 +9,7 @@
                  [com.taoensso/timbre "2.1.2"]
                  [ring "1.1.8"]
                  [http-kit "2.1.1"]
+                 [potemkin "0.3.0"]
                  [ring-anti-forgery "0.2.1"]
                  [shoreleave/shoreleave-pubsub "0.3.0"]
                  [shoreleave/shoreleave-browser "0.3.0"]
