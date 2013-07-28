@@ -68,15 +68,15 @@
 
 ;;
 
-(defmulti handle-message (fn [games msg-type msg channel game-id player-id] msg-type))
+(defmulti handle-message (fn [games channels msg-type msg channel game-id player-id] msg-type))
 
 (defmethod handle-message :default
-  [games msg-type _ channel _ player-id]
+  [games channels msg-type _ channel _ player-id]
   (println "Unknown message" msg-type player-id)
   (chan/send-error! channel "Unknown message"))
 
 (defmethod handle-message :update-game
-  [games _ msg channel game-id player-id]
+  [games channels _ msg channel game-id player-id]
   (if-let [game-msg (msgs/create-message msg)]
     (swap! games update-in [game-id]
            c/update-game
@@ -87,12 +87,12 @@
   (broadcast-game-state! games game-id))
 
 (defmethod handle-message :game-state
-  [games _ _ channel game-id player-id]
+  [games channels _ _ channel game-id player-id]
   (send-game-state! games channel game-id))
 
 (defmethod handle-message :whos-online
-  [games _ _ channel game-id player-id]
-  (chan/send-msg! channel {:online (chan/player-ids-online game-id)}))
+  [games channels _ _ channel game-id player-id]
+  (chan/send-msg! channel {:online (chan/player-ids-online channels game-id)}))
 
 ;;
 
@@ -101,12 +101,12 @@
   [msg session]
   (assoc msg :player-id (p/id session)))
 
-(defn ws-handler [games game-id player-id {:keys [session] :as req}]
+(defn ws-handler [games channels game-id player-id {:keys [session] :as req}]
   (with-channel req channel
     (on-close channel
               (fn [status]
-                (chan/cleanup game-id player-id)
-                (chan/broadcast-msg! game-id {:leave player-id})))
+                (chan/cleanup channels game-id player-id)
+                (chan/broadcast-msg! channels game-id {:leave player-id})))
 
     (on-receive channel
                 (fn [data]
@@ -114,13 +114,14 @@
                     (if (map? data)
                       (doseq [[msg-type msg] data]
                         (handle-message games
+                                        channels
                                         msg-type
                                         (player-msg msg session)
                                         channel game-id player-id))))))
 
     (chan/send-msg! channel {:player-id player-id})
-    (chan/broadcast-msg! game-id {:join player-id})
-    (chan/setup channel game-id player-id)
+    (chan/broadcast-msg! channels game-id {:join player-id})
+    (chan/setup channels channel game-id player-id)
     ))
 
 (defn render-game [game-id request]
@@ -151,7 +152,7 @@
   ([game-id action] (str (game-url game-id) "/" (name action))))
 
 (defn init-routes
-  [games]
+  [games channels]
   (routes
     (GET "/" []
          "Welcome to Funkenschlag")
@@ -171,7 +172,7 @@
 
              (GET "/ws" {:keys [session] :as req}
                   (if (and (= game-id (:game-id session)) (:id session))
-                    (ws-handler games game-id (p/id session) req)
+                    (ws-handler games channels game-id (p/id session) req)
                     (-> (response "")
                         (assoc :status 403))))
 
@@ -192,8 +193,8 @@
                           (assoc :session nil)))))
 
 (defn init-handler
-  [games]
+  [games channels]
   (reset-game games) ;; todo remove
-  (-> (init-routes games)
+  (-> (init-routes games channels)
       (wrap-resource "public")
       site))

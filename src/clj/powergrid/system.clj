@@ -1,18 +1,16 @@
 (ns powergrid.system
   (:require [powergrid.service]
+            [powergrid.util.log :refer [debug]]
             [org.httpkit.server :as http-kit]))
 
-(defrecord PowergridSystem [handler server port games])
+(defrecord PowergridSystem [handler server port games channels])
 
 (defn system
   "Returns new instance of whole application"
   ([] (system {}))
   ([{:keys [port] :or {port 8484}}]
    (map->PowergridSystem
-     {:handler nil
-      :games nil
-      :server nil
-      :port port})))
+     {:port port})))
 
 (defn- stop-server
   "Stops server if running, returns system"
@@ -30,10 +28,13 @@
   "Performs side effects to initialize the system, acquire resources,
   and start it running. Returns an updated instance of the system."
   [system]
-  (let [games (atom {})]
+  (let [games (atom {})
+        channels (atom {})]
+    (add-watch channels :debug (fn [k r old-val new-val] (debug :channels new-val)))
     (-> system
-        (assoc :games games)
-        (assoc :handler (powergrid.service/init-handler games))
+        (assoc :games games
+               :channels channels
+               :handler (powergrid.service/init-handler games channels))
         (start-server))))
 
 (defn stop

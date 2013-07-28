@@ -3,32 +3,37 @@
             [powergrid.util.log :refer [debug]]
             [powergrid.util :refer [dissoc-in]]))
 
-(def channels (atom {})) ; keyed by [game-id player-id]
+(defn send-msg!
+  [channel msg]
+  (s/send! channel (pr-str msg)))
 
-(add-watch channels :debug (fn [k r old-val new-val] (debug :channels new-val)))
+(defn send-error!
+  [channel err-msg]
+  (send-msg! channel {:error err-msg}))
 
-(defn player-channel [game-id player-id]
+(defn player-channel
+  [channels game-id player-id]
   (get-in @channels [game-id player-id]))
 
-(defn player-ids-online [game-id]
+(defn player-ids-online
+  [channels game-id]
   (keys (get @channels game-id)))
 
-(defn game-channels [game-id]
+(defn game-channels
+  [channels game-id]
   (vals (get @channels game-id)))
 
-(defn cleanup [game-id player-id]
+(defn cleanup
+  [channels game-id player-id]
   (when (and game-id player-id)
     (swap! channels dissoc-in [game-id player-id])))
 
-(defn setup [channel game-id player-id]
+(defn setup
+  [channels channel game-id player-id]
   (swap! channels assoc-in [game-id player-id] channel))
-
-(defn send-msg! [channel msg] (s/send! channel (pr-str msg)))
-
-(defn send-error! [channel err-msg] (send-msg! channel {:error err-msg}))
 
 (defn broadcast-msg!
   "Sends message to all channels associated with game"
-  [game-id msg]
-  (doseq [channel (game-channels game-id)]
+  [channels game-id msg]
+  (doseq [channel (game-channels channels game-id)]
     (send-msg! channel msg)))
