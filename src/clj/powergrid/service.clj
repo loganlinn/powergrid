@@ -5,6 +5,7 @@
             [powergrid.common.player :as p]
             [powergrid.common.power-plants :as pp]
             [powergrid.service.channel :as chan]
+            [powergrid.util :refer [uuid]]
             [powergrid.util.log :refer [debug]]
             [org.httpkit.server :refer :all]
             [compojure.core :refer [routes context GET POST ANY]]
@@ -16,19 +17,6 @@
 
 (def msg-type :powergrid/type)
 (def msg-topic :powergrid/topic)
-
-(defn uuid [] (str (java.util.UUID/randomUUID)))
-
-(defn edn-response
-  "Returns Ring response for EDN payload"
-  ([data]
-   (edn-response data 200))
-  ([data status]
-   {:status status
-    :headers {"Content-Type" "application/edn"}
-    :body (pr-str data)}))
-
-;;
 
 (defn- fix-auction-bidders
   "Replace bidders queue with seq for js portability"

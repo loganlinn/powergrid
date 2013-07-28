@@ -20,6 +20,8 @@
   "Returns a vector: [ (filter f s) (filter (complement f) s) ]"
   [(filter f s) (filter (complement f) s)])
 
+(defn uuid [] (str (java.util.UUID/randomUUID)))
+
 ;(defmethod print-method PersistentQueue
   ;[q w]
   ;(print-method '<- w)
