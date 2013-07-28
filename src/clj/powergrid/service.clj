@@ -187,16 +187,16 @@
     (ANY "/logout" [] (-> (redirect "/")
                           (assoc :session nil)))))
 
-(defn default-game []
-  (-> (g/new-game :usa
+(defn- default-game [id]
+  (-> (g/new-game id
+                  :usa
                   [(p/new-player "Logan" :black)
                    (p/new-player "Maeby" :blue)])
-      (assoc :id 1)
       c/tick))
 
 (defn init-handler
   [games channels]
-  (swap! games assoc "1" (default-game)) ;; todo remove
+  (swap! games assoc "1" (default-game "1")) ;; todo remove
   (-> (init-routes games channels)
       (wrap-resource "public")
       site))

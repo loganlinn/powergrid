@@ -7,7 +7,7 @@
             [powergrid.common.resource :as r]
             [powergrid.cities :as c]
             [powergrid.common.country.usa :as usa]
-            [powergrid.util :refer [separate queue]]
+            [powergrid.util :refer [separate queue uuid]]
             [robert.hooke :as hook]))
 
 (import-vars
@@ -113,20 +113,22 @@
 
 (defn new-game
   "Returns new Game for vector of players"
-  [country players]
-  (map->Game {:id (str (java.util.UUID/randomUUID))
-              :country country
-              :phase 1
-              :step 1
-              :round 1
-              :resources (init-resources)
-              :power-plants (init-power-plants (count players))
-              :players (into {} (map (juxt p/id identity) players))
-              :turns  '()
-              :turn-order (shuffle (map p/id players))
-              :cities (c/map->Cities {:owners {}
-                                      :connections (c/as-graph usa/connections)})
-              :bank 0}))
+  ([country players]
+   (new-game (uuid) country players))
+  ([id country players]
+   (map->Game {:id id
+               :country country
+               :phase 1
+               :step 1
+               :round 1
+               :resources (init-resources)
+               :power-plants (init-power-plants (count players))
+               :players (into {} (map (juxt p/id identity) players))
+               :turns  '()
+               :turn-order (shuffle (map p/id players))
+               :cities (c/map->Cities {:owners {}
+                                       :connections (c/as-graph usa/connections)})
+               :bank 0})))
 
 (defn inc-phase
   [game]
