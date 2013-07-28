@@ -30,13 +30,6 @@
 
 ;;
 
-(defn reset-game [games]
-  (swap! games assoc "1" (-> (g/new-game :usa
-                                         [(p/new-player "Logan" :red)
-                                          (p/new-player "Maeby" :blue)])
-                             (assoc :id 1)
-                             c/tick)))
-
 (defn- fix-auction-bidders
   "Replace bidders queue with seq for js portability"
   [game]
@@ -206,9 +199,16 @@
     (ANY "/logout" [] (-> (redirect "/")
                           (assoc :session nil)))))
 
+(defn default-game []
+  (-> (g/new-game :usa
+                  [(p/new-player "Logan" :black)
+                   (p/new-player "Maeby" :blue)])
+      (assoc :id 1)
+      c/tick))
+
 (defn init-handler
   [games channels]
-  (reset-game games) ;; todo remove
+  (swap! games assoc "1" (default-game)) ;; todo remove
   (-> (init-routes games channels)
       (wrap-resource "public")
       site))
