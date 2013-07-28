@@ -63,8 +63,8 @@
 
 (defn- broadcast-game-state!
   "Sends current game state to all associated channels"
-  [games game-id]
-  (chan/broadcast-msg! game-id (game-msg games game-id)))
+  [games channels game-id]
+  (chan/broadcast-msg! channels game-id (game-msg games game-id)))
 
 ;;
 
@@ -84,7 +84,7 @@
            :error #(chan/send-error! channel %3))
     (if (not= msg {})
       (chan/send-error! channel "Invalid message"))) ;; TODO don't use empty map to get current state
-  (broadcast-game-state! games game-id))
+  (broadcast-game-state! games channels game-id))
 
 (defmethod handle-message :game-state
   [games channels _ _ channel game-id player-id]
