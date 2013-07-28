@@ -54,7 +54,9 @@
 ;;
 
 (defn game-msg [games game-id]
-  {:game (client-game (@games game-id))})
+  {:powergrid/type :swap
+   :powergrid/topic [:games game-id :state]
+   :value (client-game (@games game-id))})
 
 (defn- send-game-state!
   "Sends game-state over individual channel"
@@ -65,6 +67,11 @@
   "Sends current game state to all associated channels"
   [games channels game-id]
   (chan/broadcast-msg! channels game-id (game-msg games game-id)))
+
+(defn whos-online-msg [channels game-id]
+  {:powergrid/type :swap
+   :powergrid/topic [:games game-id :online]
+   :online (keys (chan/game-channels channels game-id))})
 
 ;;
 
@@ -92,7 +99,7 @@
 
 (defmethod handle-message :whos-online
   [games channels _ _ channel game-id player-id]
-  (chan/send-msg! channel {:online (chan/player-ids-online channels game-id)}))
+  (chan/send-msg! channel (whos-online-msg channels game-id)))
 
 ;;
 
@@ -119,8 +126,12 @@
                                         (player-msg msg session)
                                         channel game-id player-id))))))
 
-    (chan/send-msg! channel {:player-id player-id})
-    (chan/broadcast-msg! channels game-id {:join player-id})
+    (chan/send-msg! channel {:powergrid/type :swap
+                             :powergrid/topic [:games game-id :player-id]
+                             :value player-id})
+    (chan/broadcast-msg! channels game-id {:powergrid/type :conj
+                                           :powergrid/topic [:games game-id :online]
+                                           :value player-id})
     (chan/setup channels channel game-id player-id)
     ))
 

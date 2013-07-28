@@ -15,13 +15,10 @@
   [channels game-id player-id]
   (get-in @channels [game-id player-id]))
 
-(defn player-ids-online
-  [channels game-id]
-  (keys (get @channels game-id)))
-
 (defn game-channels
+  "Returns map of player-id to channel for game"
   [channels game-id]
-  (vals (get @channels game-id)))
+  (get @channels game-id {}))
 
 (defn cleanup
   [channels game-id player-id]
@@ -35,5 +32,5 @@
 (defn broadcast-msg!
   "Sends message to all channels associated with game"
   [channels game-id msg]
-  (doseq [channel (game-channels channels game-id)]
+  (doseq [[_ channel] (game-channels channels game-id)]
     (send-msg! channel msg)))
