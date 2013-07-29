@@ -1,6 +1,7 @@
 (ns powergrid.service
   (:require [powergrid.core :as c]
             [powergrid.game :as g]
+            [powergrid.message :as msg]
             [powergrid.messages.factory :as msgs]
             [powergrid.common.player :as p]
             [powergrid.common.power-plants :as pp]
@@ -15,8 +16,8 @@
             [ring.util.response :refer [response redirect redirect-after-post]]
             [ring.middleware.resource :refer [wrap-resource]]))
 
-(def msg-type :powergrid/type)
-(def msg-topic :powergrid/topic)
+(def msg-type :io.pedestal.app.messages/type)
+(def msg-topic :io.pedestal.app.messages/topic)
 
 (defn- fix-auction-bidders
   "Replace bidders queue with seq for js portability"
@@ -37,9 +38,14 @@
 
 ;;
 
+(defn error-msg [error]
+  {msg-type :cons
+   msg-topic [:game :error]
+   :value error})
+
 (defn game-msg [games game-id]
   {msg-type :swap
-   msg-topic [:games game-id :state]
+   msg-topic [:game :state]
    :value (client-game (@games game-id))})
 
 (defn- send-game-state!
@@ -54,69 +60,70 @@
 
 (defn whos-online-msg [channels game-id]
   {msg-type :swap
-   msg-topic [:games game-id :online]
-   :online (keys (chan/game-channels channels game-id))})
+   msg-topic [:game :online]
+   :value (keys (chan/game-channels channels game-id))})
 
 ;;
 
-(defmulti handle-message (fn [games channels msg-type msg channel game-id player-id] msg-type))
+(defmulti handle-message (fn [games channels channel game-id player-id message] (msg-type message)))
 
 (defmethod handle-message :default
-  [games channels msg-type _ channel _ player-id]
-  (println "Unknown message" msg-type player-id)
-  (chan/send-error! channel "Unknown message"))
+  [games channels channel game-id player-id message]
+  (debug "Unsupported message" message)
+  (chan/send-msg! channel (error-msg "Unknown message")))
+
+(defn- debug-game-msg [msg] (debug :game-message msg) msg)
+
+(defn- create-game-msg
+  [games game-id player-id message]
+  (if-let [game (get @games game-id)]
+    (-> (:turn message)
+        (assoc :topic (or (:topic message) (msg/expected-topic game)))
+        (assoc :player-id player-id)
+        (debug-game-msg)
+        (msgs/create-message))
+    (debug "GAME NOT FOUND")))
 
 (defmethod handle-message :update-game
-  [games channels _ msg channel game-id player-id]
-  (if-let [game-msg (msgs/create-message msg)]
-    (swap! games update-in [game-id]
-           c/update-game
-           game-msg
-           :error #(chan/send-error! channel %3))
-    (if (not= msg {})
-      (chan/send-error! channel "Invalid message"))) ;; TODO don't use empty map to get current state
-  (broadcast-game-state! games channels game-id))
+  [games channels channel game-id player-id message]
+  (if-let [game-msg (create-game-msg games game-id player-id message)]
+    (do
+      (swap! games update-in [game-id]
+             c/update-game
+             game-msg
+             :error #(chan/send-msg! channel (error-msg (str "Turn failed: " %3))))
+      (broadcast-game-state! games channels game-id))
+    (chan/send-msg! channel (error-msg "Unrecognized message"))))
 
 (defmethod handle-message :game-state
-  [games channels _ _ channel game-id player-id]
+  [games channels channel game-id player-id message]
   (send-game-state! games channel game-id))
 
 (defmethod handle-message :whos-online
-  [games channels _ _ channel game-id player-id]
+  [games channels channel game-id player-id message]
   (chan/send-msg! channel (whos-online-msg channels game-id)))
 
 ;;
-
-(defn player-msg
-  "Returns msg after associating player-id from session"
-  [msg session]
-  (assoc msg :player-id (p/id session)))
 
 (defn ws-handler [games channels game-id player-id {:keys [session] :as req}]
   (with-channel req channel
     (on-close channel
               (fn [status]
                 (chan/cleanup channels game-id player-id)
-                (chan/broadcast-msg! channels game-id {:leave player-id})))
+                (chan/broadcast-msg! channels game-id (whos-online-msg channels game-id))))
 
     (on-receive channel
                 (fn [data]
-                  (let [data (read-string data)]
-                    (if (map? data)
-                      (doseq [[msg-type msg] data]
-                        (handle-message games
-                                        channels
-                                        msg-type
-                                        (player-msg msg session)
-                                        channel game-id player-id))))))
+                  (let [message (read-string data)]
+                    (debug {:game-id game-id :player-id player-id :message message})
+                    (handle-message games channels channel game-id player-id message))))
 
     (chan/send-msg! channel {msg-type :swap
-                             msg-topic [:games game-id :player-id]
+                             msg-topic [:game :player-id]
                              :value player-id})
-    (chan/broadcast-msg! channels game-id {msg-type :conj
-                                           msg-topic [:games game-id :online]
-                                           :value player-id})
     (chan/setup channels channel game-id player-id)
+    (chan/broadcast-msg! channels game-id
+                         (whos-online-msg channels game-id))
     ))
 
 (defn render-game [game-id request]
@@ -128,7 +135,7 @@
      [:h1 "Funkenschlag"]
      [:div#game]
      (page/include-js "/js/raphael-min.js"
-                      "/js/cljs.js") ]))
+                      "/js/cljs.js")]))
 
 (defn render-join [request game]
   (page/html5

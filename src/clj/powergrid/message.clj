@@ -19,7 +19,7 @@
   (validate [this game] "Validates non-pass messages. Retruns failure if message is invalid, otherwise game")
   (update-game [this game logger] "Returns game after applying valid message. Invoked when passable? is falsey"))
 
-(defn- expected-topic [game]
+(defn expected-topic [game]
   (case (int (g/current-phase game))
     2 :phase2
     3 :phase3

@@ -7,10 +7,6 @@
   [channel msg]
   (s/send! channel (pr-str msg)))
 
-(defn send-error!
-  [channel err-msg]
-  (send-msg! channel {:error err-msg}))
-
 (defn player-channel
   [channels game-id player-id]
   (get-in @channels [game-id player-id]))

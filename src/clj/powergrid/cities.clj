@@ -79,7 +79,7 @@
   permitted to build in each city"
   [cities player-id new-cities]
   (loop [cities cities
-         [city & cs] new-cities
+         [city & cs] (seq new-cities)
          total-cost (apply + (map (partial build-cost cities) new-cities))]
     (if city
       (let [cost (min-connection-cost cities player-id city)]
