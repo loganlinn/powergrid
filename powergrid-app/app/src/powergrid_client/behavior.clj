@@ -30,9 +30,6 @@
 (defn swap-value-transform [_ message]
   (:value message))
 
-(defn swap-int-value-transform [_ message]
-  (int (:value message)))
-
 (defn conj-value-transform [old message]
   (conj (or old #{}) (:value message)))
 
@@ -67,10 +64,6 @@
 
 ;; Derive
 
-(defn derive-turn-topic [_ game]
-  (when-let [phase (get-in game [:state :phase])]
-   (keyword (str "phase" phase))))
-
 (defn has-action
   [_ {:keys [game player-id] :as inputs}]
   (when player-id
@@ -81,22 +74,27 @@
 
 ;; TODO move committed? out of turn
 (defn commit-turn [{:keys [turn player-id state]}]
-  (if (:committed? turn)
+  (when (:committed? turn)
     [{msg/type :update-game
       msg/topic [:game (:id state)]
       :turn (-> turn
                 (dissoc :committed?)
-                (assoc :player-id player-id))}]
-    []))
+                (assoc :player-id player-id))}]))
 
 (defn login-effect
   [{:keys [game-id handle color] :as login}]
   (log/debug :in :login-effect :login login)
-  (if (and game-id handle color)
+  (when (and game-id handle color)
     [{msg/type :game-login
       msg/topic [:games game-id]
-      :game-id game-id :handle handle :color color}]
-    []))
+      :game-id game-id :handle handle :color color}]))
+
+;; Continue
+
+(defn phase-transition [phase]
+  (log/debug :in :phase-transition :phase phase)
+  (when phase
+    [^:input {msg/topic msg/app-model msg/type :set-focus :name (keyword (str "phase" phase))}]))
 
 ;; Emitter
 
@@ -105,43 +103,83 @@
     {:transforms
      {:login [{msg/type :login msg/topic [:login] (msg/param :handle) {} (msg/param :color) {}}
               {msg/type :swap msg/topic [:login :game-id] :value "1"}
-              ;{msg/type :set-focus msg/topic msg/app-model :name :game}
-              ]}}}])
+              {msg/type :set-focus msg/topic msg/app-model :name :game}]}}}])
 
 (defn init-main [_]
   [{:main
     {:game
-     {:turn
+     {:state
       {:transforms
-       {:commit [{msg/topic [:game :turn]} {msg/topic [:game :turn] msg/type :reset}]
-        :pass-bid [{msg/topic [:game :turn] msg/type :pass}
-                   {msg/topic [:game :turn :type] msg/type :swap :value :bid}
-                   {msg/topic [:game :turn] msg/type :reset}]
-        :pass-buy [{msg/topic [:game :turn] msg/type :pass}
-                   {msg/topic [:game :turn :type] msg/type :swap :value :buy}
-                   {msg/topic [:game :turn] msg/type :reset}]
-        :reset [{msg/topic [:game :turn]}]
-        :select-power-plant [{msg/topic [:game :turn] (msg/param :value) {}}
-                             {msg/topic [:game :turn :topic] msg/type :swap :value :phase2}
-                             {msg/topic [:game :turn :type] msg/type :swap :value :bid}]
-        :inc-resource [{msg/topic [:game :turn] (msg/param :resource) {}}
-                       {msg/topic [:game :turn :topic] msg/type :swap :value :phase3}
-                       {msg/topic [:game :turn :type] msg/type :swap :value :buy}]
-        :dec-resource [{msg/topic [:game :turn] (msg/param :resource) {}}
-                       {msg/topic [:game :turn :topic] msg/type :swap :value :phase3}
-                       {msg/topic [:game :turn :type] msg/type :swap :value :buy}]
-        :select-city [{msg/topic [:game :turn :new-cities] (msg/param :value) {}}
-                      {msg/topic [:game :turn :topic] msg/type :swap :value :phase4}
-                      {msg/topic [:game :turn :type] msg/type :swap :value :buy}]
-        :deselect-city [{msg/topic [:game :turn :new-cities] (msg/param :value) {}}]
-        :power-cities [{msg/topic [:game :turn :powered-plants] (msg/param :plant-id) {} (msg/param :resource) {} (msg/param :amount) {}}
-                       {msg/topic [:game :turn :topic] msg/type :swap :value :phase5}
-                       {msg/topic [:game :turn :type] msg/type :swap :value :sell}]
-        :bid [{msg/topic [:game :turn :bid] msg/type :swap-int (msg/param :value) {}}]
-        :inc-bid [{msg/topic [:game :turn :bid] msg/type :inc}]
-        :dec-bid [{msg/topic [:game :turn :bid] msg/type :dec}]
-        :set [{msg/topic [:game :turn] (msg/param :value) {}}]
-        }}}}}])
+        {:refresh [{msg/topic [:game :state]}]}}}}}])
+
+(defn init-phase2 [_]
+  (log/debug :in :init-phase2 :args _)
+  [{:main
+    {:phase
+     {2 {:turn
+         {:transforms
+          {:commit [{msg/topic [:phase 2 :turn]} {msg/topic [:phase 2 :turn] msg/type :reset}]
+           :select-power-plant [{msg/topic [:phase 2 :turn] (msg/param :value) {}}
+                                {msg/topic [:phase 2 :turn :topic] msg/type :swap :value :phase2}
+                                {msg/topic [:phase 2 :turn :type] msg/type :swap :value :bid}]
+           :bid [{msg/topic [:phase 2 :turn :bid] msg/type :swap-int (msg/param :value) {}}]
+           :inc-bid [{msg/topic [:phase 2 :turn :bid] msg/type :inc}]
+           :dec-bid [{msg/topic [:phase 2 :turn :bid] msg/type :dec}]
+           :pass-bid [{msg/topic [:phase 2 :turn] msg/type :pass}
+                      {msg/topic [:phase 2 :turn :type] msg/type :swap :value :bid}
+                      {msg/topic [:phase 2 :turn] msg/type :reset}]
+           }}}}}}
+   ;[:value [:main :phase 2 :turn :topic] :phase 2]
+   ])
+
+(defn init-phase3 [_]
+  [{:main
+    {:phase
+     {3 {:turn
+         {:transforms
+          {:commit [{msg/topic [:phase 3 :turn]} {msg/topic [:phase 3 :turn] msg/type :reset}]
+           :inc-resource [{msg/topic [:phase 3 :turn] (msg/param :resource) {}}
+                          {msg/topic [:phase 3 :turn :type] msg/type :swap :value :buy}]
+           :dec-resource [{msg/topic [:phase 3 :turn] (msg/param :resource) {}}
+                          {msg/topic [:phase 3 :turn :type] msg/type :swap :value :buy}]
+           :pass-buy [{msg/topic [:phase 3 :turn] msg/type :pass}
+                      {msg/topic [:phase 3 :turn :type] msg/type :swap :value :buy}
+                      {msg/topic [:phase 3 :turn] msg/type :reset}]
+           }}}}}}
+   ;[:value [:main :phase 3 :turn :topic] :phase 3]
+   ])
+
+(defn init-phase4 [_]
+  [{:main
+    {:phase
+    {4 {:turn
+        {:transforms
+         {:commit [{msg/topic [:phase 4 :turn]} {msg/topic [:phase 4 :turn] msg/type :reset}]
+          :select-city [{msg/topic [:phase 4 :turn :new-cities] (msg/param :value) {}}
+                        {msg/topic [:phase 4 :turn :type] msg/type :swap :value :buy}]
+          :deselect-city [{msg/topic [:phase 4 :turn :new-cities] (msg/param :value) {}}]
+          :pass-buy [{msg/topic [:phase 4 :turn] msg/type :pass}
+                     {msg/topic [:phase 4 :turn :type] msg/type :swap :value :buy}
+                     {msg/topic [:phase 4 :turn] msg/type :reset}]
+          }}}}}}
+   ;[:value [:main :phase 4 :turn :topic] :phase 4]
+   ])
+
+(defn init-phase5 [_]
+  [{:main
+    {:phase
+     {5 {:turn
+         {:transforms
+          {:commit [{msg/topic [:phase 5 :turn]} {msg/topic [:phase 5 :turn] msg/type :reset}]
+
+           :power-cities [{msg/topic [:phase 5 :turn :powered-plants] (msg/param :plant-id) {} (msg/param :resource) {} (msg/param :amount) {}}
+                          {msg/topic [:phase 5 :turn :topic] msg/type :swap :value :phase5}
+                          {msg/topic [:phase 5 :turn :type] msg/type :swap :value :sell}]
+           :pass-sell [{msg/topic [:phase 5 :turn] msg/type :pass}
+                       {msg/topic [:phase 5 :turn :type] msg/type :swap :value :sell}
+                       {msg/topic [:phase 5 :turn] msg/type :reset}]}}}}}}
+   ;[:value [:main :phase 5 :turn :topic] :phase 5]
+   ])
 
 ;;
 
@@ -153,31 +191,50 @@
                [:cons [:**] cons-value-transform]
                [:inc  [:**] inc-transform]
                [:dec  [:**] dec-transform]
-               [:swap-int [:**] swap-int-value-transform]
+               [:swap-int [:**] (comp int int-value-transform)]
                [:login [:login] login-transform]
-               [:select-power-plant [:game :turn] select-power-plant]
-               [:inc-resource [:game :turn] inc-resource]
-               [:dec-resource [:game :turn] dec-resource]
-               [:select-city [:game :turn :new-cities] conj-keyword-value-transform]
-               [:deselect-city [:game :turn :new-cities] disj-keyword-value-transform]
-               [:commit [:game :turn] #(assoc %1 :committed? true)]
-               [:pass [:game :turn] #(assoc %1 msg-pass true :committed? true)]
-               [:reset [:game :turn] (constantly {})]
+               [:select-power-plant [:phase 2 :turn] select-power-plant]
+               [:inc-resource [:phase 3 :turn] inc-resource]
+               [:dec-resource [:phase 3 :turn] dec-resource]
+               [:select-city   [:phase 4 :turn :new-cities] conj-keyword-value-transform]
+               [:deselect-city [:phase 4 :turn :new-cities] disj-keyword-value-transform]
+
+               [:commit [:phase :* :turn] #(assoc %1 :committed? true)]
+               [:pass   [:phase :* :turn] #(assoc %1 msg-pass true :committed? true)]
+               [:reset  [:phase :* :turn] (constantly {})]
 
                [:set [:game :turn] #(read-string (:value %2))]
                [:debug [:pedestal :**] swap-value-transform]]
+
    :derive #{[{[:game :state] :game
                [:game :player-id] :player-id} [:game :has-action] has-action :map]}
+
    :effect #{[#{[:login]} login-effect :single-val]
              [#{[:game]} commit-turn :single-val]}
+
+   :continue #{[#{[:game :state :phase]} phase-transition :single-val]}
+
    :emit [{:init init-login}
           [#{[:login :*]} (app/default-emitter [])]
           {:init init-main}
           [#{[:game :*]} (app/default-emitter [:main])]
-          [#{[:pedestal :debug :*]} (app/default-emitter [])]
-          ]
-   ;:focus {:login [[:login]]
-   ;:wait [[:wait]]
-   ;:game [[:main] [:pedestal]]
-   ;:default :login}
+          {:init init-phase2}
+          [#{[:phase 2 :*]} (app/default-emitter [:main])]
+          {:init init-phase3}
+          [#{[:phase 3 :*]} (app/default-emitter [:main])]
+          {:init init-phase4}
+          [#{[:phase 4 :*]} (app/default-emitter [:main])]
+          {:init init-phase5}
+          [#{[:phase 5 :*]} (app/default-emitter [:main])]
+          [#{[:pedestal :debug :*]} (app/default-emitter [])]]
+
+   :focus {:login [[:login]]
+           :wait [[:wait]]
+           :game [[:main] [:pedestal]]
+           :phase2 [[:main] [:phase2] [:pedestal]]
+           :phase3 [[:main] [:phase3] [:pedestal]]
+           :phase4 [[:main] [:phase4] [:pedestal]]
+           :phase5 [[:main] [:phase5] [:pedestal]]
+           :default :game}
    })
+
