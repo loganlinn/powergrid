@@ -73,13 +73,15 @@
 ;; Effects
 
 ;; TODO move committed? out of turn
-(defn commit-turn [{:keys [turn player-id state]}]
-  (when (:committed? turn)
+(defn commit-turn [{:keys [turn player-id game-id]}]
+  (log/debug :in :commit-turn :turn turn :player-id player-id :game-id game-id)
+  (when-let [turn (first turn)]
+   (when (and game-id player-id (every? turn [:committed? :topic :type]))
     [{msg/type :update-game
-      msg/topic [:game (:id state)]
+      msg/topic [:game game-id]
       :turn (-> turn
                 (dissoc :committed?)
-                (assoc :player-id player-id))}]))
+                (assoc :player-id player-id))}])))
 
 (defn login-effect
   [{:keys [game-id handle color] :as login}]
@@ -127,6 +129,7 @@
            :dec-bid [{msg/topic [:phase 2 :turn :bid] msg/type :dec}]
            :pass-bid [{msg/topic [:phase 2 :turn] msg/type :pass}
                       {msg/topic [:phase 2 :turn :type] msg/type :swap :value :bid}
+                      {msg/topic [:phase 2 :turn :topic] msg/type :swap :value :phase2}
                       {msg/topic [:phase 2 :turn] msg/type :reset}]
            }}}}}}
    ;[:value [:main :phase 2 :turn :topic] :phase 2]
@@ -144,6 +147,7 @@
                           {msg/topic [:phase 3 :turn :type] msg/type :swap :value :buy}]
            :pass-buy [{msg/topic [:phase 3 :turn] msg/type :pass}
                       {msg/topic [:phase 3 :turn :type] msg/type :swap :value :buy}
+                      {msg/topic [:phase 3 :turn :topic] msg/type :swap :value :phase3}
                       {msg/topic [:phase 3 :turn] msg/type :reset}]
            }}}}}}
    ;[:value [:main :phase 3 :turn :topic] :phase 3]
@@ -160,6 +164,7 @@
           :deselect-city [{msg/topic [:phase 4 :turn :new-cities] (msg/param :value) {}}]
           :pass-buy [{msg/topic [:phase 4 :turn] msg/type :pass}
                      {msg/topic [:phase 4 :turn :type] msg/type :swap :value :buy}
+                     {msg/topic [:phase 4 :turn :topic] msg/type :swap :value :phase4}
                      {msg/topic [:phase 4 :turn] msg/type :reset}]
           }}}}}}
    ;[:value [:main :phase 4 :turn :topic] :phase 4]
@@ -177,6 +182,7 @@
                           {msg/topic [:phase 5 :turn :type] msg/type :swap :value :sell}]
            :pass-sell [{msg/topic [:phase 5 :turn] msg/type :pass}
                        {msg/topic [:phase 5 :turn :type] msg/type :swap :value :sell}
+                       {msg/topic [:phase 5 :turn :topic] msg/type :swap :value :phase5}
                        {msg/topic [:phase 5 :turn] msg/type :reset}]}}}}}}
    ;[:value [:main :phase 5 :turn :topic] :phase 5]
    ])
@@ -210,7 +216,9 @@
                [:game :player-id] :player-id} [:game :has-action] has-action :map]}
 
    :effect #{[#{[:login]} login-effect :single-val]
-             [#{[:game]} commit-turn :single-val]}
+             [{[:game :player-id] :player-id
+               [:game :state :id] :game-id
+               [:phase :* :turn] :turn} commit-turn :map]}
 
    :continue #{[#{[:game :state :phase]} phase-transition :single-val]}
 
@@ -218,23 +226,19 @@
           [#{[:login :*]} (app/default-emitter [])]
           {:init init-main}
           [#{[:game :*]} (app/default-emitter [:main])]
-          {:init init-phase2}
-          [#{[:phase 2 :*]} (app/default-emitter [:main])]
-          {:init init-phase3}
-          [#{[:phase 3 :*]} (app/default-emitter [:main])]
-          {:init init-phase4}
-          [#{[:phase 4 :*]} (app/default-emitter [:main])]
-          {:init init-phase5}
-          [#{[:phase 5 :*]} (app/default-emitter [:main])]
+          {:in #{[:phase 2 :*]} :init init-phase2 :fn (app/default-emitter [:main])}
+          {:in #{[:phase 3 :*]} :init init-phase3 :fn (app/default-emitter [:main])}
+          {:in #{[:phase 4 :*]} :init init-phase4 :fn (app/default-emitter [:main])}
+          {:in #{[:phase 5 :*]} :init init-phase5 :fn (app/default-emitter [:main])}
           [#{[:pedestal :debug :*]} (app/default-emitter [])]]
 
    :focus {:login [[:login]]
            :wait [[:wait]]
            :game [[:main] [:pedestal]]
-           :phase2 [[:main] [:phase2] [:pedestal]]
-           :phase3 [[:main] [:phase3] [:pedestal]]
-           :phase4 [[:main] [:phase4] [:pedestal]]
-           :phase5 [[:main] [:phase5] [:pedestal]]
+           :phase2 [[:main :game] [:main :phase 2] [:pedestal]]
+           :phase3 [[:main :game] [:main :phase 3] [:pedestal]]
+           :phase4 [[:main :game] [:main :phase 4] [:pedestal]]
+           :phase5 [[:main :game] [:main :phase 5] [:pedestal]]
            :default :game}
    })
 
