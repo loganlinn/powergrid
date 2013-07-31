@@ -1,6 +1,12 @@
 (ns ^:shared powergrid-client.behavior
     (:require [clojure.string :as string]
               [cljs.reader :refer [read-string]]
+              [powergrid.common.game :as g]
+              [powergrid.common.player :as p]
+              [powergrid.common.cities]
+              [powergrid.common.auction]
+              [powergrid.common.resource]
+              [powergrid.common.power-plants]
               [io.pedestal.app :as app]
               [io.pedestal.app.messages :as msg]
               [io.pedestal.app.dataflow :as dataflow]
@@ -64,6 +70,12 @@
 (defn derive-turn-topic [_ game]
   (when-let [phase (get-in game [:state :phase])]
    (keyword (str "phase" phase))))
+
+(defn has-action
+  [_ {:keys [game player-id] :as inputs}]
+  (when player-id
+    (= player-id
+       (g/action-player-id game))))
 
 ;; Effects
 
@@ -154,7 +166,8 @@
 
                [:set [:game :turn] #(read-string (:value %2))]
                [:debug [:pedestal :**] swap-value-transform]]
-   :derive #{}
+   :derive #{[{[:game :state] :game
+               [:game :player-id] :player-id} [:game :has-action] has-action :map]}
    :effect #{[#{[:login]} login-effect :single-val]
              [#{[:game]} commit-turn :single-val]}
    :emit [{:init init-login}
@@ -168,61 +181,3 @@
    ;:game [[:main] [:pedestal]]
    ;:default :login}
    })
-
-;; Once this behavior works, run the Data UI and record
-;; rendering data which can be used while working on a custom
-;; renderer. Rendering involves making a template:
-;;
-;; app/templates/powergrid-client.html
-;;
-;; slicing the template into pieces you can use:
-;;
-;; app/src/powergrid_client/html_templates.cljs
-;;
-;; and then writing the rendering code:
-;;
-;; app/src/powergrid_client/rendering.cljs
-
-(comment
-  ;; The examples below show the signature of each type of function
-  ;; that is used to build a behavior dataflow.
-
-  ;; transform
-
-  (defn example-transform [old-state message]
-    ;; returns new state
-    )
-
-  ;; derive
-
-  (defn example-derive [old-state inputs]
-    ;; returns new state
-    )
-
-  ;; emit
-
-  (defn example-emit [inputs]
-    ;; returns rendering deltas
-    )
-
-  ;; effect
-
-  (defn example-effect [inputs]
-    ;; returns a vector of messages which effect the outside world
-    )
-
-  ;; continue
-
-  (defn example-continue [inputs]
-    ;; returns a vector of messages which will be processed as part of
-    ;; the same dataflow transaction
-    )
-
-  ;; dataflow description reference
-
-  {:transform [[:op [:path] example-transform]]
-   :derive    #{[#{[:in]} [:path] example-derive]}
-   :effect    #{[#{[:in]} example-effect]}
-   :continue  #{[#{[:in]} example-continue]}
-   :emit      [[#{[:in]} example-emit]]}
-  )
