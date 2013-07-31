@@ -48,12 +48,19 @@
   (let [resource (keyword (:resource message))]
     (update-in old [:resources resource] #(max 0 ((fnil dec 0))))))
 
+(defn login-transform
+  [old message]
+  (assoc old
+         :handle (:handle message)
+         :color (keyword (:color message))))
+
 (defn select-power-plant [old message]
   (let [v (int (:value message))]
     {:plant-id v
      :bid v}))
 
 ;; Derive
+
 (defn derive-turn-topic [_ game]
   (when-let [phase (get-in game [:state :phase])]
    (keyword (str "phase" phase))))
@@ -67,16 +74,27 @@
       msg/topic [:game (:id state)]
       :turn (-> turn
                 (dissoc :committed?)
-                (assoc :player-id player-id))}]))
+                (assoc :player-id player-id))}]
+    []))
 
-;;
+(defn login-effect
+  [{:keys [game-id handle color] :as login}]
+  (log/debug :in :login-effect :login login)
+  (if (and game-id handle color)
+    [{msg/type :game-login
+      msg/topic [:games game-id]
+      :game-id game-id :handle handle :color color}]
+    []))
+
+;; Emitter
 
 (defn init-login [_]
   [{:login
-    {:name
-     {:transforms
-      {:login [{msg/type :swap msg/topic [:login :name] (msg/param :value) {}}
-               {msg/type :set-focus msg/topic msg/app-model :name :game} ]}}}}])
+    {:transforms
+     {:login [{msg/type :login msg/topic [:login] (msg/param :handle) {} (msg/param :color) {}}
+              {msg/type :swap msg/topic [:login :game-id] :value "1"}
+              ;{msg/type :set-focus msg/topic msg/app-model :name :game}
+              ]}}}])
 
 (defn init-main [_]
   [{:main
@@ -113,6 +131,8 @@
         :set [{msg/topic [:game :turn] (msg/param :value) {}}]
         }}}}}])
 
+;;
+
 (def example-app
   {:version 2
    :debug true
@@ -122,6 +142,7 @@
                [:inc  [:**] inc-transform]
                [:dec  [:**] dec-transform]
                [:swap-int [:**] swap-int-value-transform]
+               [:login [:login] login-transform]
                [:select-power-plant [:game :turn] select-power-plant]
                [:inc-resource [:game :turn] inc-resource]
                [:dec-resource [:game :turn] dec-resource]
@@ -134,7 +155,8 @@
                [:set [:game :turn] #(read-string (:value %2))]
                [:debug [:pedestal :**] swap-value-transform]]
    :derive #{}
-   :effect #{[#{[:game]} commit-turn :single-val]}
+   :effect #{[#{[:login]} login-effect :single-val]
+             [#{[:game]} commit-turn :single-val]}
    :emit [{:init init-login}
           [#{[:login :*]} (app/default-emitter [])]
           {:init init-main}
