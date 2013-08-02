@@ -1,5 +1,6 @@
 (ns powergrid.messages.phase2
-  (:require [powergrid.message :as msg]
+  (:require [powergrid.domain.messages.phase2]
+            [powergrid.message :as msg]
             [powergrid.common.protocols :as pc]
             [powergrid.util.error :refer [fail failf]]
             [powergrid.game :as g]
@@ -33,16 +34,7 @@
       (g/remove-turn player-id)
       (g/cleanup-auction)))
 
-(defrecord BidPowerPlantMessage [player-id plant-id bid]
-  pc/Labeled
-  (label [this game]
-    (let [player-label (pc/label (g/player game player-id))]
-      (if (msg/is-pass? this)
-        (if-let [auction (g/auction game)]
-          (format "%s passes bidding on %s." player-label (pc/label (a/item auction)))
-          (format "%s passes on power plants." player-label))
-        (format "%s bids %d on %s." player-label bid (pc/label (pp/plant plant-id))))))
-
+(extend-type powergrid.domain.messages.phase2.BidPowerPlantMessage
   msg/Message
   (turn? [_] false)
   (passable? [_ game]
@@ -54,7 +46,7 @@
         (complete-auction game auction)
         (g/set-auction game auction))
       game))
-  (validate [_ game]
+  (validate [{:keys [player-id plant-id bid]} game]
     (let [auction (g/auction game)
           plant (pp/plant plant-id)]
       (cond
@@ -78,7 +70,7 @@
         (failf "Minimum bid is %d" plant-id)
 
         :else game)))
-  (update-game [_ game logger]
+  (update-game [{:keys [player-id plant-id bid]} game logger]
     (let [plant (pp/plant plant-id)
           auction (-> (get-or-create-auction game plant-id)
                       (a/bid player-id bid))]
@@ -111,5 +103,5 @@
 ;; =========
 
 (def messages
-  {:bid map->BidPowerPlantMessage
+  {:bid powergrid.domain.messages.phase2/map->BidPowerPlantMessage
    :discard map->DiscardPowerPlantMessage})

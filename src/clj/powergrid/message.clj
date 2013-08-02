@@ -1,16 +1,20 @@
 (ns powergrid.message
   (:refer-clojure :exclude [type])
-  (:require [powergrid.game :as g]
+  (:require [powergrid.domain.messages]
+            [potemkin :refer [import-vars]]
+            [powergrid.game :as g]
             [powergrid.common.protocols :as pc]
             [powergrid.util.error :refer [fail failf error-m]]
             [powergrid.util.log :refer [debugf]]
             [clojure.algo.monads :refer [with-monad m-chain]]
             [slingshot.slingshot :refer [throw+]]))
 
-(def topic :topic)
-(def type :type)
-(def pass ::pass)
-(defn is-pass? [msg] (pass msg))
+(import-vars
+  [powergrid.domain.messages
+   topic
+   type
+   pass
+   is-pass?])
 
 (defprotocol Message
   (turn? [this] "Returns true if turns should be advanced after hanlding message")
