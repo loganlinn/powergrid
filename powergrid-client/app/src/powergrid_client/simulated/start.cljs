@@ -2,7 +2,7 @@
   (:require [io.pedestal.app :as app]
             [io.pedestal.app.render.push.handlers.automatic :as d]
             [io.pedestal.app.protocols :as p]
-            [powergrid.common]
+            [powergrid.domain]
             [powergrid-client.start :as start]
             [powergrid-client.simulated.services :as services]
             ;; This needs to be included somewhere in order for the
@@ -17,7 +17,7 @@
   ;;
   (let [app (start/create-app d/data-renderer-config)
         services (services/->WebsocketService (:app app))]
-    (powergrid.common/register-tag-parsers!)
+    (powergrid.domain/register-tag-parsers!)
     (app/consume-effects (:app app) services/services-fn)
     (p/start services)
     app))

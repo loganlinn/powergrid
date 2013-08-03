@@ -4,7 +4,7 @@
             [io.pedestal.app.render.push :as push-render]
             [io.pedestal.app.render :as render]
             [io.pedestal.app.messages :as msg]
-            [powergrid.common]
+            [powergrid.domain]
             [powergrid-client.behavior :as behavior]
             [powergrid-client.rendering :as rendering]))
 
@@ -51,5 +51,5 @@
   ;; main function. To tie into tooling, this function should return
   ;; the newly created app.
   (let [app (create-app (rendering/render-config))]
-    (powergrid.common/register-tag-parsers!)
+    (powergrid.domain/register-tag-parsers!)
     app))
