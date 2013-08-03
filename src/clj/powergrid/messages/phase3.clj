@@ -1,5 +1,5 @@
 (ns powergrid.messages.phase3
-  (:require [powergrid.domain.messages.phase3]
+  (:require [powergrid.domain.messages]
             [powergrid.message :as msg]
             [powergrid.common.protocols :as pc]
             [powergrid.util.error :refer [fail]]

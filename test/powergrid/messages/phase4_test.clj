@@ -7,7 +7,6 @@
             [powergrid.common.player :as p]
             [powergrid.common.power-plants :as pp]))
 
-
 (fact "passable"
   (msg/passable? (map->BuyCitiesMessage {}) ...game...) => truthy
   (msg/update-pass (map->BuyCitiesMessage {}) ...game... msg/nil-logger) => ..game...)

@@ -51,9 +51,3 @@
 (fact flatten-sale
   (flatten-sale {10 {:coal 1 :oil 1} 11 {:trash 1}})
   => (just #{[10 :coal 1] [10 :oil 1] [11 :trash 1]}))
-
-(fact total-yield
-  (fact "3 1-yield power-plants"
-    (total-yield [3 4 5]) => 3)
-  (fact "with ecological"
-    (total-yield [11 12 13]) => 5))

@@ -3,7 +3,9 @@
             [powergrid.common.power-plants :as pp]
             [powergrid.common.game :as g]
             [powergrid.common.auction :as a]
+            [powergrid.common.cities :as c]
             [powergrid.domain.messages :as msg]
+            [powergrid.domain.phase5 :as phase5]
             [clojure.string :as str])
   (:refer-clojure :exclude [type]))
 
@@ -18,7 +20,7 @@
   Labeled
   (label [this game]
     (let [player-label (label (g/player game player-id))]
-      (if (msg/is-pass? this)
+      (if (is-pass? this)
         (if-let [auction (g/auction game)]
           (format "%s passes bidding on %s." player-label (label (a/item auction)))
           (format "%s passes on power plants." player-label))
@@ -37,10 +39,10 @@
   Labeled
   (label [this game]
     (let [player-label (label (g/player game player-id))]
-     (if (msg/is-pass? this)
-      (format "%s passes on buying resources." player-label)
-      (let [rlabels (map #(str (val %) " " (name (key %))) resources)]
-       (format "%s buys %s." player-label (str/join ", " rlabels)))))))
+      (if (msg/is-pass? this)
+        (format "%s passes on buying resources." player-label)
+        (let [rlabels (map #(str (val %) " " (name (key %))) resources)]
+          (format "%s buys %s." player-label (str/join ", " rlabels)))))))
 
 ;; Phase 4
 
@@ -51,3 +53,18 @@
      (if (msg/is-pass? this)
       (format "%s passes on building cities." player-label)
       (format "%s built in %s." player-label (str/join ", " (map name new-cities)))))))
+
+;; Phase 5
+
+(defrecord PowerCitiesMessage [player-id powered-plants]
+  Labeled
+  (label [this game]
+    (let [player-label (label (g/player game player-id))
+          player-network-size (c/network-size (g/cities game) player-id)]
+     (if (msg/is-pass? this)
+      (format "%s passes on powering cities." player-label)
+      (format "%s powers %d %s, earns $%d."
+              player-label
+              (count powered-plants)
+              (if (= 1 (count powered-plants)) "city" "cities")
+              (phase5/total-payout player-network-size powered-plants))))))

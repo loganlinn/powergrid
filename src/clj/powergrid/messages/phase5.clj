@@ -1,20 +1,15 @@
 (ns powergrid.messages.phase5
-  (:require [powergrid.message :as msg]
+  (:require [powergrid.domain.messages]
+            [powergrid.domain.phase5 :as phase5]
+            [powergrid.message :as msg]
             [powergrid.common.protocols :as pc]
             [powergrid.util.error :refer [fail failf]]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
-            [powergrid.cities :as c]
+            [powergrid.common.cities :as c]
             [powergrid.common.power-plants :as pp]
-            [powergrid.common.resource :as r]))
-
-(def payout-values [10 22 33 44 54 64 73 82 90 98 105 112 118 124 129 134 138 142 145 148 150])
-
-(defn payout
-  "Returns the payout amount to receive from powering num-powered cities"
-  [num-powered]
-  {:pre [(not (neg? num-powered))]}
-  (get payout-values (min num-powered (dec (count payout-values)))))
+            [powergrid.common.resource :as r])
+  (:import [powergrid.domain.messages PowerCitiesMessage]))
 
 (defn validate-sale
   "Returns true of the plant-id and resource amt combo is valid.
@@ -68,37 +63,15 @@
     game
     (flatten-sale powered-plants)))
 
-(defn total-yield
-  "Returns number of cities that can be powered from operating power-plants"
-  [plant-ids]
-  (apply + (map (comp pp/yield pp/plant) plant-ids)))
 
-(defn total-payout
-  [game player-id powered-plants]
-  (let [yield (total-yield (keys powered-plants))
-        net-size (c/network-size (g/cities game) player-id)]
-    (payout (min yield net-size))))
-
-;; powered-plants {plant-id {resource amt}}
-(defrecord PowerCitiesMessage [player-id powered-plants]
-  pc/Labeled
-  (label [this game]
-    (let [player-label (pc/label (g/player game player-id))]
-     (if (msg/is-pass? this)
-      (format "%s passes on powering cities." player-label)
-      (format "%s powers %d %s, earns $%d."
-              player-label
-              (count powered-plants)
-              (if (= 1 (count powered-plants)) "city" "cities")
-              (total-payout game player-id powered-plants)))))
-
+(extend-type PowerCitiesMessage
   msg/Message
   (turn? [_] true)
   (passable? [_ _] true)
-  (update-pass [_ game logger]
-    (-> game (g/transfer-money :to player-id (payout 0))))
+  (update-pass [{:keys [player-id]} game logger]
+    (-> game (g/transfer-money :to player-id (phase5/payout 0))))
 
-  (validate [this game]
+  (validate [{:keys [player-id powered-plants]} game]
     (or
       (cond
         (not (and (map? powered-plants) (every? map? (vals powered-plants))))
@@ -109,11 +82,12 @@
       (some validate-sale powered-plants)
       game))
 
-  (update-game [this game logger]
-    (-> game
+  (update-game [{:keys [player-id powered-plants]} game logger]
+    (let [player-network-size (c/network-size (g/cities game) player-id)]
+     (-> game
         (consume-resources player-id powered-plants)
         (g/transfer-money :to player-id
-                          (total-payout game player-id powered-plants)))))
+                          (phase5/total-payout player-network-size powered-plants))))))
 
 (def messages
-  {:sell map->PowerCitiesMessage})
+  {:sell powergrid.domain.messages/map->PowerCitiesMessage})
