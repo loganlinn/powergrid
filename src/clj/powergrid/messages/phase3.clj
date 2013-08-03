@@ -1,12 +1,12 @@
 (ns powergrid.messages.phase3
-  (:require [powergrid.domain.messages]
+  (:require [powergrid.domain.phase3]
             [powergrid.message :as msg]
             [powergrid.common.protocols :as pc]
             [powergrid.util.error :refer [fail]]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
             [powergrid.common.resource :as r])
-  (:import [powergrid.domain.messages BuyResourcesMessage]))
+  (:import [powergrid.domain.phase3 BuyResourcesMessage]))
 
 (defn resource-price
   "Returns the current price for n-units of resource"
@@ -62,4 +62,4 @@
             resources)))
 
 (def messages
-  {:buy powergrid.domain.messages/map->BuyResourcesMessage})
+  {:buy powergrid.domain.phase3/map->BuyResourcesMessage})

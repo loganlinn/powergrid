@@ -1,5 +1,5 @@
 (ns powergrid.messages.phase2
-  (:require [powergrid.domain.messages]
+  (:require [powergrid.domain.phase2]
             [powergrid.message :as msg]
             [powergrid.common.protocols :refer [label]]
             [powergrid.util.error :refer [fail failf]]
@@ -8,7 +8,7 @@
             [powergrid.auction :as a]
             [powergrid.common.power-plants :as pp]
             [powergrid.common.resource :as r])
-  (:import [powergrid.domain.messages BidPowerPlantMessage DiscardPowerPlantMessage]))
+  (:import [powergrid.domain.phase2 BidPowerPlantMessage DiscardPowerPlantMessage]))
 
 (defn new-auction
   "Returns new auction new auction for power-plant"
@@ -104,5 +104,5 @@
 ;; =========
 
 (def messages
-  {:bid powergrid.domain.messages/map->BidPowerPlantMessage
-   :discard powergrid.domain.messages/map->DiscardPowerPlantMessage})
+  {:bid powergrid.domain.phase2/map->BidPowerPlantMessage
+   :discard powergrid.domain.phase2/map->DiscardPowerPlantMessage})

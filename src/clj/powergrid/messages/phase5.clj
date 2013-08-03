@@ -1,6 +1,5 @@
 (ns powergrid.messages.phase5
-  (:require [powergrid.domain.messages]
-            [powergrid.domain.phase5 :as phase5]
+  (:require [powergrid.domain.phase5 :as phase5]
             [powergrid.message :as msg]
             [powergrid.common.protocols :as pc]
             [powergrid.util.error :refer [fail failf]]
@@ -9,7 +8,7 @@
             [powergrid.common.cities :as c]
             [powergrid.common.power-plants :as pp]
             [powergrid.common.resource :as r])
-  (:import [powergrid.domain.messages PowerCitiesMessage]))
+  (:import [powergrid.domain.phase5 PowerCitiesMessage]))
 
 (defn validate-sale
   "Returns true of the plant-id and resource amt combo is valid.
@@ -90,4 +89,4 @@
                           (phase5/total-payout player-network-size powered-plants))))))
 
 (def messages
-  {:sell powergrid.domain.messages/map->PowerCitiesMessage})
+  {:sell powergrid.domain.phase5/map->PowerCitiesMessage})

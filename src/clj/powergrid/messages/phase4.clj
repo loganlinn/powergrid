@@ -1,12 +1,12 @@
 (ns powergrid.messages.phase4
-  (:require [powergrid.domain.messages]
+  (:require [powergrid.domain.phase4]
             [powergrid.message :as msg]
             [powergrid.util.error :refer [fail]]
             [powergrid.game :as g]
             [powergrid.cities :as c]
             [powergrid.common.player :as p]
             [powergrid.common.resource :as r])
-  (:import [powergrid.domain.messages BuyCitiesMessage]))
+  (:import [powergrid.domain.phase4 BuyCitiesMessage]))
 
 (defn can-build-city?
   "Returns true if player can build in city, otherwise false"
@@ -59,4 +59,4 @@
           (g/transfer-money :from player-id cost)))))
 
 (def messages
-  {:buy powergrid.domain.messages/map->BuyCitiesMessage})
+  {:buy powergrid.domain.phase4/map->BuyCitiesMessage})

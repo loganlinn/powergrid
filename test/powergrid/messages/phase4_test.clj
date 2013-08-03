@@ -1,6 +1,6 @@
 (ns powergrid.messages.phase4-test
   (:require [midje.sweet :refer :all]
-            [powergrid.domain.messages :refer [map->BuyCitiesMessage]]
+            [powergrid.domain.phase4 :refer [map->BuyCitiesMessage]]
             [powergrid.messages.phase4 :refer :all]
             [powergrid.message :as msg]
             [powergrid.game :as g]
