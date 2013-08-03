@@ -5,3 +5,4 @@
 (def type :type)
 (def pass ::pass)
 (defn is-pass? [msg] (pass msg))
+

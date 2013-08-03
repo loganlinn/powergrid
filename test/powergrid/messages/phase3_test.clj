@@ -1,6 +1,7 @@
 (ns powergrid.messages.phase3-test
   (:refer-clojure :exclude [type])
   (:require [midje.sweet :refer :all]
+            [powergrid.domain.messages.phase3 :refer [map->BuyResourcesMessage]]
             [powergrid.messages.phase3 :refer :all]
             [powergrid.message :as msg]
             [powergrid.game :as g]

@@ -1,5 +1,6 @@
 (ns powergrid.messages.phase3
-  (:require [powergrid.message :as msg]
+  (:require [powergrid.domain.messages.phase3]
+            [powergrid.message :as msg]
             [powergrid.common.protocols :as pc]
             [powergrid.util.error :refer [fail]]
             [powergrid.game :as g]
@@ -26,24 +27,13 @@
       (g/update-player player-id pc/accept-resource resource n)
       (g/transfer-money :from player-id (resource-price game resource n))))
 
-(defn label-resources [resources]
-  (clojure.string/join ", " (for [[r amt] resources]
-                              (str amt " " (name r)))))
-
-(defrecord BuyResourcesMessage [player-id resources]
-  pc/Labeled
-  (label [this game]
-    (let [player-label (pc/label (g/player game player-id))]
-     (if (msg/is-pass? this)
-      (format "%s passes on buying resources." player-label)
-      (format "%s buys %s." player-label (label-resources resources)))))
-
+(extend-type powergrid.domain.messages.phase3.BuyResourcesMessage
   msg/Message
   (turn? [_] true)
   (passable? [_ _] true)
   (update-pass [_ game logger] game)
 
-  (validate [this game]
+  (validate [{:keys [player-id resources]} game]
     (let [player (g/player game player-id)]
       (cond
         (or (not (map? resources)) (empty? resources))
@@ -65,10 +55,10 @@
 
         :else game)))
 
-  (update-game [this game logger]
+  (update-game [{:keys [player-id resources]} game logger]
     (reduce (fn [game [r n]] (buy-resource game player-id r n))
             game
             resources)))
 
 (def messages
-  {:buy map->BuyResourcesMessage})
+  {:buy powergrid.domain.messages.phase3/map->BuyResourcesMessage})
