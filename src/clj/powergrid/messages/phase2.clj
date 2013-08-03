@@ -1,13 +1,14 @@
 (ns powergrid.messages.phase2
-  (:require [powergrid.domain.messages.phase2]
+  (:require [powergrid.domain.messages]
             [powergrid.message :as msg]
-            [powergrid.common.protocols :as pc]
+            [powergrid.common.protocols :refer [label]]
             [powergrid.util.error :refer [fail failf]]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
             [powergrid.auction :as a]
             [powergrid.common.power-plants :as pp]
-            [powergrid.common.resource :as r]))
+            [powergrid.common.resource :as r])
+  (:import [powergrid.domain.messages BidPowerPlantMessage DiscardPowerPlantMessage]))
 
 (defn new-auction
   "Returns new auction new auction for power-plant"
@@ -34,7 +35,7 @@
       (g/remove-turn player-id)
       (g/cleanup-auction)))
 
-(extend-type powergrid.domain.messages.phase2.BidPowerPlantMessage
+(extend-type BidPowerPlantMessage
   msg/Message
   (turn? [_] false)
   (passable? [_ game]
@@ -78,18 +79,18 @@
         (-> game
             (complete-auction auction)
             (logger (format "Auction complete. %s bought %s for $%d"
-                            (pc/label (g/player game (a/player-id auction)))
-                            (pc/label (a/item auction))
+                            (label (g/player game (a/player-id auction)))
+                            (label (a/item auction))
                             (a/price auction))))
         (g/set-auction game auction)))))
 
 ;; =========
 
-(defrecord DiscardPowerPlantMessage [player-id plant-id]
+(extend-type DiscardPowerPlantMessage
   msg/Message
   (turn? [_] false)
   (passable? [_ game] false)
-  (validate [_ game]
+  (validate [{:keys [player-id plant-id]} game]
     (let [plant (pp/plant plant-id)
           player (g/player game player-id)]
       (cond
@@ -97,11 +98,11 @@
         (not player) (fail "Invalid player")
         (not (p/owns-power-plant? player plant-id)) (fail "Invalid power plant")
         :else game)))
-  (update-game [_ game logger]
+  (update-game [{:keys [player-id plant-id]} game logger]
     (g/update-player game player-id p/remove-power-plant plant-id)))
 
 ;; =========
 
 (def messages
-  {:bid powergrid.domain.messages.phase2/map->BidPowerPlantMessage
-   :discard map->DiscardPowerPlantMessage})
+  {:bid powergrid.domain.messages/map->BidPowerPlantMessage
+   :discard powergrid.domain.messages/map->DiscardPowerPlantMessage})

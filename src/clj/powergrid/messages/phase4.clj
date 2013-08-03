@@ -1,13 +1,14 @@
 (ns powergrid.messages.phase4
-  (:require [powergrid.message :as msg]
-            [powergrid.common.protocols :as pc]
+  (:require [powergrid.domain.messages]
+            [powergrid.message :as msg]
             [powergrid.util.error :refer [fail]]
             [powergrid.game :as g]
             [powergrid.cities :as c]
             [powergrid.common.player :as p]
-            [powergrid.common.resource :as r]))
+            [powergrid.common.resource :as r])
+  (:import [powergrid.domain.messages BuyCitiesMessage]))
 
-(defn valid-city?
+(defn can-build-city?
   "Returns true if player can build in city, otherwise false"
   [game player-id city]
   (let [cities (g/cities game)
@@ -34,24 +35,16 @@
   [game player-id new-cities]
   (reduce #(g/update-cities %1 c/add-owner player-id %2) game new-cities))
 
-(defrecord BuyCitiesMessage [player-id new-cities]
-  pc/Labeled
-  (label [this game]
-    (let [player-label (pc/label (g/player game player-id))]
-     (if (msg/is-pass? this)
-      (format "%s passes on building cities." player-label)
-      (format "%s built in %s." player-label (clojure.string/join ", " (map name new-cities))))))
-
+(extend-type BuyCitiesMessage
   msg/Message
   (turn? [_] true)
   (passable? [_ _] true)
   (update-pass [_ game logger] game)
-
-  (validate [this game]
+  (validate [{:keys [player-id new-cities]} game]
     (cond
       (not (coll? new-cities)) (fail "Invalid purchase")
 
-      (not (every? (partial valid-city? game player-id) new-cities))
+      (not (every? (partial can-build-city? game player-id) new-cities))
       (fail "Invalid city")
 
       (not (can-afford-cities? game player-id new-cities))
@@ -59,11 +52,11 @@
 
       :else game))
 
-  (update-game [this game logger]
+  (update-game [{:keys [player-id new-cities]} game logger]
     (let [cost (purchase-cost game player-id new-cities)]
       (-> game
           (own-cities player-id new-cities)
           (g/transfer-money :from player-id cost)))))
 
 (def messages
-  {:buy map->BuyCitiesMessage})
+  {:buy powergrid.domain.messages/map->BuyCitiesMessage})

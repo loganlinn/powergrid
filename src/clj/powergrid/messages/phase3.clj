@@ -5,7 +5,8 @@
             [powergrid.util.error :refer [fail]]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
-            [powergrid.common.resource :as r]))
+            [powergrid.common.resource :as r])
+  (:import [powergrid.domain.messages BuyResourcesMessage]))
 
 (defn resource-price
   "Returns the current price for n-units of resource"
@@ -27,7 +28,7 @@
       (g/update-player player-id pc/accept-resource resource n)
       (g/transfer-money :from player-id (resource-price game resource n))))
 
-(extend-type powergrid.domain.messages.phase3.BuyResourcesMessage
+(extend-type BuyResourcesMessage
   msg/Message
   (turn? [_] true)
   (passable? [_ _] true)
@@ -61,4 +62,4 @@
             resources)))
 
 (def messages
-  {:buy powergrid.domain.messages.phase3/map->BuyResourcesMessage})
+  {:buy powergrid.domain.messages/map->BuyResourcesMessage})

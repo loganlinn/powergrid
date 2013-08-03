@@ -1,7 +1,7 @@
 (ns powergrid.messages.phase2-test
   (:require [midje.sweet :refer :all]
             [powergrid.message :as msg]
-            [powergrid.domain.messages.phase2 :refer [map->BidPowerPlantMessage]]
+            [powergrid.domain.messages :refer [map->BidPowerPlantMessage]]
             [powergrid.messages.phase2 :refer :all]
             [powergrid.game :as g]
             [powergrid.common.player :as p]
