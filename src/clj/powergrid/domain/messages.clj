@@ -27,8 +27,11 @@
         (format "%s bids %d on %s." player-label bid (label (pp/plant plant-id)))))))
 
 (defrecord DiscardPowerPlantMessage [player-id plant-id]
-  ;; TODO implement label
-  )
+  Labeled
+  (label [this game]
+    (let [player-label (label (g/player game player-id))
+          pp-label (label (pp/plant plant-id))]
+      (format "%s discarded %s"))))
 
 ;; Phase 3
 
