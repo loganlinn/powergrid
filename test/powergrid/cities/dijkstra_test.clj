@@ -2,7 +2,7 @@
   (:require [midje.sweet :refer :all]
             [powergrid.cities :refer [as-graph]]
             [powergrid.cities.dijkstra :refer :all]
-            [powergrid.common.country.usa :as usa]))
+            [powergrid.domain.country.usa :as usa]))
 
 (fact dijkstra
   (fact "simple graph"

@@ -1,9 +1,9 @@
 (ns powergrid.lobby
   (:require [potemkin :refer [import-vars]]
-            [powergrid.common.lobby]))
+            [powergrid.domain.lobby]))
 
 (import-vars
-  [powergrid.common.lobby
+  [powergrid.domain.lobby
    ->Lobby
    map->Lobby
    max-seats

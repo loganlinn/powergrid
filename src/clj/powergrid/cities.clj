@@ -1,10 +1,10 @@
 (ns powergrid.cities
   (:require [potemkin :refer [import-vars]]
-            [powergrid.common.cities]
+            [powergrid.domain.cities]
             [powergrid.cities.dijkstra :as d]))
 
 (import-vars
-  [powergrid.common.cities
+  [powergrid.domain.cities
    ->Cities
    map->Cities
    owners

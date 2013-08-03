@@ -1,4 +1,4 @@
-(ns ^:shared powergrid.common.lobby)
+(ns ^:shared powergrid.domain.lobby)
 
 (defrecord Lobby [game-id seats country seats-closed])
 

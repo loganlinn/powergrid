@@ -1,8 +1,8 @@
 (ns ^:shared powergrid.domain.phase5
-  (:require [powergrid.common.game :as g]
-            [powergrid.common.cities :as c]
-            [powergrid.common.power-plants :as pp]
-            [powergrid.common.protocols :refer [Labeled label]]
+  (:require [powergrid.domain.game :as g]
+            [powergrid.domain.cities :as c]
+            [powergrid.domain.power-plants :as pp]
+            [powergrid.domain.protocols :refer [Labeled label]]
             [powergrid.domain.messages :as msg]
             [clojure.string :as str]))
 

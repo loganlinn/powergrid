@@ -4,9 +4,9 @@
             [powergrid.domain.phase2 :refer [map->BidPowerPlantMessage]]
             [powergrid.messages.phase2 :refer :all]
             [powergrid.game :as g]
-            [powergrid.common.player :as p]
+            [powergrid.domain.player :as p]
             [powergrid.auction :as a]
-            [powergrid.common.power-plants :as pp]))
+            [powergrid.domain.power-plants :as pp]))
 
 (defn mock-bid
   [& args]

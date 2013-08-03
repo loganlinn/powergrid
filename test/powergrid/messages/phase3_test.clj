@@ -5,9 +5,9 @@
             [powergrid.messages.phase3 :refer :all]
             [powergrid.message :as msg]
             [powergrid.game :as g]
-            [powergrid.common.player :as p]
-            [powergrid.common.resource :as r]
-            [powergrid.common.power-plants :as pp]))
+            [powergrid.domain.player :as p]
+            [powergrid.domain.resource :as r]
+            [powergrid.domain.power-plants :as pp]))
 
 (fact total-price
   (total-price ...game... {:coal 5 :oil 3}) => 15

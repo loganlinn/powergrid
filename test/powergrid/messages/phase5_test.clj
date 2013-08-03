@@ -3,8 +3,8 @@
             [powergrid.messages.phase5 :refer :all]
             [powergrid.message :as msg]
             [powergrid.game :as g]
-            [powergrid.common.player :as p]
-            [powergrid.common.power-plants :as pp]))
+            [powergrid.domain.player :as p]
+            [powergrid.domain.power-plants :as pp]))
 
 (fact validate-sale
   (fact "ecological power-plants"

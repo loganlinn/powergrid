@@ -1,11 +1,11 @@
 (ns powergrid.messages.phase3
   (:require [powergrid.domain.phase3]
             [powergrid.message :as msg]
-            [powergrid.common.protocols :as pc]
+            [powergrid.domain.protocols :as pc]
             [powergrid.util.error :refer [fail]]
             [powergrid.game :as g]
-            [powergrid.common.player :as p]
-            [powergrid.common.resource :as r])
+            [powergrid.domain.player :as p]
+            [powergrid.domain.resource :as r])
   (:import [powergrid.domain.phase3 BuyResourcesMessage]))
 
 (defn resource-price

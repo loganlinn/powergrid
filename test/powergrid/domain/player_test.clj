@@ -1,8 +1,8 @@
-(ns powergrid.common.player-test
+(ns powergrid.domain.player-test
   (:require [midje.sweet :refer :all]
-            [powergrid.common.protocols :as pc]
-            [powergrid.common.player :refer :all]
-            [powergrid.common.power-plants :as pp]))
+            [powergrid.domain.protocols :as pc]
+            [powergrid.domain.player :refer :all]
+            [powergrid.domain.power-plants :as pp]))
 
 (defn mock-player
   [& args]

@@ -1,7 +1,7 @@
-(ns powergrid.common.power-plants-test
+(ns powergrid.domain.power-plants-test
   (:require [midje.sweet :refer :all]
-            [powergrid.common.power-plants :refer :all]
-            [powergrid.common.player :as p]
+            [powergrid.domain.power-plants :refer :all]
+            [powergrid.domain.player :as p]
             [powergrid.game :as g]))
 
 (fact initial-market

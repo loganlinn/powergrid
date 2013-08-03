@@ -1,5 +1,5 @@
-(ns ^:shared powergrid.common.resource
-  (:require [powergrid.common.protocols :as pc]))
+(ns ^:shared powergrid.domain.resource
+  (:require [powergrid.domain.protocols :as pc]))
 
 (def types #{:coal :oil :garbage :uranium})
 

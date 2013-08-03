@@ -1,9 +1,9 @@
 (ns powergrid.core
   (:require [powergrid.util :refer [separate]]
             [powergrid.game :as g]
-            [powergrid.common.protocols :as pc]
-            [powergrid.common.player :as p]
-            [powergrid.common.resource :as r]
+            [powergrid.domain.protocols :as pc]
+            [powergrid.domain.player :as p]
+            [powergrid.domain.resource :as r]
             [powergrid.message :as msg]
             [powergrid.messages.factory :as msgs]
             [powergrid.util.error :refer [has-failed? error-m fail failf]]

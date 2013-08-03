@@ -1,13 +1,13 @@
 (ns powergrid.messages.phase5
   (:require [powergrid.domain.phase5 :as phase5]
             [powergrid.message :as msg]
-            [powergrid.common.protocols :as pc]
+            [powergrid.domain.protocols :as pc]
             [powergrid.util.error :refer [fail failf]]
             [powergrid.game :as g]
-            [powergrid.common.player :as p]
-            [powergrid.common.cities :as c]
-            [powergrid.common.power-plants :as pp]
-            [powergrid.common.resource :as r])
+            [powergrid.domain.player :as p]
+            [powergrid.domain.cities :as c]
+            [powergrid.domain.power-plants :as pp]
+            [powergrid.domain.resource :as r])
   (:import [powergrid.domain.phase5 PowerCitiesMessage]))
 
 (defn validate-sale

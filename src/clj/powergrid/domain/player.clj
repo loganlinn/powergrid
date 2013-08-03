@@ -1,6 +1,6 @@
-(ns ^:shared powergrid.common.player
-  (:require [powergrid.common.power-plants :as pp]
-            [powergrid.common.protocols :as pc]))
+(ns ^:shared powergrid.domain.player
+  (:require [powergrid.domain.power-plants :as pp]
+            [powergrid.domain.protocols :as pc]))
 
 (defrecord Player [handle color money power-plants]
   pc/Labeled

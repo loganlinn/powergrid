@@ -4,8 +4,8 @@
             [powergrid.util.error :refer [fail]]
             [powergrid.game :as g]
             [powergrid.cities :as c]
-            [powergrid.common.player :as p]
-            [powergrid.common.resource :as r])
+            [powergrid.domain.player :as p]
+            [powergrid.domain.resource :as r])
   (:import [powergrid.domain.phase4 BuyCitiesMessage]))
 
 (defn can-build-city?

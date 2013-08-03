@@ -1,8 +1,8 @@
-(ns ^:shared powergrid.common.game
-  (:require [powergrid.common.power-plants :as pp]
-            [powergrid.common.player :as p]
-            [powergrid.common.auction :as a]
-            [powergrid.common.cities :as c]))
+(ns ^:shared powergrid.domain.game
+  (:require [powergrid.domain.power-plants :as pp]
+            [powergrid.domain.player :as p]
+            [powergrid.domain.auction :as a]
+            [powergrid.domain.cities :as c]))
 
 (defrecord Game
   [id

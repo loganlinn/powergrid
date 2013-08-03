@@ -1,8 +1,8 @@
 (ns powergrid.core-test
   (:require [midje.sweet :refer :all]
             [powergrid.core :refer :all]
-            [powergrid.common.player :as p]
-            [powergrid.common.power-plants :as pp]
+            [powergrid.domain.player :as p]
+            [powergrid.domain.power-plants :as pp]
             [powergrid.game :as g]
             [powergrid.cities :as c]
             [powergrid.message :as msg]

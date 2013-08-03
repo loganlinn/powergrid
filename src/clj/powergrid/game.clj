@@ -1,17 +1,17 @@
 (ns powergrid.game
   (:require [potemkin :refer [import-vars]]
-            [powergrid.common.game]
-            [powergrid.common.power-plants :as pp]
-            [powergrid.common.player :as p]
+            [powergrid.domain.game]
+            [powergrid.domain.power-plants :as pp]
+            [powergrid.domain.player :as p]
             [powergrid.auction :as a]
-            [powergrid.common.resource :as r]
+            [powergrid.domain.resource :as r]
             [powergrid.cities :as c]
-            [powergrid.common.country.usa :as usa]
+            [powergrid.domain.country.usa :as usa]
             [powergrid.util :refer [separate queue uuid]]
             [robert.hooke :as hook]))
 
 (import-vars
-  [powergrid.common.game
+  [powergrid.domain.game
    ->Game
    map->Game
    id

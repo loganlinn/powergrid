@@ -1,10 +1,10 @@
 (ns powergrid.auction
   (:require [potemkin :refer [import-vars]]
-            [powergrid.common.auction]
+            [powergrid.domain.auction]
             [powergrid.util :refer [queue]]))
 
 (import-vars
-  [powergrid.common.auction
+  [powergrid.domain.auction
    ->Auction
    map->Auction
    current-bidder

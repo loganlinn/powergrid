@@ -1,13 +1,13 @@
 (ns powergrid.messages.phase2
   (:require [powergrid.domain.phase2]
             [powergrid.message :as msg]
-            [powergrid.common.protocols :refer [label]]
+            [powergrid.domain.protocols :refer [label]]
             [powergrid.util.error :refer [fail failf]]
             [powergrid.game :as g]
-            [powergrid.common.player :as p]
+            [powergrid.domain.player :as p]
             [powergrid.auction :as a]
-            [powergrid.common.power-plants :as pp]
-            [powergrid.common.resource :as r])
+            [powergrid.domain.power-plants :as pp]
+            [powergrid.domain.resource :as r])
   (:import [powergrid.domain.phase2 BidPowerPlantMessage DiscardPowerPlantMessage]))
 
 (defn new-auction

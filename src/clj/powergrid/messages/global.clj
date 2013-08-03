@@ -1,10 +1,10 @@
 (ns powergrid.messages.global
   (:require [powergrid.message :as msg]
             [powergrid.game :as g]
-            [powergrid.common.protocols :as pc]
-            [powergrid.common.player :as p]
-            [powergrid.common.power-plants :as pp]
-            [powergrid.common.resource :as r]
+            [powergrid.domain.protocols :as pc]
+            [powergrid.domain.player :as p]
+            [powergrid.domain.power-plants :as pp]
+            [powergrid.domain.resource :as r]
             [powergrid.util.error :refer [fail]]
             [powergrid.util :refer [kw]]))
 
