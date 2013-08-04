@@ -17,8 +17,10 @@
    bank])
 
 (defn id [game] (:id game))
-(defn current-step  [game] (:step game))
-(defn current-phase [game] (:phase game))
+(defn step [game] (:step game))
+(defn phase [game] (:phase game))
+(defn ^:deprecated current-step  [game] (:step game))
+(defn ^:deprecated current-phase [game] (:phase game))
 (defn current-round [game] (:round game))
 (defn turns [game] (:turns game))
 (defn turn-order [game] (:turn-order game))
@@ -95,7 +97,7 @@
 (defn power-plants
   "Returns the current or future power plant market"
   ([game]
-   (power-plants game :market))
+   (:power-plants game))
   ([game market]
    (get-in game [:power-plants market])))
 

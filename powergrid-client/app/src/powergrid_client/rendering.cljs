@@ -1,73 +1,77 @@
 (ns powergrid-client.rendering
-  (:require [domina :as dom]
+  (:require [dommy.core :as dom]
+            [io.pedestal.app.util.log :as log]
             [io.pedestal.app.render.push :as render]
             [io.pedestal.app.render.push.templates :as templates]
-            [io.pedestal.app.render.push.handlers.automatic :as d])
-  (:require-macros [powergrid-client.html-templates :as html-templates]))
+            [io.pedestal.app.render.push.handlers.automatic :as d]
+            [io.pedestal.app.render.push.handlers :as h])
+  (:require-macros [powergrid-client.html-templates :as html-templates]
+                   [dommy.macros :refer [sel sel1 node deftemplate]]))
 
-;; Load templates.
+(defn- by-id [id]
+  (sel1 (str "#" id)))
 
 (def templates (html-templates/powergrid-client-templates))
 
-;; The way rendering is handled below is the result of using the
-;; renderer provided in `io.pedestal.app.render`. The only requirement
-;; for a renderer is that it must implement the Renderer protocol.
-;;
-;; This renderer dispatches to rendering functions based on the
-;; requested change. See the render-config table below. Each render
-;; function takes three arguments: renderer, render operation and a
-;; a transmitter which is used to send data back to the application's
-;; behavior. This example does not use the transmitter.
+(defn game-tmpl
+  [delta]
+  [:div
+   [:div#power-plant-market
+   [:div.power-plant-market]
+   [:div.power-plant-future]]])
 
-(defn render-page [renderer [_ path] transmitter]
-  (let [;; The renderer that we are using here helps us map changes to
-        ;; the UI tree to the DOM. It keeps a mapping of paths to DOM
-        ;; ids. The `get-parent-id` function will return the DOM id of
-        ;; the parent of the node at path. If the path is [:a :b :c]
-        ;; then this will find the id associated with [:a :b]. The
-        ;; root node [] is configured when we created the renderer.
-        parent (render/get-parent-id renderer path)
-        ;; Use the `new-id!` function to associate a new id to the
-        ;; given path. With two arguments, this function will generate
-        ;; a random unique id. With three arguments, the given id will
-        ;; be associated with the given path.
-        id (render/new-id! renderer path)
-        ;; Get the dynamic template named :powergrid-client-page
-        ;; from the templates map. The `add-template` function will
-        ;; associate this template with the node at
-        ;; path. `add-template` returns a function that can be called
-        ;; to generate the initial HTML.
-        html (templates/add-template renderer path (:powergrid-client-page templates))]
-    ;; Call the `html` function, passing the initial values for the
-    ;; template. This returns an HTML string which is then added to
-    ;; the DOM using Domina.
-    (dom/append! (dom/by-id parent) (html {:id id :message ""}))))
+(defn render-template [template-fn initial-value-fn]
+  (fn [renderer [_ path :as delta] input-queue]
+    (let [parent (render/get-parent-id renderer path)
+          id (name (render/new-id! renderer path))]
+      (dom/append! (by-id parent) (-> (template-fn delta)
+                                      (dom/set-attr! :id id))))))
 
-(defn render-message [renderer [_ path _ new-value] transmitter]
-  ;; This function responds to a :value event. It uses the
-  ;; `update-t` function to update the template at `path` with the new
-  ;; values in the passed map.
-  (templates/update-t renderer path {:message new-value}))
+(defn render-value [renderer [_ path _ new-value] input-queue]
+  (let [key (last path)]
+    (templates/update-t renderer [:game] {key (str new-value)})))
 
-;; The data structure below is used to map rendering data to functions
-;; which handle rendering for that specific change. This function is
-;; referenced in config/config.clj and must be a function in order to
-;; be used from the tool's "render" view.
+(defn render-new-id [id]
+  (fn [renderer [_ path] _]
+    (render/new-id! renderer path id)))
+
+(defn- resource-name [r]
+  (cond
+    (set? r) (clojure.string/join "-" (sort (map name r)))
+    (keyword? r) (name r)
+    :else r))
+
+(deftemplate power-plant-tmpl [{:keys [number resource capacity yield] :as plant}]
+  [:div.power-plant
+   {:class (format "%s power-plant-%d" (resource-name resource) number)}
+   [:span.number number]
+   [:span.capacity capacity]
+   [:span.yield yield]])
+
+(defn render-power-plant-market
+  [renderer [_ path _ new-value] input-queue]
+  (let [parent (render/get-parent-id renderer path)
+        market-type (name (last path))
+        market-el (sel1 (by-id parent) (str ".power-plant-" market-type))
+        html (:power-plant templates)]
+    (dom/append! market-el (map power-plant-tmpl new-value))
+    ))
 
 (defn render-config []
-  [;; All :node-create deltas for the node at :greeting will
-   ;; be rendered by the `render-page` function. The node name
-   ;; :greeting is a default name that is used when we don't
-   ;; provide our own derives and emits. To name your own nodes,
-   ;; create a custom derive or emit in the application's behavior.
-   [:node-create  [:greeting] render-page]
-   ;; All :node-destroy deltas for this path will be handled by the
-   ;; library function `d/default-exit`.
-   [:node-destroy   [:greeting] d/default-exit]
-   ;; All :value deltas for this path will be handled by the
-   ;; function `render-message`.
-   [:value [:greeting] render-message]])
+  [[:node-create  [:game] (render-template game-tmpl (constantly {:game-id ""}))]
+   [:node-destroy [:game] h/default-destroy]
 
-;; In render-config, paths can use wildcard keywords :* and :**. :*
-;; means exactly one segment with any value. :** means 0 or more
-;; elements.
+   [:value [:game :*] render-value]
+   [:value [:pedestal :debug :*] render-value]
+   ;[:node-create  [:main :game :power-plant-market]
+   ;(render-template :power-plant-market (fn [[_ path]]
+   ;(log/debug :in [:main :game :power-plant-market] :path path)
+   ;{}))]
+   [:node-create [:game :power-plant-market] (render-new-id "power-plant-market")]
+   [:value [:game :power-plant-market :*] render-power-plant-market]
+   ;[:value [:main :game :power-plant-market :* :*] render-value]
+   ;[:node-destroy [:main :game :power-plant-market] h/default-destroy]
+   ;[:node-destroy [:main :game :power-plant-market :* :*] h/default-destroy]
+   ;[:node-create  [:main :**] render-element]
+   ;[:node-destroy [:main :**] h/default-destroy]
+   ])

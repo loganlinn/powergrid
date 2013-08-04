@@ -6,6 +6,7 @@
             [io.pedestal.app.messages :as msg]
             [powergrid.domain]
             [powergrid-client.behavior :as behavior]
+            [powergrid-client.simulated.services :as services] ;; TODO use non-simulated ns
             [powergrid-client.rendering :as rendering]))
 
 ;; In this namespace, the application is built and started.
@@ -50,6 +51,9 @@
   ;; for several aspects. A main namespace must have a no argument
   ;; main function. To tie into tooling, this function should return
   ;; the newly created app.
-  (let [app (create-app (rendering/render-config))]
+  (let [app (create-app (rendering/render-config))
+        services (services/->WebsocketService (:app app))]
     (powergrid.domain/register-tag-parsers!)
+    (app/consume-effects (:app app) services/services-fn)
+    (p/start services)
     app))

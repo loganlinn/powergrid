@@ -54,22 +54,26 @@
 // @import "foundation/components/tooltips";
 // @import "foundation/components/dropdown";
 
-.oil {
-  background-color: #333;
-  color: #ccc;
-}
-.coal {
-  background-color: #987654;
-}
-.garbage {
-  background-color: yellow;
-}
-.uranium {
-  background-color: red;
+@mixin resource {
+  &.oil {
+    background-color: #333;
+    color: #ccc;
+  }
+  &.coal {
+    background-color: #987654;
+  }
+  &.garbage {
+    background-color: yellow;
+  }
+  &.uranium {
+    background-color: red;
+  }
 }
 
 .power-plant {
   @include panel;
+  @include resource;
+  background: auto;
   height: 4em;
   width: 4em;
   margin-right: 10px;
