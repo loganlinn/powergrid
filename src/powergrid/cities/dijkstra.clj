@@ -30,7 +30,7 @@
       (if target (costs target) costs)
       (let [costs' (update-costs g costs curr unvisited)
             curr' (first (sort-by costs' unvisited))]
-        (if (= target curr)
+        (if (= target curr')
           (costs' target)
           (recur costs'
                  curr'
