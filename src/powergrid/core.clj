@@ -35,14 +35,14 @@
      game
      rate)))
 
-(defmulti prep-phase g/current-phase)
+(defmulti pre-phase g/current-phase)
 (defmulti post-phase g/current-phase)
 (defmulti prep-step g/current-step)
 (defmulti post-step g/current-step)
 (defmulti phase-complete? g/current-phase)
 (defmulti step-complete? g/current-step)
 
-(defmethod prep-phase :default [game] game)
+(defmethod pre-phase :default [game] game)
 (defmethod post-phase :default [game] game)
 (defmethod prep-step :default [game] game)
 (defmethod post-step :default [game] game)
@@ -50,12 +50,12 @@
 (defmethod phase-complete? :default [game] (not (g/turns-remain? game)))
 (defmethod step-complete? :default [game] false)
 
-(defmethod prep-phase 1 [{:keys [round] :as game}]
+(defmethod pre-phase 1 [{:keys [round] :as game}]
   (cond-> game
     (not= round 1) g/update-turn-order
     true g/clear-turns))
 
-(defmethod prep-phase 2 [game]
+(defmethod pre-phase 2 [game]
   (g/reset-turns game))
 
 (defn post-phase-2-step-3-card
@@ -76,15 +76,15 @@
       (post-phase-2-step-3-card game)
       game)))
 
-(defmethod prep-phase 3 [{:keys [round] :as game}]
+(defmethod pre-phase 3 [{:keys [round] :as game}]
   (cond-> game
     (= round 1) (g/update-turn-order)
     true (g/reset-turns)))
 
-(defmethod prep-phase 4 [game]
+(defmethod pre-phase 4 [game]
   (-> game (g/reset-turns)))
 
-(defmethod prep-phase 5 [game]
+(defmethod pre-phase 5 [game]
   (-> game (g/reset-turns)))
 
 (defmethod post-phase 5 [game]
@@ -116,7 +116,7 @@
 ;; =============================================================================
 
 (with-monad error-m
-  (def next-phase (m-chain [post-phase g/inc-phase prep-phase]))
+  (def next-phase (m-chain [post-phase g/inc-phase pre-phase]))
   (def next-step (m-chain [post-step g/inc-step prep-step]))
 
   (defn tick-phase [game]
