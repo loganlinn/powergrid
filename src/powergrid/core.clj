@@ -138,8 +138,7 @@
                     success-fn *default-success-fn*
                     logger *default-logger*}}]
   (domonad error-m
-    [result (msg/apply-message game msg logger)
-     result (tick result)]
+    [result (tick (msg/apply-message game msg logger))]
     (if (has-failed? result)
       (do
         (if error-fn (error-fn game msg (:message result)))
