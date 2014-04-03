@@ -14,3 +14,4 @@ pom.xml.asc
 resources/public/js/cljs.js
 /out
 client/
+.nrepl-port
