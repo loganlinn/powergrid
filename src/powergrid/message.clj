@@ -50,7 +50,7 @@
 
 (defn- validate-msg
   "Returns a Failure if msg is invalid, otherwise a game"
-  [msg game]
+  [game msg]
   (or
     (invalid-pass? msg game)
     (invalid-topic? msg game)
@@ -61,7 +61,7 @@
 
 (defn- advance-turns
   "Advance game's turns if msg is a turn"
-  [msg game]
+  [game msg]
   (if (turn? msg) (g/advance-turns game) game))
 
 ;; TODO pass logger to update-* (logger game "message")
@@ -82,12 +82,12 @@
   [game msg logger]
   {:pre [(satisfies? Message msg)]}
   (let [update-fn (if (is-pass? msg) update-pass update-game)
+        msg-label (pc/label msg game)
         msg-apply (with-monad error-m
-                    (m-chain [(partial validate-msg msg)
+                    (m-chain [#(validate-msg % msg)
                               #(update-fn msg % logger)
-                              (partial advance-turns msg)]))]
-    (let [msg-label (pc/label msg game)
-          result (msg-apply game)]
-      (logger game msg-label)
-      result)))
+                              #(advance-turns % msg)]))
+        result (msg-apply game)]
+    (logger game msg-label)
+    result))
 
