@@ -3,11 +3,9 @@
   (:require [powergrid.domain.messages]
             [potemkin :refer [import-vars]]
             [powergrid.game :as g]
-            [powergrid.domain.protocols :as pc]
             [powergrid.util.error :refer [fail failf error-m]]
             [powergrid.util.log :refer [debugf]]
-            [clojure.algo.monads :refer [with-monad m-chain]]
-            [slingshot.slingshot :refer [throw+]]))
+            [clojure.algo.monads :refer [with-monad m-chain]]))
 
 (import-vars
   [powergrid.domain.messages
