@@ -55,8 +55,8 @@
    46 (PowerPlant. 46 #{:coal :oil} 3 7)
    50 (PowerPlant. 50 :fusion 0 6) })
 
-(defn initial-market [] (map power-plants [3 4 5 6]))
-(defn initial-future [] (map power-plants [7 8 9 10]))
+(defn initial-market [] (mapv power-plants [3 4 5 6]))
+(defn initial-future [] (mapv power-plants [7 8 9 10]))
 (defn initial-deck   [] (keep #(when (> (key %) 10) (val %)) power-plants))
 
 (defn plant [plant-num]

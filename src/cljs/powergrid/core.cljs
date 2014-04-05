@@ -3,41 +3,66 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [clojure.string]
-            [cljs.core.async :refer [<! chan put! sliding-buffer]]))
+            [cljs.reader]
+            [cljs.core.async :refer [<! chan put! sliding-buffer]]
+            [powergrid.domain.game]
+            [powergrid.domain.player]
+            [powergrid.domain.cities]
+            [powergrid.domain.auction]
+            [powergrid.domain.resource]
+            [powergrid.domain.power-plants]))
 
 (enable-console-print!)
 
 
-#_(defn register-tag-parsers!
-    "Registers the tag parsers for the powergrid types"
-    []
-    (register-tag-parser! "powergrid.domain.game.Game" powergrid.domain.game/map->Game)
-    (register-tag-parser! "powergrid.domain.player.Player" powergrid.domain.player/map->Player)
-    (register-tag-parser! "powergrid.domain.cities.Cities" powergrid.domain.cities/map->Cities)
-    (register-tag-parser! "powergrid.domain.auction.Auction" powergrid.domain.auction/map->Auction)
-    (register-tag-parser! "powergrid.domain.resource.Resource" powergrid.domain.resource/map->Resource)
-    (register-tag-parser! "powergrid.domain.power_plants.PowerPlant" powergrid.domain.power-plants/map->PowerPlant))
-
 (def app-state (atom {}))
 
-(defn power-plant-card [power-plant owner]
+(defn resource-name [r]
+  (if (set? r)
+    (clojure.string/join "-" (sort (map name r)))
+    (name r)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Components
+
+(defn power-plant-card [data owner]
   (reify
     om/IRender
     (render [this]
-      (let [{:keys [number resource capcity yield]} power-plant]
-        (dom/div #js {:className "power-plant"}
-                 (clojure.string/join ["PowerPlant: "
-                                       number
-                                       resource
-                                       capacity
-                                       yield]))))))
+      (let [{:keys [number resource capacity yield]} data]
+        (dom/div #js {:className (str "power-plant " (resource-name resource) " pp-" number)}
+                 (dom/span #js {:className "pp-number"} number)
+                 (dom/span #js {:className "pp-capacity"} capacity)
+                 (dom/span #js {:className "pp-yield"} yield))))))
 
-(defn power-plant-market [app owner]
+(defn power-plant-market [data owner]
   (reify
     om/IRender
     (render [this]
-      )))
+      (dom/div #js {:className "power-plants"}
+               "Current Power Plants"
+               (apply dom/div #js {:className "present-market"}
+                      (om/build-all power-plant-card (:market data)
+                                    {:key :number}))
+               "Future Power Plants"
+               (apply dom/div #js {:className "future-market"}
+                      (om/build-all power-plant-card (:future data)
+                                    {:key :number}))))))
 
-(om/root power-plant-card
-         {:number 3 :resource :oil :capacity 2 :yield 1}
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Initialization
+
+(cljs.reader/register-tag-parser! "powergrid.domain.game.Game" powergrid.domain.game/map->Game)
+(cljs.reader/register-tag-parser! "powergrid.domain.player.Player" powergrid.domain.player/map->Player)
+(cljs.reader/register-tag-parser! "powergrid.domain.cities.Cities" powergrid.domain.cities/map->Cities)
+(cljs.reader/register-tag-parser! "powergrid.domain.auction.Auction" powergrid.domain.auction/map->Auction)
+(cljs.reader/register-tag-parser! "powergrid.domain.resource.Resource" powergrid.domain.resource/map->Resource)
+(cljs.reader/register-tag-parser! "powergrid.domain.power_plants.PowerPlant" powergrid.domain.power-plants/map->PowerPlant)
+
+(swap! app-state assoc :power-plants
+       {:market (powergrid.domain.power-plants/initial-market)
+        :future (powergrid.domain.power-plants/initial-future)})
+
+(om/root power-plant-market
+         (:power-plants @app-state)
          {:target (.getElementById js/document "app")})
