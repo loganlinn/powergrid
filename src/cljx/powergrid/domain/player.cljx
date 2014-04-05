@@ -1,4 +1,4 @@
-(ns ^:shared powergrid.domain.player
+(ns powergrid.domain.player
   (:require [powergrid.domain.power-plants :as pp]
             [powergrid.domain.protocols :as pc]))
 

@@ -1,4 +1,4 @@
-(ns ^:shared powergrid.domain.power-plants
+(ns powergrid.domain.power-plants
   (:require [powergrid.domain.protocols :as pc]))
 
 (defrecord PowerPlant [number resource capacity yield]

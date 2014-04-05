@@ -1,4 +1,4 @@
-(ns ^:shared powergrid.domain.phase3
+(ns powergrid.domain.phase3
   (:require [powergrid.domain.game :as g]
             [powergrid.domain.power-plants :as pp]
             [powergrid.domain.protocols :refer [Labeled label]]

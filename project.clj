@@ -19,7 +19,10 @@
                  [hiccup "1.0.5"]
                  [prismatic/dommy "0.1.1"] ;; TODO REMOVE
                  [midje "1.5.1"]]
-  :plugins  [[lein-cljsbuild "1.0.2"]]
+
+  :plugins  [[lein-cljsbuild "1.0.2"]
+             [com.keminglabs/cljx "0.3.2"]]
+  :hooks [cljx.hooks]
 
   :source-paths ["target/generated/src/clj" "src/clj"]
   :resource-paths ["target/generated/src/cljs"]
@@ -31,6 +34,19 @@
                    :plugins [[lein-midje "3.0.0"]]}}
 
   :jar-exclusions [#"\.cljx|\.swp|\.swo|\.DS_Store"]
+
+  :cljx {:builds [{:source-paths ["src/cljx"]
+                   :output-path "target/generated/src/clj"
+                   :rules :clj}
+                  {:source-paths ["src/cljx"]
+                   :output-path "target/generated/src/cljs"
+                   :rules :cljs}
+                  {:source-paths ["test/cljx"]
+                   :output-path "target/generated/test/clj"
+                   :rules :clj}
+                  {:source-paths ["test/cljx"]
+                   :output-path "target/generated/test/cljs"
+                   :rules :cljs}]}
 
   :cljsbuild {:builds [{:id "dev"
                         :source-paths ["src/cljs" "target/generated/src/cljs"]

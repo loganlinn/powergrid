@@ -1,4 +1,4 @@
-(ns ^:shared powergrid.domain.messages
+(ns powergrid.domain.messages
   (:require [powergrid.domain.protocols :refer [Labeled label]]
             [powergrid.domain.power-plants :as pp]
             [powergrid.domain.game :as g]

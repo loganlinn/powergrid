@@ -1,4 +1,4 @@
-(ns ^:shared powergrid.domain.phase2
+(ns powergrid.domain.phase2
   (:require [powergrid.domain.game :as g]
             [powergrid.domain.power-plants :as pp]
             [powergrid.domain.auction :as a]

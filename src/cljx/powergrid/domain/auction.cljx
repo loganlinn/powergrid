@@ -1,4 +1,4 @@
-(ns ^:shared powergrid.domain.auction
+(ns powergrid.domain.auction
   (:require [powergrid.domain.protocols :as pc]))
 
 (defrecord Auction [item player-id bidders price min-increment])

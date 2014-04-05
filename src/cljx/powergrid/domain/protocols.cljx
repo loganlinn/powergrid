@@ -1,4 +1,4 @@
-(ns ^:shared powergrid.domain.protocols
+(ns powergrid.domain.protocols
   "Protocols used globally the application")
 
 ;; TODO Move other protocols here
