@@ -34,13 +34,14 @@
 
   :cljsbuild {:builds [{:id "dev"
                         :source-paths ["src/cljs" "target/generated/src/cljs"]
-                        :compiler {:output-to "main.js"
-                                   :output-dir "out"
+                        :compiler {:output-to "out/dev/powergrid.dev.js"
+                                   :output-dir "out/dev"
                                    :optimizations :none
                                    :source-map true}}
                        {:id "release"
                         :source-paths ["src/cljs" "target/generated/src/cljs"]
-                        :compiler {:output-to "main.js"
+                        :compiler {:output-to "out/release/powergrid.release.js"
+                                   :output-dir "out/release"
                                    :optimizations :advanced
                                    :pretty-print false
                                    :preamble ["react/react.min.js"]
