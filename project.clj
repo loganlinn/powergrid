@@ -7,7 +7,7 @@
                  [org.clojure/clojurescript "0.0-2173"]
                  [org.clojure/tools.nrepl "0.2.3"]
                  [org.clojure/algo.monads "0.1.4"]
-                 [com.keminglabs/cljx "0.3.1"]
+                 [org.clojure/core.async "0.1.267.0-0d7780-alpha"]
                  ;; TODO com.stuartsierra/component
                  [om "0.5.3"]
                  [com.taoensso/timbre "3.1.6"]
