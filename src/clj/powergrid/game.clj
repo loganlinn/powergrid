@@ -7,8 +7,7 @@
             [powergrid.domain.resource :as r]
             [powergrid.cities :as c]
             [powergrid.domain.country.usa :as usa]
-            [powergrid.util :refer [separate queue uuid]]
-            [robert.hooke :as hook]))
+            [powergrid.util :refer [separate queue uuid]]))
 
 (import-vars
   [powergrid.domain.game
