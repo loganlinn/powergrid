@@ -28,10 +28,10 @@
   (label [this game]
     (let [player-label (label (g/player game player-id))
           player-network-size (c/network-size (g/cities game) player-id)]
-     (if (msg/is-pass? this)
-      (format "%s passes on powering cities." player-label)
-      (format "%s powers %d %s, earns $%d."
-              player-label
-              (count powered-plants)
-              (if (= 1 (count powered-plants)) "city" "cities")
-              (total-payout player-network-size powered-plants))))))
+      (if (msg/is-pass? this)
+        (str player-label " passes on powering cities.")
+        (str player-label " powers " (count powered-plants) " "
+             (if (= 1 (count powered-plants)) "city" "cities")
+             ", earns $"
+             (total-payout player-network-size powered-plants)
+             ".")))))

@@ -119,7 +119,7 @@
   "Returns the maximum number of connections allowed in a city based on current
   step of game"
   [game]
-  (current-step game))
+  (step game))
 
 ;; MISC
 

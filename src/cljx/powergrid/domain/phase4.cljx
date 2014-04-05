@@ -10,5 +10,5 @@
   (label [this game]
     (let [player-label (label (g/player game player-id))]
      (if (msg/is-pass? this)
-      (format "%s passes on building cities." player-label)
-      (format "%s built in %s." player-label (->> new-cities (map name) (str/join ", ")))))))
+      (str player-label " passes on building cities.")
+      (str player-label " built in " (->> new-cities (map name) (str/join ", ")) ".")))))

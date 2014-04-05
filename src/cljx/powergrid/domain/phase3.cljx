@@ -13,6 +13,6 @@
   (label [this game]
     (let [player-label (label (g/player game player-id))]
       (if (msg/is-pass? this)
-        (format "%s passes on buying resources." player-label)
+        (str player-label " passes on buying resources.")
         (let [rlabels (map #(str (val %) " " (name (key %))) resources)]
-          (format "%s buys %s." player-label (str/join ", " rlabels)))))))
+          (str player-label " buys " (str/join ", " rlabels) "."))))))
