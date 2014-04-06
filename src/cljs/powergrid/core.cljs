@@ -10,44 +10,26 @@
             [powergrid.domain.cities]
             [powergrid.domain.auction]
             [powergrid.domain.resource]
-            [powergrid.domain.power-plants]))
+            [powergrid.domain.power-plants]
+            [powergrid.ui.power-plants :as power-plants-ui]
+            [powergrid.ui.resources :as resources-ui]))
 
 (enable-console-print!)
-
-
-(def app-state (atom {}))
-
-(defn resource-name [r]
-  (if (set? r)
-    (clojure.string/join "-" (sort (map name r)))
-    (name r)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Components
 
-(defn power-plant-card [data owner]
+(defn game-view [data owner]
   (reify
     om/IRender
-    (render [this]
-      (let [{:keys [number resource capacity yield]} data]
-        (dom/div #js {:className (str "power-plant " (resource-name resource) " pp-" number)}
-                 (dom/span #js {:className "pp-number"} number)
-                 (dom/span #js {:className "pp-capacity"} capacity)
-                 (dom/span #js {:className "pp-yield"} yield))))))
-
-(defn power-plant-market [data owner]
-  (reify
-    om/IRender
-    (render [this]
-      (dom/div #js {:className "power-plants"}
-               "Current Power Plants"
-               (apply dom/div #js {:className "present-market"}
-                      (om/build-all power-plant-card (:market data)
-                                    {:key :number}))
-               "Future Power Plants"
-               (apply dom/div #js {:className "future-market"}
-                      (om/build-all power-plant-card (:future data)
-                                    {:key :number}))))))
+    (render [_]
+      (dom/div #js {:id "game"}
+               (dom/div #js {:id "power-plants"}
+                        (dom/h3 nil "Power Plants")
+                        (om/build power-plants-ui/power-plant-market (:power-plants data)))
+               (dom/div #js {:id "resources"}
+                        (dom/h3 nil "Resources")
+                        (om/build resources-ui/resource-market (:resources data)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Initialization
@@ -59,10 +41,12 @@
 (cljs.reader/register-tag-parser! "powergrid.domain.resource.Resource" powergrid.domain.resource/map->Resource)
 (cljs.reader/register-tag-parser! "powergrid.domain.power_plants.PowerPlant" powergrid.domain.power-plants/map->PowerPlant)
 
-(swap! app-state assoc :power-plants
-       {:market (powergrid.domain.power-plants/initial-market)
-        :future (powergrid.domain.power-plants/initial-future)})
+(def app-state
+  (atom {:power-plants
+         {:market (powergrid.domain.power-plants/initial-market)
+          :future (powergrid.domain.power-plants/initial-future)}
+         :resources
+         (powergrid.domain.resource/initial-resources)}))
 
-(om/root power-plant-market
-         (:power-plants @app-state)
+(om/root game-view app-state
          {:target (.getElementById js/document "app")})
