@@ -13,7 +13,8 @@
             [powergrid.domain.power-plants]
             [powergrid.ui.power-plants :as power-plants-ui]
             [powergrid.ui.resources :as resources-ui]
-            [powergrid.ui.auction :as auction-ui]))
+            [powergrid.ui.auction :as auction-ui]
+            [powergrid.ui.players :as players-ui]))
 
 (enable-console-print!)
 
@@ -25,6 +26,9 @@
     om/IRender
     (render [_]
       (dom/div #js {:id "game"}
+               (dom/div #js {:id "players"}
+                        (dom/h3 nil "Players")
+                        (om/build players-ui/players-view (select-keys data [:players :turn-order])))
                (dom/div #js {:id "power-plants"}
                         (dom/h3 nil "Power Plants")
                         (om/build power-plants-ui/power-plant-market (:power-plants data)))
@@ -34,6 +38,11 @@
                (dom/div #js {:id "resources"}
                         (dom/h3 nil "Resources")
                         (om/build resources-ui/resource-market (:resources data)))))))
+
+(defn app-view [app owner]
+  (dom/div nil
+           (when [game (:game app)]
+             (om/build game-view game))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Initialization
@@ -46,11 +55,14 @@
 (cljs.reader/register-tag-parser! "powergrid.domain.power_plants.PowerPlant" powergrid.domain.power-plants/map->PowerPlant)
 
 (def app-state
-  (atom {:power-plants
-         {:market (powergrid.domain.power-plants/initial-market)
-          :future (powergrid.domain.power-plants/initial-future)}
-         :resources
-         (powergrid.domain.resource/initial-resources)}))
+  (atom {:game {:power-plants
+                {:market (powergrid.domain.power-plants/initial-market)
+                 :future (powergrid.domain.power-plants/initial-future)}
+                :resources
+                (powergrid.domain.resource/initial-resources)
+                :players {:blue (powergrid.domain.player/new-player "logan" :blue)
+                          :red (powergrid.domain.player/new-player "maeby" :red)}
+                :turn-order [:blue :red]}}))
 
-(om/root game-view app-state
+(om/root app-view app-state
          {:target (.getElementById js/document "app")})

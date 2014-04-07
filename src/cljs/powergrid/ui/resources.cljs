@@ -20,7 +20,7 @@
     (render [_]
       (let [avail-by-price (into {} (map (fn [[k r]] [k (frequencies (resource/market-pricing r))])
                                          (seq resources)))]
-        (apply dom/ul nil
+        (apply dom/ul #js {:className "resource-track"}
                (map (fn [price]
                       (dom/li #js {:data-resource-price price}
                               (dom/span #js {:className "resource-price"} price)

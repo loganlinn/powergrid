@@ -2,6 +2,9 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Components
+
 (defn auction-view [data owner]
   (reify
     om/IRender
