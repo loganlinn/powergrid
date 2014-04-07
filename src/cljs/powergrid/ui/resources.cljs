@@ -16,7 +16,7 @@
 
 (defn resource-market [resources owner]
   (reify
-    om/IRendeR
+    om/IRender
     (render [_]
       (let [avail-by-price (into {} (map (fn [[k r]] [k (frequencies (resource/market-pricing r))])
                                          (seq resources)))]
