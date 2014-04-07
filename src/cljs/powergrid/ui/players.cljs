@@ -21,7 +21,9 @@
   (reify
     om/IRender
     (render [_]
-      (dom/li #js {:className "player" :data-player-id (player/id player)}
+      (dom/li #js {:className (cond-> "player"
+                                      (:has-action? player) (str " has-action"))
+                   :data-player-id (player/id player)}
               (dom/span #js {:className "handle"} (:handle player))
               (dom/span #js {:className "money"} (str "$" (:money player 0)))))))
 
@@ -29,7 +31,10 @@
   (reify
     om/IRender
     (render [_]
-      (let [ps (-> (:players data)
+      (let [{:keys [action-player-id]} data
+            ps (-> (:players data)
                    (sort-players-by-turn-order (:turn-order data)))]
         (apply dom/ul nil
-               (om/build-all player-view ps {:key :color}))))))
+               (om/build-all player-view ps
+                             {:key :color
+                              :fn #(assoc % :has-action? (= (player/id %) action-player-id))}))))))
