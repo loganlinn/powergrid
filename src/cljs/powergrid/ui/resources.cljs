@@ -4,12 +4,6 @@
             [powergrid.domain.resource :as resource]))
 
 
-(def ^:private resource-els
-  {:coal #(dom/div #js {:className "resource coal"})
-   :oil #(dom/div #js {:className "resource oil"})
-   :garbage #(dom/div #js {:className "resource garbage"})
-   :uranium #(dom/div #js {:className "resource uranium"})})
-
 (def resource-prices [1 2 3 4 5 6 7 8 12 14 15 16])
 
 (defn- resource-class [r avail i]
@@ -22,7 +16,7 @@
 
 (defn resource-market [resources owner]
   (reify
-    om/IRender
+    om/IRendeR
     (render [_]
       (let [avail-by-price (into {} (map (fn [[k r]] [k (frequencies (resource/market-pricing r))])
                                          (seq resources)))]
