@@ -21,27 +21,30 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Components
 
-(defn game-view [data owner]
+(defn game-view [game owner]
   (reify
     om/IRender
     (render [_]
       (dom/div #js {:id "game"}
+               (dom/div nil
+                        (dom/h3 nil (str "Phase: " (:phase game)))
+                        (dom/h3 nil (str "Step: " (:step game))))
                (dom/div #js {:id "players"}
                         (dom/h3 nil "Players")
-                        (om/build players-ui/players-view (select-keys data [:players :turn-order])))
+                        (om/build players-ui/players-view (select-keys game [:players :turn-order])))
                (dom/div #js {:id "power-plants"}
                         (dom/h3 nil "Power Plants")
-                        (om/build power-plants-ui/power-plant-market (:power-plants data)))
-               (when-let [auction (:auction data)]
+                        (om/build power-plants-ui/power-plant-market (:power-plants game)))
+               (when-let [auction (:auction game)]
                  (dom/div #js {:id "auction"}
                           (om/build auction-ui/auction-view auction)))
                (dom/div #js {:id "resources"}
                         (dom/h3 nil "Resources")
-                        (om/build resources-ui/resource-market (:resources data)))))))
+                        (om/build resources-ui/resource-market (:resources game)))))))
 
 (defn app-view [app owner]
   (dom/div nil
-           (when [game (:game app)]
+           (when-let [game (:game app)]
              (om/build game-view game))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -55,11 +58,12 @@
 (cljs.reader/register-tag-parser! "powergrid.domain.power_plants.PowerPlant" powergrid.domain.power-plants/map->PowerPlant)
 
 (def app-state
-  (atom {:game {:power-plants
-                {:market (powergrid.domain.power-plants/initial-market)
-                 :future (powergrid.domain.power-plants/initial-future)}
-                :resources
-                (powergrid.domain.resource/initial-resources)
+  (atom {:game {:phase 1
+                :step 1
+                :round 1
+                :power-plants {:market (powergrid.domain.power-plants/initial-market)
+                               :future (powergrid.domain.power-plants/initial-future)}
+                :resources (powergrid.domain.resource/initial-resources)
                 :players {:blue (powergrid.domain.player/new-player "logan" :blue)
                           :red (powergrid.domain.player/new-player "maeby" :red)}
                 :turn-order [:blue :red]}}))
