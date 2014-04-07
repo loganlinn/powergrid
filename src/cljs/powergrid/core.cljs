@@ -12,7 +12,8 @@
             [powergrid.domain.resource]
             [powergrid.domain.power-plants]
             [powergrid.ui.power-plants :as power-plants-ui]
-            [powergrid.ui.resources :as resources-ui]))
+            [powergrid.ui.resources :as resources-ui]
+            [powergrid.ui.auction :as auction-ui]))
 
 (enable-console-print!)
 
@@ -27,6 +28,9 @@
                (dom/div #js {:id "power-plants"}
                         (dom/h3 nil "Power Plants")
                         (om/build power-plants-ui/power-plant-market (:power-plants data)))
+               (when-let [auction (:auction data)]
+                 (dom/div #js {:id "auction"}
+                          (om/build auction-ui/auction-view auction)))
                (dom/div #js {:id "resources"}
                         (dom/h3 nil "Resources")
                         (om/build resources-ui/resource-market (:resources data)))))))
