@@ -22,9 +22,9 @@
                                          (seq resources)))]
         (apply dom/ul #js {:className "resource-track"}
                (map (fn [price]
-                      (dom/li #js {:data-resource-price price}
+                      (dom/li nil
                               (dom/span #js {:className "resource-price"} price)
-                              (apply dom/ul nil
+                              (apply dom/ul #js {:className "resource-block" :data-resource-price price}
                                      (reduce (fn [els r]
                                                (let [capacity (get-in resource/market-capacity [r price] 0)
                                                      avail    (get-in avail-by-price [r price] 0)]

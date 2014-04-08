@@ -11,6 +11,7 @@
             [powergrid.domain.auction]
             [powergrid.domain.resource]
             [powergrid.domain.power-plants]
+            [powergrid.style]
             [powergrid.ui.power-plants :as power-plants-ui]
             [powergrid.ui.resources :as resources-ui]
             [powergrid.ui.auction :as auction-ui]

@@ -17,9 +17,9 @@
     (render [this]
       (let [{:keys [number resource capacity yield]} data]
         (dom/li #js {:className (str "power-plant " (resource-name resource) " pp-" number)}
-                (dom/span #js {:className "pp-number"} number)
-                (dom/span #js {:className "pp-capacity"} capacity)
-                (dom/span #js {:className "pp-yield"} yield))))))
+                (dom/span #js {:className "number"} number)
+                (dom/span #js {:className "capacity"} capacity)
+                (dom/span #js {:className "yield"} yield))))))
 
 (defn power-plant-market [data owner]
   (reify

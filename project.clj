@@ -10,6 +10,7 @@
                  [org.clojure/core.async "0.1.267.0-0d7780-alpha"]
                  ;; TODO com.stuartsierra/component
                  [om "0.5.3"]
+                 [garden "1.1.5"]
                  [com.taoensso/timbre "3.1.6"]
                  [ring "1.2.2"]
                  [http-kit "2.1.1"]
