@@ -48,6 +48,7 @@
               :right (px 5)}]]
 
    [:.resource-track
+    {:padding 0 :margin 0}
     [:li {:list-style :none
           :float :left}]]
    [:.resource-block
@@ -81,7 +82,7 @@
    [:.uranium {:background-color uranium-color}]])
 
 (defn compile-styles []
-  (css/css styles))
+  (css/css {:pretty-print? false} styles))
 
 #+cljs
 ;; hacky styles (TODO make a real asset)
