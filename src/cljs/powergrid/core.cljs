@@ -50,10 +50,21 @@
                           (om/build resources-ui/resource-market
                                     (:resources game))))))))
 
+(defn app-menu []
+  (dom/div #js {:className "pure-menu pure-menu-horizontal pure-menu-open"}
+           (dom/a #js {:href "#" :className "pure-menu-heading"} "Powergrid")
+           (dom/ul nil
+                   (dom/li nil (dom/a #js {:href "#"} "New Game"))
+                   (dom/li nil (dom/a #js {:href "#"} "Games"))
+                   (dom/li nil (dom/a #js {:href "#"} "Logout")))))
+
 (defn app-view [app owner]
-  (dom/div nil
-           (when-let [game (:game app)]
-             (om/build game-view game))))
+  (dom/div #js {:className "pure-g"}
+           (dom/div #js {:className "pure-u-1"}
+                    (app-menu))
+           (dom/div #js {:className "pure-u-1"}
+                    (when-let [game (:game app)]
+                      (om/build game-view game)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Initialization
