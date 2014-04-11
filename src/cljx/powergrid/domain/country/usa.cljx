@@ -7,7 +7,7 @@
     :boise
     :boston
     :buffalo
-    :cincinnatti
+    :cincinnati
     :cheyenne
     :chicago
     :dallas
@@ -67,12 +67,12 @@
    [:buffalo :new-york] 8
    [:buffalo :pittsburgh] 7
    [:buffalo :detroit] 7
-   [:cincinnatti :chicago] 7
-   [:cincinnatti :detroit] 4
-   [:cincinnatti :pittsburgh] 7
-   [:cincinnatti :raleigh] 15
-   [:cincinnatti :knoxville] 6
-   [:cincinnatti :st-louis] 12
+   [:cincinnati :chicago] 7
+   [:cincinnati :detroit] 4
+   [:cincinnati :pittsburgh] 7
+   [:cincinnati :raleigh] 15
+   [:cincinnati :knoxville] 6
+   [:cincinnati :st-louis] 12
    [:cheyenne :minneapolis] 18
    [:cheyenne :omaha] 14
    [:cheyenne :denver] 0

@@ -110,6 +110,12 @@
    :future (pp/initial-future)
    :deck (init-power-plant-deck (pp/initial-deck) num-players)})
 
+(defn init-cities
+  [country]
+  (assert (= :usa country) "Only USA currently supported (I know, right?)")
+  (c/map->Cities {:owners {}
+                  :connections (c/as-graph usa/connections)}))
+
 (defn new-game
   "Returns new Game for vector of players"
   ([country players]
@@ -125,8 +131,7 @@
                :players (into {} (map (juxt p/id identity) players))
                :turns  '()
                :turn-order (shuffle (map p/id players))
-               :cities (c/map->Cities {:owners {}
-                                       :connections (c/as-graph usa/connections)})
+               :cities (init-cities country)
                :bank 0})))
 
 (defn inc-phase

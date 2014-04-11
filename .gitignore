@@ -15,3 +15,5 @@ resources/public/js/cljs.js
 /out
 client/
 .nrepl-port
+[#]*[#]
+\.\#*

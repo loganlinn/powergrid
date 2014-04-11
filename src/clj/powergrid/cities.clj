@@ -8,18 +8,12 @@
    ->Cities
    map->Cities
    owners
+   as-graph
    connections
    valid-city?
    owned-cities
    network-size
    network-sizes])
-
-(defn as-graph
-  "Converts a map of edges to cost to a 2d graph"
-  [cs]
-  (reduce (fn [g [[n1 n2] cost]]
-            (-> g (assoc-in [n1 n2] cost) (assoc-in [n2 n1] cost)))
-          {} cs))
 
 (defn city-owners
   "Returns vector of player-ids who own a connection in city"

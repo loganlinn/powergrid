@@ -3,6 +3,8 @@
             [garden.units :refer [em px]]
             [garden.color :as color]))
 
+(def bg-color (color/rgb 255 255 255))
+
 (def oil-color (color/rgb [3 3 3]))
 
 (def coal-color (color/rgb [152 118 84]))
@@ -23,6 +25,26 @@
 
 (def styles
   [[:* {:box-sizing :border-box}]
+
+   [:.cities
+    [:.regions
+     [:path {:fill "#ccc" :stroke bg-color}]]
+    [:.connections
+     [:path {:stroke "#333" :stroke-width 2}]]]
+
+   [:.power-plants
+    {:position :absolute
+     :top (px 10)
+     :right (px 10)}]
+   [:.resources
+    {:position :absolute
+     :bottom (px 10)}]
+   [:.cities
+    {:position :absolute
+     :top "20%"
+     :bottom: "20%"
+     :right 0
+     :left 0}]
 
    [:.present-market :.future-market
     {:margin [(px 0) (px 0) (px 10) (px 0)]
@@ -48,7 +70,9 @@
               :right (px 5)}]]
 
    [:.resource-track
-    {:padding 0 :margin 0}
+    {:padding 0
+     :margin 0
+     :width "100%"}
     [:li {:list-style :none
           :float :left}]]
    [:.resource-block

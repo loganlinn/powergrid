@@ -25,3 +25,11 @@
   "Returns map of player-id to number of cities they own (for the players who own cities)"
   [cities]
   (frequencies (flatten (vals (owners cities)))))
+
+(defn as-graph
+  "Converts a map of edges to cost to a 2d graph"
+  [cs]
+  (reduce (fn [g [[n1 n2] cost]]
+            (-> g (assoc-in [n1 n2] cost) (assoc-in [n2 n1] cost)))
+          {} cs))
+
