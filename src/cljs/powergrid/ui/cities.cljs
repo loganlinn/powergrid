@@ -40,7 +40,9 @@
                                     xy2 #js [x2 y2]]]
                           (dom/path #js {:d (path (arc {:source xy1 :target xy2}))}))))))))
 
-(defn cities-view [data owner]
+(defn cities-view
+  "Contains d3 drawing functions in state. These fns get passed into map component"
+  [data owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -61,12 +63,8 @@
         {:projection projection
          :path path
          :arc arc
-         :regions nil
+         :regions (.-features js/US_STATES_GEOJSON)
          :mouse nil}))
-
-    om/IDidMount
-    (did-mount [_]
-      (.json js/d3 "deps/us-states.json" #(om/set-state! owner :regions (.-features %))))
 
     om/IRenderState
     (render-state [_ {:keys [regions projection path arc] :as state}]
