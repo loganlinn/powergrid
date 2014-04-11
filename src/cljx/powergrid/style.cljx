@@ -42,7 +42,7 @@
    [:.cities
     {:position :absolute
      :top "20%"
-     :bottom: "20%"
+     :bottom "20%"
      :right 0
      :left 0}]
 
