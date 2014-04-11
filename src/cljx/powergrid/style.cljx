@@ -26,6 +26,13 @@
 (def styles
   [[:* {:box-sizing :border-box}]
 
+   [:.unselectable
+    {:-webkit-user-select :none
+     :-moz-user-select :-moz-none
+     :-khtml-user-select :none
+     :-ms-user-select :none
+     :user-select :none}]
+
    [:.cities
     [:.regions
      [:path {:fill "#ccc" :stroke bg-color}]]
