@@ -27,7 +27,8 @@
                                  (dom/circle #js {:cx x
                                                   :cy y
                                                   :r city-radius})
-                                 (dom/text #js {:x x
+                                 (dom/text #js {:className "unselectable"
+                                                :x x
                                                 :y (+ y (* city-radius 2) 5)
                                                 :textAnchor "middle"} ;; TODO Debug textAnchor
                                            city-name))))
@@ -81,7 +82,11 @@
                                       (.translate projection #js [(+ origin-x (/ (- end-x start-x) 2))
                                                                   (+ origin-y (/ (- end-y start-y) 2))])
                                       (om/refresh! owner)))
-                    :onMouseUp #(om/set-state! owner :mouse nil)}
+                    :onMouseUp #(om/set-state! owner :mouse nil)
+                    :onWheel (fn [e]
+                               (.preventDefault e)
+                               (.scale projection (+ (.scale projection) (.-deltaY e)))
+                               (om/refresh! owner))}
                (when regions
                  (om/build map-view {:projection projection
                                      :path path
