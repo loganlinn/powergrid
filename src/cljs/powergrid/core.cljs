@@ -32,8 +32,13 @@
             action-player-id (game/action-player-id game)
             has-action? (= (:player-id game) action-player-id)]
         (dom/div #js {:id "game" :className (when has-action? "has-action")}
+                 (dom/div #js {:className "cities"}
+                          (om/build cities-ui/cities-view
+                                    (:cities game)))
+
                  (dom/div nil
                           (dom/h3 nil (str "Step " step ", Phase " phase ": " (game/phase-title phase))))
+
                  (dom/div #js {:className "players"}
                           (dom/h3 nil "Players")
                           (om/build players-ui/players-view
@@ -51,9 +56,6 @@
                           (dom/h3 nil "Resource Market")
                           (om/build resources-ui/resource-market
                                     (:resources game)))
-                 (dom/div #js {:className "cities"}
-                          (om/build cities-ui/cities-view
-                                    (:cities game)))
                  )))))
 
 (defn app-menu []
