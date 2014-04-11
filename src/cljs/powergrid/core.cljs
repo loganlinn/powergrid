@@ -41,14 +41,14 @@
                                      :turn-order (:turn-order game)
                                      :action-player-id action-player-id}))
                  (dom/div #js {:className "power-plants"}
-                          (dom/h3 nil "Power Plants")
+                          (dom/h3 nil "Power Plant Market")
                           (om/build power-plants-ui/power-plant-market
                                     (:power-plants game)))
                  (when-let [auction (:auction game)]
                    (dom/div nil
                             (om/build auction-ui/auction-view auction)))
                  (dom/div #js {:className "resources"}
-                          (dom/h3 nil "Resources")
+                          (dom/h3 nil "Resource Market")
                           (om/build resources-ui/resource-market
                                     (:resources game)))
                  (dom/div #js {:className "cities"}
